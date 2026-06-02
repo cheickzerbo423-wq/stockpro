@@ -56,15 +56,18 @@ CREATE TABLE IF NOT EXISTS utilisateurs (
 
 -- ── Clients / Fournisseurs ───────────────────────────────────
 CREATE TABLE IF NOT EXISTS clients_fournisseurs (
-  id         SERIAL        PRIMARY KEY,
-  nom        VARCHAR(150)  NOT NULL,
-  type       VARCHAR(20)   NOT NULL DEFAULT 'Client'
-                           CHECK (type IN ('Client','Fournisseur','Les deux')),
-  telephone  VARCHAR(30),
-  email      VARCHAR(150),
-  adresse    TEXT,
-  created_at TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+  id             SERIAL        PRIMARY KEY,
+  nom            VARCHAR(150)  NOT NULL,
+  type           VARCHAR(20)   NOT NULL DEFAULT 'Client'
+                               CHECK (type IN ('Client','Fournisseur','Les deux','Clients','Fournisseurs')),
+  contact        VARCHAR(100),
+  telephone      VARCHAR(30),
+  email          VARCHAR(150),
+  ville          VARCHAR(100),
+  adresse        TEXT,
+  actif          BOOLEAN       NOT NULL DEFAULT TRUE,
+  created_at     TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
 -- ── Factures ────────────────────────────────────────────────
@@ -111,6 +114,8 @@ CREATE TABLE IF NOT EXISTS achats (
   prix_unitaire   NUMERIC(15,2) NOT NULL DEFAULT 0,
   montant_total   NUMERIC(15,2) NOT NULL DEFAULT 0,
   fournisseur     VARCHAR(150),
+  fournisseur_nom VARCHAR(150),
+  prix_achat      NUMERIC(15,2) NOT NULL DEFAULT 0,
   date_achat      DATE          NOT NULL DEFAULT CURRENT_DATE,
   annee           INTEGER       GENERATED ALWAYS AS (EXTRACT(YEAR FROM date_achat)::INTEGER) STORED,
   statut_paiement VARCHAR(20)   NOT NULL DEFAULT 'Non payé'

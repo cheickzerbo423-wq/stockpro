@@ -13,7 +13,6 @@ import Factures     from "./pages/Factures";
 import Utilisateurs from "./pages/Utilisateurs";
 import Rapports     from "./pages/Rapports";
 import Guide        from "./pages/Guide";
-import Devis        from "./pages/Devis";
 
 const BLUE   = "#0023FF";
 const YELLOW = "#FFF900";
@@ -26,7 +25,6 @@ const NAV_ITEMS = [
   { path: "/achats",       label: "Approvisionnements",     icon: "achats",    module: "appro" },
   { path: "/clients",      label: "Clients & Fournisseurs", icon: "clients",   module: "clients" },
   { path: "/factures",     label: "Factures",               icon: "factures",  module: "facturation" },
-  { path: "/devis",        label: "Devis",                  icon: "devis",     module: "devis" },
   { path: "/rapports",     label: "Rapports",               icon: "rapports",  module: null },
   { path: "/guide",        label: "Guide",                  icon: "guide",     module: null },
   { path: "/utilisateurs", label: "Utilisateurs",           icon: "users",     module: null, adminOnly: true },
@@ -328,7 +326,6 @@ export default function App() {
           <Route path="/achats"       element={<PrivateRoute><Layout><Achats       /></Layout></PrivateRoute>} />
           <Route path="/clients"      element={<PrivateRoute><Layout><Clients      /></Layout></PrivateRoute>} />
           <Route path="/factures"     element={<PrivateRoute><Layout><Factures     /></Layout></PrivateRoute>} />
-          <Route path="/devis"        element={<PrivateRoute><Layout><Devis        /></Layout></PrivateRoute>} />
           <Route path="/rapports"     element={<PrivateRoute><Layout><Rapports     /></Layout></PrivateRoute>} />
           <Route path="/guide"        element={<PrivateRoute><Layout><Guide        /></Layout></PrivateRoute>} />
           <Route path="/utilisateurs" element={<PrivateRoute adminOnly><Layout><Utilisateurs /></Layout></PrivateRoute>} />

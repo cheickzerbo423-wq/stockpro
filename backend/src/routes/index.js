@@ -11,7 +11,6 @@ const ventesCtrl   = require("../controllers/ventesController");
 const achatsCtrl   = require("../controllers/achatsController");
 const clientsCtrl  = require("../controllers/clientsController");
 const facturesCtrl = require("../controllers/facturesController");
-const devisCtrl    = require("../controllers/devisController");
 const usersCtrl    = require("../controllers/utilisateursController");
 const rapportsCtrl = require("../controllers/rapportsController");
 const gammesCtrl   = require("../controllers/gammesController");
@@ -66,13 +65,6 @@ router.get(/^\/factures\/(.+)\/pdf$/,      authenticate, authorize("facturation"
 router.get(/^\/factures\/(.+)\/recu$/,     authenticate, authorize("facturation"), facturesCtrl.generateRecu);
 router.put(/^\/factures\/(.+)\/paiement$/, authenticate, authorize("facturation"), audit("PAIEMENT", "factures"), facturesCtrl.updatePaiement);
 router.get(/^\/factures\/(.+)$/,           authenticate, authorize("facturation"), facturesCtrl.getOne);
-
-// ============================================================
-// DEVIS
-// ============================================================
-router.get ("/devis",             authenticate, authorize("devis"), devisCtrl.getAll);
-router.post("/devis",             authenticate, authorize("devis"), audit("CREATION", "devis"), devisCtrl.create);
-router.put ("/devis/:id/statut",  authenticate, authorize("devis"), audit("STATUT",   "devis"), devisCtrl.updateStatut);
 
 // ============================================================
 // UTILISATEURS — Admin uniquement

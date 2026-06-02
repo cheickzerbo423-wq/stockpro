@@ -5,7 +5,6 @@
 -- Nettoyage complet avant recréation
 DROP VIEW  IF EXISTS vue_stock CASCADE;
 DROP TABLE IF EXISTS audit_log            CASCADE;
-DROP TABLE IF EXISTS devis                CASCADE;
 DROP TABLE IF EXISTS achats               CASCADE;
 DROP TABLE IF EXISTS lignes_vente         CASCADE;
 DROP TABLE IF EXISTS factures             CASCADE;
@@ -123,21 +122,6 @@ CREATE TABLE IF NOT EXISTS achats (
   montant_paye    NUMERIC(15,2) NOT NULL DEFAULT 0,
   created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
-);
-
--- ── Devis ───────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS devis (
-  id            SERIAL        PRIMARY KEY,
-  numero        VARCHAR(50)   NOT NULL UNIQUE,
-  client_nom    VARCHAR(150)  NOT NULL,
-  montant       NUMERIC(15,2) NOT NULL DEFAULT 0,
-  date_emission DATE          NOT NULL DEFAULT CURRENT_DATE,
-  commentaire   TEXT,
-  num_commande  VARCHAR(50),
-  statut        VARCHAR(20)   NOT NULL DEFAULT 'En attente'
-                              CHECK (statut IN ('En attente','Valide','Refuse','Facture')),
-  created_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-  updated_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
 -- ── Journal d'audit ─────────────────────────────────────────

@@ -84,7 +84,7 @@ export function useMutation(mutateFn) {
 import {
   dashboardService, articlesService, ventesService,
   achatsService, clientsService, facturesService,
-  utilisateursService, gammesService, devisService,
+  utilisateursService, gammesService,
 } from "../services";
 
 export const useDashboard = () =>
@@ -114,5 +114,3 @@ export const useUtilisateurs = () =>
 export const useGammes = () =>
   useApi(() => gammesService.getAll());
 
-export const useDevis = () =>
-  useApi(() => devisService.getAll());

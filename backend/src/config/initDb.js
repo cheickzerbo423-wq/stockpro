@@ -4,13 +4,15 @@ const fs = require("fs");
 const path = require("path");
 const { Pool } = require("pg");
 
-const pool = new Pool({
-  host:     process.env.DB_HOST,
-  port:     process.env.DB_PORT,
-  database: process.env.DB_NAME,
-  user:     process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-});
+const pool = process.env.DATABASE_URL
+  ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
+  : new Pool({
+      host:     process.env.DB_HOST,
+      port:     process.env.DB_PORT,
+      database: process.env.DB_NAME,
+      user:     process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+    });
 
 async function init() {
   console.log("⏳ Initialisation de la base de données StockPro...");
@@ -28,7 +30,7 @@ async function init() {
     console.log("   Login    : admin");
     console.log("   Mot de passe : admin123  ← CHANGEZ-LE IMMÉDIATEMENT !");
   } catch (err) {
-    console.error("❌ Erreur lors de l'initialisation :", err.message);
+    console.error("❌ Erreur lors de l'initialisation :", err);
   } finally {
     await pool.end();
   }

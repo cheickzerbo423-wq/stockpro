@@ -176,12 +176,12 @@ async function exportPDF(req, res) {
     doc.fillColor("#94a3b8").fontSize(8).font("Helvetica")
        .text(`CA ${fmt(v.ca_total)}  —  Dépenses ${fmt(a.total_achats)}`, 62, benY + 50);
 
-    // ── Pied de page (inline après dernier bloc) ──
-    doc.y = benY + 68;
+    // ── Pied de page ──
+    doc.moveDown(2);
     doc.moveTo(50, doc.y).lineTo(545, doc.y).lineWidth(0.5).strokeColor("#e8ecff").stroke();
-    doc.y += 6;
+    doc.moveDown(0.5);
     doc.fillColor("#9ba5c9").fontSize(7).font("Helvetica")
-       .text(`Document généré automatiquement par WariGest  ·  ${fmtDate(new Date().toISOString().split("T")[0])}`, 50, doc.y, { width: 495, align: "center" });
+       .text(`Document généré automatiquement par WariGest  ·  ${fmtDate(new Date().toISOString().split("T")[0])}`, { width: 495, align: "center" });
 
     doc.end();
   } catch (err) {

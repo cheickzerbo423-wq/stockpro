@@ -78,8 +78,7 @@ function WariGestLogo({ size = 32 }) {
 function BottomNav({ visibleItems }) {
   const items = visibleItems.filter(i => BOTTOM_NAV.includes(i.path));
   return (
-    <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 30, background: "white", borderTop: "1px solid #e8ecff", display: "flex", height: 64, boxShadow: "0 -4px 20px rgba(0,35,255,0.08)" }}
-      className="md:hidden">
+    <nav className="bottom-nav-mobile" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 30, background: "white", borderTop: "1px solid #e8ecff", display: "flex", height: 64, boxShadow: "0 -4px 20px rgba(0,35,255,0.08)" }}>
       {items.map((item) => (
         <NavLink key={item.path} to={item.path} end={item.path === "/"}
           style={({ isActive }) => ({

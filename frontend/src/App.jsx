@@ -240,8 +240,8 @@ function Layout({ children }) {
       )}
 
       {/* Sidebar desktop */}
-      <aside style={{ width: collapsed ? 68 : 232, background: DARK, display: "flex", flexDirection: "column", flexShrink: 0, transition: "width 0.25s" }}
-        className="hidden md:flex">
+      <aside style={{ width: collapsed ? 68 : 232, background: DARK, display: "none", flexDirection: "column", flexShrink: 0, transition: "width 0.25s" }}
+        className="md:flex">
         <SidebarContent />
       </aside>
 
@@ -291,7 +291,7 @@ function Layout({ children }) {
           </div>
         </header>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: 80 }} className="md:p-6 md:pb-6">
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 16px 80px" }} className="md:p-6 md:pb-6">
           {children}
         </div>
       </main>

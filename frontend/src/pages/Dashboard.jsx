@@ -1,63 +1,62 @@
-// src/pages/Dashboard.jsx
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  LineChart, Line, CartesianGrid,
-} from "recharts";
+// src/pages/Dashboard.jsx — WariGest
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from "recharts";
 import { useDashboard } from "../hooks/useApi";
 import { fmt, fmtN, Spinner, ErrorBox } from "../components/UI";
 
+const BLUE   = "#0023FF";
+const YELLOW = "#FFF900";
+const DARK   = "#060d2e";
+
 const MOIS_LABELS = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
 
-/* ── KPI Card ── */
-function KpiCard({ label, value, icon, sub, trend, accentBg, accentText, borderColor }) {
-  const trendUp = trend > 0;
-  return (
-    <div className={`bg-white rounded-2xl border p-4 shadow-sm flex flex-col gap-2 ${borderColor}`}>
-      <div className="flex items-center justify-between">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg ${accentBg}`}>
-          {icon}
-        </div>
-        {trend !== undefined && (
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${trendUp ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"}`}>
-            {trendUp ? "▲" : "▼"} {Math.abs(trend)}%
-          </span>
-        )}
-      </div>
-      <div>
-        <div className={`text-lg font-black leading-tight ${accentText}`}>{value}</div>
-        <div className="text-xs text-gray-400 font-medium mt-0.5">{label}</div>
-      </div>
-      {sub && <div className="text-xs text-gray-400 border-t border-gray-50 pt-1.5">{sub}</div>}
-    </div>
-  );
-}
-
-/* ── Section titre ── */
-function SectionTitle({ children }) {
-  return (
-    <div className="flex items-center gap-2 mb-3">
-      <div className="h-3.5 w-1 bg-orange-500 rounded-full" />
-      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{children}</h3>
-    </div>
-  );
-}
-
-/* ── Tooltip graph ── */
 const GraphTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-gray-900 text-white rounded-xl px-3 py-2 text-xs shadow-lg">
-      <div className="font-bold text-gray-300 mb-1">{label}</div>
+    <div style={{ background: DARK, color: "white", borderRadius: 10, padding: "8px 12px", fontSize: 12, boxShadow: "0 4px 20px rgba(0,35,255,0.2)" }}>
+      <div style={{ color: "rgba(255,255,255,0.5)", marginBottom: 4, fontWeight: 600 }}>{label}</div>
       {payload.map((p) => (
-        <div key={p.dataKey} style={{ color: p.color }}>
-          {p.name} : <strong>{fmt(p.value)}</strong>
+        <div key={p.dataKey} style={{ color: YELLOW, fontWeight: 700 }}>
+          {p.name} : {fmt(p.value)}
         </div>
       ))}
     </div>
   );
 };
 
-/* ══════════════════════════════════════════════ */
+function KpiCard({ label, value, icon, sub, color = BLUE, bg = "#e8ecff" }) {
+  return (
+    <div style={{ background: "white", borderRadius: 16, border: "1.5px solid #e8ecff", padding: 16, display: "flex", flexDirection: "column", gap: 12, boxShadow: "0 2px 12px rgba(0,35,255,0.05)" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ width: 38, height: 38, borderRadius: 12, background: bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
+          {icon}
+        </div>
+      </div>
+      <div>
+        <div style={{ fontSize: 16, fontWeight: 900, color, lineHeight: 1.2 }}>{value}</div>
+        <div style={{ fontSize: 11, color: "#9ba5c9", fontWeight: 600, marginTop: 2 }}>{label}</div>
+      </div>
+      {sub && <div style={{ fontSize: 11, color: "#9ba5c9", borderTop: "1px solid #f0f2ff", paddingTop: 8 }}>{sub}</div>}
+    </div>
+  );
+}
+
+function SectionTitle({ children }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+      <div style={{ width: 3, height: 16, background: BLUE, borderRadius: 4 }} />
+      <h3 style={{ fontSize: 11, fontWeight: 800, color: "#9ba5c9", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>{children}</h3>
+    </div>
+  );
+}
+
+function Card({ children, style = {} }) {
+  return (
+    <div style={{ background: "white", borderRadius: 16, border: "1.5px solid #e8ecff", padding: 20, boxShadow: "0 2px 12px rgba(0,35,255,0.05)", ...style }}>
+      {children}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { data, loading, error, reload } = useDashboard();
   const annee = new Date().getFullYear();
@@ -66,240 +65,188 @@ export default function Dashboard() {
   if (error)   return <ErrorBox message={error} onRetry={reload} />;
   if (!data)   return null;
 
-  const {
-    kpis,
-    alertes_stock   = [],
-    alertes_gammes  = [],
-    ca_par_mois     = [],
-    top_clients     = [],
-    recent_factures = [],
-  } = data;
+  const { kpis, alertes_stock = [], alertes_gammes = [], ca_par_mois = [], top_clients = [], recent_factures = [] } = data;
 
-  /* Taux de recouvrement */
-  const tauxRec = kpis.ca_facture > 0
-    ? Math.round((kpis.encaisse / kpis.ca_facture) * 100)
-    : 0;
-
-  /* Fusion graphique annee + annee-1 par mois */
+  const tauxRec = kpis.ca_facture > 0 ? Math.round((kpis.encaisse / kpis.ca_facture) * 100) : 0;
   const graphData = MOIS_LABELS.map((label, i) => {
     const moisKey = `${annee}-${String(i + 1).padStart(2, "0")}`;
     const curr = ca_par_mois.find((r) => r.mois === moisKey);
     return { label, ca: curr ? parseInt(curr.ca) : 0 };
   });
-  const hasAnyData = graphData.some((d) => d.ca > 0);
 
   return (
-    <div className="space-y-5">
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
       {/* ── En-tête ── */}
-      <div className="flex items-center justify-between">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
         <div>
-          <h2 className="text-lg font-black text-gray-900">Tableau de Bord</h2>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <h2 style={{ fontSize: 22, fontWeight: 900, color: DARK, margin: 0 }}>Tableau de Bord</h2>
+          <p style={{ fontSize: 12, color: "#9ba5c9", margin: "2px 0 0", textTransform: "capitalize" }}>
             {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </p>
         </div>
         <button onClick={reload}
-          className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-orange-500 transition bg-white border border-gray-200 px-3 py-1.5 rounded-xl shadow-sm">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
-            <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-          </svg>
+          style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: BLUE, background: "#e8ecff", border: "1.5px solid #c7d0ff", padding: "7px 14px", borderRadius: 10, cursor: "pointer", fontFamily: "inherit" }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           Actualiser
         </button>
       </div>
 
       {/* ── KPIs ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard
-          icon="📈" label={`Chiffre d'Affaires ${annee}`}
-          value={fmt(kpis.ca_total)}
-          sub={`Dépenses : ${fmt(kpis.depenses_total)}`}
-          accentBg="bg-orange-50" accentText="text-orange-600" borderColor="border-orange-100"
-        />
-        <KpiCard
-          icon="💰" label="Bénéfice Net"
-          value={fmt(kpis.benefice)}
-          sub={`Marge : ${kpis.ca_total > 0 ? Math.round((kpis.benefice / kpis.ca_total) * 100) : 0}%`}
-          accentBg={kpis.benefice >= 0 ? "bg-emerald-50" : "bg-red-50"}
-          accentText={kpis.benefice >= 0 ? "text-emerald-600" : "text-red-600"}
-          borderColor={kpis.benefice >= 0 ? "border-emerald-100" : "border-red-100"}
-        />
-        <KpiCard
-          icon="💸" label="Dépenses Totales"
-          value={fmt(kpis.depenses_total)}
-          sub={`${kpis.nb_articles} articles en stock`}
-          accentBg="bg-red-50" accentText="text-red-600" borderColor="border-red-100"
-        />
-        <KpiCard
-          icon="🧾" label="Factures Émises"
-          value={fmtN(kpis.nb_factures)}
-          sub={`${kpis.factures_impayees} impayée(s) · ${fmt(kpis.montant_a_recouvrer)}`}
-          accentBg="bg-blue-50" accentText="text-blue-600" borderColor="border-blue-100"
-        />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="lg:grid-cols-4">
+        <KpiCard icon="📈" label={`CA ${annee}`}       value={fmt(kpis.ca_total)}        sub={`Dépenses : ${fmt(kpis.depenses_total)}`} color={BLUE}      bg="#e8ecff" />
+        <KpiCard icon="💰" label="Bénéfice Net"         value={fmt(kpis.benefice)}         sub={`Marge : ${kpis.ca_total > 0 ? Math.round((kpis.benefice/kpis.ca_total)*100) : 0}%`} color={kpis.benefice >= 0 ? "#059669" : "#dc2626"} bg={kpis.benefice >= 0 ? "#ecfdf5" : "#fef2f2"} />
+        <KpiCard icon="💸" label="Dépenses Totales"    value={fmt(kpis.depenses_total)}   sub={`${kpis.nb_articles} articles`}          color="#dc2626"   bg="#fef2f2" />
+        <KpiCard icon="🧾" label="Factures Émises"      value={fmtN(kpis.nb_factures)}     sub={`${kpis.factures_impayees} impayée(s)`}  color="#7c3aed"   bg="#f3e8ff" />
       </div>
 
       {/* ── Taux recouvrement ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4">
-        <div className="flex items-center justify-between mb-2">
+      <Card>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
           <SectionTitle>Taux de Recouvrement</SectionTitle>
-          <span className={`text-sm font-black ${tauxRec >= 80 ? "text-emerald-600" : tauxRec >= 50 ? "text-amber-500" : "text-red-500"}`}>
-            {tauxRec}%
-          </span>
+          <span style={{ fontSize: 16, fontWeight: 900, color: tauxRec >= 80 ? "#059669" : tauxRec >= 50 ? "#d97706" : "#dc2626" }}>{tauxRec}%</span>
         </div>
-        <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-700 ${tauxRec >= 80 ? "bg-emerald-500" : tauxRec >= 50 ? "bg-amber-400" : "bg-red-400"}`}
-            style={{ width: `${tauxRec}%` }}
-          />
+        <div style={{ height: 8, background: "#f0f2ff", borderRadius: 999, overflow: "hidden" }}>
+          <div style={{ height: "100%", borderRadius: 999, width: `${tauxRec}%`, background: tauxRec >= 80 ? "#059669" : tauxRec >= 50 ? "#d97706" : "#dc2626", transition: "width 0.7s" }} />
         </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400 mt-1.5">
-          <span>Encaissé : <strong className="text-gray-700">{fmt(kpis.encaisse)}</strong></span>
-          <span>Créances : <strong className="text-red-500">{fmt(kpis.montant_a_recouvrer)}</strong></span>
-          <span>Clients actifs : <strong className="text-gray-700">{fmtN(kpis.nb_clients)}</strong></span>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", fontSize: 11, color: "#9ba5c9", marginTop: 8 }}>
+          <span>Encaissé : <strong style={{ color: DARK }}>{fmt(kpis.encaisse)}</strong></span>
+          <span>Créances : <strong style={{ color: "#dc2626" }}>{fmt(kpis.montant_a_recouvrer)}</strong></span>
+          <span>Clients : <strong style={{ color: DARK }}>{fmtN(kpis.nb_clients)}</strong></span>
         </div>
-      </div>
+      </Card>
 
-      {/* ── Graphique évolution ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      {/* ── Graphique ── */}
+      <Card>
         <SectionTitle>Évolution des Ventes — {annee}</SectionTitle>
-        {!hasAnyData ? (
-          <p className="text-sm text-gray-400 text-center py-10">Aucune vente enregistrée.</p>
+        {!graphData.some(d => d.ca > 0) ? (
+          <p style={{ textAlign: "center", color: "#9ba5c9", padding: "32px 0", fontSize: 13 }}>Aucune vente enregistrée.</p>
         ) : (
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={graphData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false}
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={graphData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f2ff" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#9ba5c9" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "#9ba5c9" }} axisLine={false} tickLine={false}
                 tickFormatter={(v) => v >= 1e6 ? (v/1e6).toFixed(1)+"M" : v >= 1000 ? (v/1000).toFixed(0)+"k" : v} />
               <Tooltip content={<GraphTooltip />} />
-              <Line type="monotone" dataKey="ca" name="CA" stroke="#f97316" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
+              <Line type="monotone" dataKey="ca" name="CA" stroke={BLUE} strokeWidth={2.5} dot={false} activeDot={{ r: 4, fill: BLUE }} />
             </LineChart>
           </ResponsiveContainer>
         )}
-      </div>
+      </Card>
 
-      {/* ── 3 colonnes bas ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* ── 3 colonnes ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }} className="md:grid-cols-3">
 
         {/* Top clients */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <Card>
           <SectionTitle>Top Clients</SectionTitle>
-          {top_clients.length === 0 ? (
-            <p className="text-xs text-gray-400">Aucune vente cette année.</p>
-          ) : top_clients.map((c, i) => {
-            const maxCa = top_clients[0].ca;
-            return (
-              <div key={c.client_nom} className="mb-3">
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-gray-600 font-medium truncate max-w-[65%]">
-                    <span className="text-gray-400 mr-1">{i + 1}.</span>{c.client_nom}
+          {top_clients.length === 0 ? <p style={{ fontSize: 12, color: "#9ba5c9" }}>Aucune vente cette année.</p>
+            : top_clients.map((c, i) => (
+              <div key={c.client_nom} style={{ marginBottom: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
+                  <span style={{ fontSize: 12, color: "#475569", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60%" }}>
+                    <span style={{ color: "#9ba5c9", marginRight: 4 }}>{i+1}.</span>{c.client_nom}
                   </span>
-                  <span className="font-bold text-gray-800">{fmt(c.ca)}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: DARK }}>{fmt(c.ca)}</span>
                 </div>
-                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-orange-400 rounded-full transition-all duration-700"
-                    style={{ width: `${Math.round((c.ca / maxCa) * 100)}%`, opacity: 1 - i * 0.15 }} />
+                <div style={{ height: 5, background: "#f0f2ff", borderRadius: 999, overflow: "hidden" }}>
+                  <div style={{ height: "100%", background: BLUE, borderRadius: 999, width: `${Math.round((c.ca / top_clients[0].ca) * 100)}%`, opacity: 1 - i * 0.15 }} />
                 </div>
               </div>
-            );
-          })}
-        </div>
+            ))
+          }
+        </Card>
 
         {/* Dernières factures */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <Card>
           <SectionTitle>Dernières Factures</SectionTitle>
-          <div className="space-y-2">
-            {recent_factures.length === 0 && <p className="text-xs text-gray-400">Aucune facture.</p>}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {recent_factures.length === 0 && <p style={{ fontSize: 12, color: "#9ba5c9" }}>Aucune facture.</p>}
             {recent_factures.map((f) => (
-              <div key={f.code} className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="text-xs font-bold text-orange-500 font-mono">{f.code}</div>
-                  <div className="text-xs text-gray-500 truncate">{f.client_nom}</div>
+              <div key={f.code} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: BLUE, fontFamily: "monospace" }}>{f.code}</div>
+                  <div style={{ fontSize: 11, color: "#9ba5c9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.client_nom}</div>
                 </div>
-                <div className="text-right shrink-0">
-                  <div className="text-xs font-bold text-gray-800">{fmt(f.montant)}</div>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${f.statut ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"}`}>
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: DARK }}>{fmt(f.montant)}</div>
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: f.statut ? "#ecfdf5" : "#fef2f2", color: f.statut ? "#059669" : "#dc2626" }}>
                     {f.statut ? "Réglée" : "Impayée"}
                   </span>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* Alertes stock */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <div className="flex items-center justify-between mb-3">
+        <Card>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
             <SectionTitle>Alertes Stock</SectionTitle>
             {(alertes_stock.length + alertes_gammes.length) > 0 && (
-              <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">
+              <span style={{ fontSize: 10, fontWeight: 800, background: "#dc2626", color: "white", padding: "2px 8px", borderRadius: 999 }}>
                 {alertes_stock.length + alertes_gammes.length}
               </span>
             )}
           </div>
-
           {alertes_stock.length === 0 && alertes_gammes.length === 0 ? (
-            <div className="flex items-center gap-2 text-sm text-emerald-600 font-semibold bg-emerald-50 rounded-xl px-3 py-2.5">
-              <span className="text-base">✅</span> Tous les stocks sont OK
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#059669", fontWeight: 600, background: "#ecfdf5", borderRadius: 10, padding: "10px 14px" }}>
+              ✅ Tous les stocks sont OK
             </div>
           ) : (
-            <div className="space-y-1.5">
-              {/* Alertes gammes */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {alertes_gammes.map((g) => (
-                <div key={g.gamme_code} className="flex items-center justify-between px-3 py-2 rounded-xl bg-purple-50 border border-purple-100">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-black text-purple-500 bg-purple-100 px-1.5 py-0.5 rounded-md">GAMME</span>
-                      <span className="text-xs font-bold text-purple-800 truncate">{g.gamme_nom}</span>
+                <div key={g.gamme_code} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", borderRadius: 10, background: "#faf5ff", border: "1px solid #e9d5ff" }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: 9, fontWeight: 800, color: "#7c3aed", background: "#ede9fe", padding: "2px 6px", borderRadius: 5 }}>GAMME</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#4c1d95" }}>{g.gamme_nom}</span>
                     </div>
-                    <div className="text-[10px] text-purple-400 mt-0.5">
-                      {g.nb_rupture > 0 && <span className="text-red-500 font-semibold">{g.nb_rupture} rupture{g.nb_rupture > 1 ? "s" : ""}</span>}
-                      {g.nb_rupture > 0 && g.nb_faible > 0 && <span className="text-purple-300"> · </span>}
-                      {g.nb_faible > 0 && <span className="text-amber-500 font-semibold">{g.nb_faible} faible{g.nb_faible > 1 ? "s" : ""}</span>}
-                      <span className="text-purple-300"> · {g.nb_variantes} variante{g.nb_variantes > 1 ? "s" : ""}</span>
+                    <div style={{ fontSize: 10, color: "#9ba5c9", marginTop: 2 }}>
+                      {g.nb_rupture > 0 && <span style={{ color: "#dc2626", fontWeight: 600 }}>{g.nb_rupture} rupture{g.nb_rupture > 1?"s":""}</span>}
+                      {g.nb_faible  > 0 && <span style={{ color: "#d97706", fontWeight: 600 }}> · {g.nb_faible} faible{g.nb_faible > 1?"s":""}</span>}
                     </div>
                   </div>
-                  <div className={`text-xs font-black shrink-0 ml-2 ${g.statut === "Rupture stock" ? "text-red-600" : "text-amber-500"}`}>
-                    {g.statut === "Rupture stock" ? "Rupture" : "Stock bas"}
-                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: g.statut === "Rupture stock" ? "#dc2626" : "#d97706" }}>
+                    {g.statut === "Rupture stock" ? "Rupture" : "Bas"}
+                  </span>
                 </div>
               ))}
-
-              {/* Alertes articles standalone */}
               {alertes_stock.map((a) => (
-                <div key={a.code} className="flex items-center justify-between px-3 py-2 rounded-xl bg-gray-50 border border-gray-100">
-                  <div className="min-w-0">
-                    <div className="text-xs font-semibold text-gray-800 truncate">{a.libelle}</div>
-                    <div className="text-[10px] text-gray-400 font-mono">{a.code}</div>
+                <div key={a.code} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", borderRadius: 10, background: "#f8fafc", border: "1px solid #e8ecff" }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: DARK }}>{a.libelle}</div>
+                    <div style={{ fontSize: 10, color: "#9ba5c9", fontFamily: "monospace" }}>{a.code}</div>
                   </div>
-                  <div className="text-right shrink-0 ml-2">
-                    <div className={`text-xs font-black ${a.stock_restant <= 0 ? "text-red-600" : "text-amber-500"}`}>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: a.stock_restant <= 0 ? "#dc2626" : "#d97706" }}>
                       {a.stock_restant <= 0 ? "Rupture" : a.stock_restant + " u."}
                     </div>
-                    <div className="text-[10px] text-gray-400">min. {a.stock_min}</div>
+                    <div style={{ fontSize: 10, color: "#9ba5c9" }}>min. {a.stock_min}</div>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
-      {/* ── Bar chart top clients ── */}
+      {/* ── Bar chart ── */}
       {top_clients.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <Card>
           <SectionTitle>CA par Client — {annee}</SectionTitle>
-          <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={top_clients} barSize={28} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-              <XAxis dataKey="client_nom" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false}
+          <ResponsiveContainer width="100%" height={150}>
+            <BarChart data={top_clients} barSize={24} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+              <XAxis dataKey="client_nom" tick={{ fontSize: 9, fill: "#9ba5c9" }} axisLine={false} tickLine={false}
                 tickFormatter={(v) => v.split(" ")[0]} />
-              <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false}
+              <YAxis tick={{ fontSize: 9, fill: "#9ba5c9" }} axisLine={false} tickLine={false}
                 tickFormatter={(v) => v >= 1e6 ? (v/1e6).toFixed(1)+"M" : v >= 1000 ? (v/1000).toFixed(0)+"k" : v} />
               <Tooltip content={<GraphTooltip />} />
-              <Bar dataKey="ca" name="CA" fill="#f97316" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="ca" name="CA" fill={BLUE} radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </Card>
       )}
     </div>
   );

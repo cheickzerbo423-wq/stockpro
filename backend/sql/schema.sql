@@ -69,17 +69,18 @@ CREATE TABLE IF NOT EXISTS clients_fournisseurs (
 
 -- ── Factures ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS factures (
-  code          VARCHAR(50)   PRIMARY KEY,
-  client_nom    VARCHAR(150)  NOT NULL,
-  client_id     INTEGER       REFERENCES clients_fournisseurs(id) ON DELETE SET NULL,
-  user_id       INTEGER       REFERENCES utilisateurs(id) ON DELETE SET NULL,
-  date_facture  DATE          NOT NULL DEFAULT CURRENT_DATE,
-  montant       NUMERIC(15,2) NOT NULL DEFAULT 0,
-  montant_paye  NUMERIC(15,2) NOT NULL DEFAULT 0,
-  reste         NUMERIC(15,2) GENERATED ALWAYS AS (montant - montant_paye) STORED,
-  statut        BOOLEAN       NOT NULL DEFAULT FALSE,
-  created_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-  updated_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+  code             VARCHAR(50)   PRIMARY KEY,
+  client_nom       VARCHAR(150)  NOT NULL,
+  client_id        INTEGER       REFERENCES clients_fournisseurs(id) ON DELETE SET NULL,
+  user_id          INTEGER       REFERENCES utilisateurs(id) ON DELETE SET NULL,
+  date_facture     DATE          NOT NULL DEFAULT CURRENT_DATE,
+  montant          NUMERIC(15,2) NOT NULL DEFAULT 0,
+  montant_paye     NUMERIC(15,2) NOT NULL DEFAULT 0,
+  monnaie_rendue   NUMERIC(15,2) NOT NULL DEFAULT 0,
+  reste            NUMERIC(15,2) GENERATED ALWAYS AS (montant - montant_paye) STORED,
+  statut           BOOLEAN       NOT NULL DEFAULT FALSE,
+  created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
 -- ── Lignes de vente ─────────────────────────────────────────
@@ -89,9 +90,11 @@ CREATE TABLE IF NOT EXISTS lignes_vente (
   article_code  VARCHAR(20)   NOT NULL REFERENCES articles(code),
   user_id       INTEGER       REFERENCES utilisateurs(id) ON DELETE SET NULL,
   libelle       VARCHAR(200)  NOT NULL,
+  client_nom    VARCHAR(150)  NOT NULL DEFAULT '',
   quantite      NUMERIC(15,3) NOT NULL DEFAULT 1,
   prix_vente    NUMERIC(15,2) NOT NULL DEFAULT 0,
-  montant_total NUMERIC(15,2) NOT NULL DEFAULT 0,
+  montant_total NUMERIC(15,2) GENERATED ALWAYS AS (quantite * prix_vente) STORED,
+  mois          VARCHAR(20),
   date_vente    DATE          NOT NULL DEFAULT CURRENT_DATE,
   annee         INTEGER       GENERATED ALWAYS AS (EXTRACT(YEAR FROM date_vente)::INTEGER) STORED,
   created_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW()

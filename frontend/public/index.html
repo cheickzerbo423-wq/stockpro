@@ -3,22 +3,37 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#F97316" />
-    <meta name="description" content="StockPro — Application de gestion de stock et facturation" />
-    <title>StockPro</title>
+    <meta name="theme-color" content="#0023FF" />
+    <meta name="description" content="WariGest — Application de gestion de stock et facturation" />
+    <title>WariGest</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
-            colors: { orange: { 50:'#fff7ed',100:'#ffedd5',200:'#fed7aa',300:'#fdba74',400:'#fb923c',500:'#f97316',600:'#ea580c',700:'#c2410c',800:'#9a3412',900:'#7c2d12' } }
+            colors: {
+              brand: { 50:'#e6eaff', 100:'#c0caff', 200:'#8a9fff', 300:'#546eff', 400:'#1f43ff', 500:'#0023FF', 600:'#001fd9', 700:'#001ab3', 800:'#00148c', 900:'#000e66' },
+              accent: { 400:'#FFF900', 500:'#FFF900' }
+            }
           }
         }
       }
     </script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #F0F2FF; }
+      ::-webkit-scrollbar { width: 5px; height: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #c7d0ff; border-radius: 9999px; }
+      ::-webkit-scrollbar-thumb:hover { background: #0023FF; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+      .animate-fade-in { animation: fade-in 0.2s ease-out; }
+    </style>
   </head>
   <body>
-    <noscript>Vous devez activer JavaScript pour utiliser StockPro.</noscript>
+    <noscript>Vous devez activer JavaScript pour utiliser WariGest.</noscript>
     <div id="root"></div>
   </body>
 </html>

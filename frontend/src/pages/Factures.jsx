@@ -215,7 +215,7 @@ export default function Factures() {
                   <div className="flex gap-1 flex-wrap">
                     <Btn sm color="gray"  onClick={() => handlePDF(f.code)}  loading={loadingPDF  === f.code}>🖨</Btn>
                     <Btn sm color="green" onClick={() => handleRecu(f.code)} loading={loadingRecu === f.code}>🎫</Btn>
-                    {!f.statut && (
+                    {!f.statut && parseFloat(f.reste) > 0 && (
                       <Btn sm color="orange" onClick={() => { setPayModal(f); setPayAmount(String(f.reste)); }}>
                         Payer
                       </Btn>

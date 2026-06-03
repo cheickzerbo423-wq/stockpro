@@ -593,7 +593,7 @@ export default function Ventes() {
                       </span>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-black text-orange-600">{fmt(v.montant_total)}</span>
-                        {!paid && (
+                        {!paid && parseFloat(v.reste) > 0 && (
                           <button
                             onClick={() => { setPayModal({ facture_code: v.facture_code, montant_paye: v.montant_paye, reste: v.reste }); setPayAmount(""); }}
                             className="text-xs bg-orange-500 text-white px-2 py-1 rounded-lg font-bold hover:bg-orange-600 transition"
@@ -654,7 +654,7 @@ export default function Ventes() {
                         )}
                       </TD>
                       <TD>
-                        {isFirst && !paid && (
+                        {isFirst && !paid && parseFloat(v.reste) > 0 && (
                           <button
                             onClick={() => { setPayModal({ facture_code: v.facture_code, montant_paye: v.montant_paye, reste: v.reste }); setPayAmount(""); }}
                             className="text-xs bg-orange-500 text-white px-2.5 py-1 rounded-lg font-bold hover:bg-orange-600 transition whitespace-nowrap"

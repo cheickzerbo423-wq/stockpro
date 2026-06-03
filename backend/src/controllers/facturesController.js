@@ -64,16 +64,15 @@ async function updatePaiement(req, res) {
     const montant      = parseFloat(facture.rows[0].montant);
     const paye         = parseFloat(montant_paye);
     const nouveauReste = parseFloat(Math.max(0, montant - paye).toFixed(2));
-    const nouveauStatut = paye >= montant;
 
     const result = await db.query(
       `UPDATE factures
        SET montant_paye = $1::numeric,
            reste        = $2::numeric,
-           statut       = $3::boolean
-       WHERE code = $4
+           statut       = CASE WHEN $2::numeric <= 0 THEN true ELSE false END
+       WHERE code = $3
        RETURNING *`,
-      [paye, nouveauReste, nouveauStatut, code]
+      [paye, nouveauReste, code]
     );
     if (!result.rows[0]) return res.status(404).json({ message: "Facture introuvable." });
     res.json(result.rows[0]);

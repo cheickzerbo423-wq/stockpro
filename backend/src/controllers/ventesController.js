@@ -19,24 +19,20 @@ const MOIS = ["Janvier","Février","Mars","Avril","Mai","Juin",
 // GET /api/ventes — Historique des ventes
 async function getAll(req, res) {
   try {
-    const { client, annee, facture } = req.query;
+    const { client, mois, annee, facture } = req.query;
     let q = `
-      SELECT
-        lv.id, lv.facture_code, lv.article_code, lv.libelle,
-        lv.quantite, lv.prix_vente, lv.montant_total,
-        lv.date_vente, lv.annee, lv.created_at,
-        f.client_nom, f.client_id, f.date_facture,
-        f.montant AS facture_montant,
-        f.montant_paye, f.reste, f.statut AS facture_statut
+      SELECT lv.*, f.client_nom, f.date_facture, f.montant AS facture_montant,
+             f.montant_paye, f.reste, f.statut AS facture_statut
       FROM lignes_vente lv
       JOIN factures f ON f.code = lv.facture_code
       WHERE 1=1`;
     const params = [];
     let idx = 1;
     if (client)  { q += ` AND f.client_nom ILIKE $${idx++}`; params.push(`%${client}%`); }
+    if (mois)    { q += ` AND lv.mois = $${idx++}`;          params.push(mois); }
     if (annee)   { q += ` AND lv.annee = $${idx++}`;         params.push(annee); }
     if (facture) { q += ` AND lv.facture_code = $${idx++}`;  params.push(facture); }
-    q += ` ORDER BY lv.date_vente DESC, lv.id DESC`;
+    q += ` ORDER BY lv.date_vente ASC, lv.id ASC`;
     const result = await db.query(q, params);
     res.json(result.rows);
   } catch (err) {
@@ -80,12 +76,12 @@ async function create(req, res) {
     const mois = MOIS[new Date(date).getMonth()];
     const annee = new Date(date).getFullYear();
 
-    // Créer la facture (statut = payée si montant_paye >= total)
+    // Créer la facture
     const factResult = await client.query(
-      `INSERT INTO factures (code, date_facture, montant, montant_paye, monnaie_rendue, client_id, client_nom, user_id, statut)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ($4 >= $3))
+      `INSERT INTO factures (code, date_facture, montant, montant_paye, monnaie_rendue, client_id, client_nom, user_id)
+       VALUES ($1, $2, $3::numeric, $4::numeric, $5::numeric, $6::integer, $7, $8::integer)
        RETURNING *`,
-      [factCode, date, total, paye, monnaie, client_id || null, client_nom, req.user?.id || null]
+      [factCode, date, parseFloat(total), parseFloat(paye), parseFloat(monnaie), client_id ? parseInt(client_id) : null, client_nom, req.user?.id ? parseInt(req.user.id) : null]
     );
 
     // Créer les lignes de vente
@@ -93,10 +89,10 @@ async function create(req, res) {
     for (const item of articles) {
       const art = await client.query(`SELECT libelle FROM articles WHERE code = $1`, [item.code]);
       const ligne = await client.query(
-        `INSERT INTO lignes_vente (facture_code, article_code, libelle, prix_vente, quantite, date_vente, client_nom, user_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `INSERT INTO lignes_vente (facture_code, article_code, libelle, prix_vente, quantite, date_vente, client_nom, mois, annee, user_id)
+         VALUES ($1, $2, $3, $4::numeric, $5::integer, $6, $7, $8, $9::integer, $10::integer)
          RETURNING *`,
-        [factCode, item.code, art.rows[0]?.libelle || item.code, item.prix_vente, item.quantite, date, client_nom, req.user?.id || null]
+        [factCode, item.code, art.rows[0]?.libelle || item.code, parseFloat(item.prix_vente), parseInt(item.quantite), date, client_nom, mois, parseInt(annee), req.user?.id ? parseInt(req.user.id) : null]
       );
       lignes.push(ligne.rows[0]);
     }
@@ -126,11 +122,11 @@ async function stats(req, res) {
 
     // CA par mois
     const caMois = await db.query(
-      `SELECT TO_CHAR(date_vente,'YYYY-MM') AS mois, SUM(montant_total) AS ca
+      `SELECT mois, annee, SUM(montant_total) AS ca
        FROM lignes_vente
        WHERE annee = $1
-       GROUP BY TO_CHAR(date_vente,'YYYY-MM')
-       ORDER BY TO_CHAR(date_vente,'YYYY-MM')`,
+       GROUP BY mois, annee, EXTRACT(MONTH FROM date_vente)
+       ORDER BY EXTRACT(MONTH FROM date_vente)`,
       [yr]
     );
 

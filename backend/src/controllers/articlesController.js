@@ -36,10 +36,10 @@ async function getOne(req, res) {
   }
 }
 
-// POST /api/articles — Créer un article
+// POST /api/articles — Créer un article (+ stock initial si fourni)
 async function create(req, res) {
   try {
-    const { code, libelle, prix_achat, prix_vente, stock_min, gamme_code, unite_par_base } = req.body;
+    const { code, libelle, prix_achat, prix_vente, stock_min, stock_initial } = req.body;
     if (!code || !libelle)
       return res.status(400).json({ message: "Code et libellé obligatoires." });
 
@@ -47,13 +47,30 @@ async function create(req, res) {
     if (exists.rows.length > 0)
       return res.status(409).json({ message: `Le code article "${code}" existe déjà.` });
 
-    const result = await db.query(
+    const article = await db.query(
       `INSERT INTO articles (code, libelle, prix_achat, prix_vente, stock_min)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
       [code.toUpperCase(), libelle.toUpperCase(), prix_achat || 0, prix_vente || 0, stock_min || 5]
     );
-    res.status(201).json(result.rows[0]);
+
+    // Si un stock initial est fourni → créer un achat d'entrée de stock
+    const qteInitiale = parseInt(stock_initial) || 0;
+    if (qteInitiale > 0) {
+      const pu    = parseInt(prix_achat) || 0;
+      const total = pu * qteInitiale;
+      const date  = new Date().toISOString().split("T")[0];
+      const MOIS  = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+      const mois  = MOIS[new Date().getMonth()];
+      const annee = new Date().getFullYear();
+      await db.query(
+        `INSERT INTO achats (article_code, libelle, fournisseur_nom, prix_achat, prix_unitaire, quantite, montant_total, date_achat, mois, annee, user_id, montant_paye)
+         VALUES ($1, $2, $3, $4, $4, $5, $6, $7, $8, $9, $10, $6)`,
+        [code.toUpperCase(), libelle.toUpperCase(), "STOCK INITIAL", pu, qteInitiale, total, date, mois, annee, req.user?.id || null]
+      );
+    }
+
+    res.status(201).json({ ...article.rows[0], stock_initial: qteInitiale });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Erreur lors de la création de l'article." });

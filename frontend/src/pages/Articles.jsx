@@ -13,7 +13,7 @@ export default function Articles() {
   const [editArticle, setEditArticle] = useState(null);
   const [editForm, setEditForm]       = useState({ libelle: "", prix_achat: "", prix_vente: "", stock_min: "" });
   const [toast, setToast]             = useState(null);
-  const [form, setForm]               = useState({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5" });
+  const [form, setForm]               = useState({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5", stock_initial: "" });
   const [formErr, setFormErr]         = useState({});
   const [codeAuto, setCodeAuto]       = useState(true);
   const [loadingCode, setLoadingCode] = useState(false);
@@ -55,9 +55,12 @@ export default function Articles() {
     if (!validate()) return;
     try {
       await createArticle({ ...form, gamme_code: null, unite_par_base: 1 });
-      notify("Article créé avec succès !");
+      const msg = form.stock_initial && parseInt(form.stock_initial) > 0
+        ? `Article créé avec un stock initial de ${form.stock_initial} unités !`
+        : "Article créé avec succès !";
+      notify(msg);
       setShowAdd(false);
-      setForm({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5" });
+      setForm({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5", stock_initial: "" });
       setCodeAuto(true);
       reload();
     } catch (err) { notify(err.message, "error"); }
@@ -198,6 +201,24 @@ export default function Articles() {
               onChange={(e) => setForm({ ...form, prix_achat: e.target.value })} />
             <Input label="Prix de Vente (FCFA)" type="number" value={form.prix_vente}
               onChange={(e) => setForm({ ...form, prix_vente: e.target.value })} />
+
+            {/* Stock initial */}
+            <div style={{ gridColumn: "1 / -1", background: "#f0f2ff", borderRadius: 12, padding: "14px 16px", border: "1.5px solid #c7d0ff" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 16 }}>📦</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#0023FF" }}>Stock initial (optionnel)</span>
+              </div>
+              <Input
+                label="Quantité en stock actuellement"
+                type="number"
+                value={form.stock_initial}
+                onChange={(e) => setForm({ ...form, stock_initial: e.target.value })}
+                placeholder="0 — laissez vide si aucun stock"
+              />
+              <p style={{ fontSize: 11, color: "#8492b4", marginTop: 6 }}>
+                Si vous avez déjà du stock, saisissez la quantité ici. Un approvisionnement initial sera créé automatiquement.
+              </p>
+            </div>
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}>
             <Btn color="gray" onClick={() => { setShowAdd(false); setCodeAuto(true); }}>Annuler</Btn>

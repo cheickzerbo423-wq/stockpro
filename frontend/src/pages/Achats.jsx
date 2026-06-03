@@ -1,7 +1,8 @@
-// src/pages/Achats.jsx — WariGest (sans gammes)
+// src/pages/Achats.jsx — WariGest
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useAchats, useArticles, useClients, useMutation, useSortableData } from "../hooks/useApi";
 import { achatsService, clientsService } from "../services";
+import ScanFacture from "../components/ScanFacture";
 import {
   fmt, fmtN, today, Spinner, ErrorBox, Badge,
   Modal, Input, Btn, PageHeader, DataTable, TR, TD, Toast, SearchBox,
@@ -117,6 +118,7 @@ export default function Achats() {
   const { mutate: payAchat }        = useMutation(achatsService.updatePaiement);
 
   const [showAdd, setShowAdd]   = useState(false);
+  const [showScan, setShowScan] = useState(false);
   const [payModal, setPayModal] = useState(null);
   const [payAmount, setPayAmount] = useState("");
   const [toast, setToast]       = useState(null);
@@ -145,6 +147,27 @@ export default function Achats() {
   const resetModal = () => {
     setLignes([emptyLigne()]); setFournisseurNom(""); setFournisseurId("");
     setFournisseurQ(""); setDateAchat(today()); setMontantPaye("");
+  };
+
+  // Réception des données du scan OCR
+  const handleScanResult = (data) => {
+    if (data.fournisseur) {
+      setFournisseurNom(data.fournisseur);
+      setFournisseurQ(data.fournisseur);
+    }
+    if (data.date) setDateAchat(data.date);
+    if (data.articles && data.articles.length > 0) {
+      setLignes(data.articles.map(a => ({
+        id: Date.now() + Math.random(),
+        article_code: "",
+        libelle: a.libelle,
+        quantite: String(a.quantite),
+        prix_achat: String(a.prix_achat),
+      })));
+    }
+    setShowScan(false);
+    setShowAdd(true);
+    notify(`📷 ${data.articles?.length || 0} article(s) importé(s) depuis la facture scannée !`);
   };
 
   const handleSave = async () => {
@@ -192,7 +215,15 @@ export default function Achats() {
       <PageHeader
         title="Approvisionnements"
         sub={`Total dépensé : ${fmt(totalDepenses)}${totalDettes > 0 ? ` · Dettes : ${fmt(totalDettes)}` : ""}`}
-        action={<Btn onClick={() => { resetModal(); setShowAdd(true); }}>+ Nouvel Approvisionnement</Btn>}
+        action={
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => setShowScan(true)}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", background: "white", color: "#0023FF", border: "1.5px solid #c7d0ff", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "inherit", boxShadow: "0 2px 8px rgba(0,35,255,0.08)" }}>
+              📷 Scanner facture
+            </button>
+            <Btn onClick={() => { resetModal(); setShowAdd(true); }}>+ Nouvel Approvisionnement</Btn>
+          </div>
+        }
       />
 
       <div style={{ marginBottom: 16, maxWidth: 400 }}>
@@ -331,6 +362,13 @@ export default function Achats() {
             <Btn onClick={handlePay}>Enregistrer</Btn>
           </div>
         </Modal>
+      )}
+
+      {showScan && (
+        <ScanFacture
+          onResult={handleScanResult}
+          onClose={() => setShowScan(false)}
+        />
       )}
 
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}

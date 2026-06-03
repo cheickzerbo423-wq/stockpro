@@ -1,0 +1,24 @@
+## Dépendances
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+## Builds
+frontend/build/
+
+## Variables d'environnement (NE JAMAIS committer)
+.env
+frontend/.env
+backend/.env
+
+## Logs
+*.log
+npm-debug.log*
+
+## OS
+.DS_Store
+Thumbs.db
+
+## IDE
+.vscode/
+.idea/

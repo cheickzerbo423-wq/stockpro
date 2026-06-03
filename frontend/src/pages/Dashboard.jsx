@@ -65,7 +65,7 @@ export default function Dashboard() {
   if (error)   return <ErrorBox message={error} onRetry={reload} />;
   if (!data)   return null;
 
-  const { kpis, alertes_stock = [], alertes_gammes = [], ca_par_mois = [], top_clients = [], recent_factures = [] } = data;
+  const { kpis, alertes_stock = [], ca_par_mois = [], top_clients = [], recent_factures = [] } = data;
 
   const tauxRec = kpis.ca_facture > 0 ? Math.round((kpis.encaisse / kpis.ca_facture) * 100) : 0;
   const graphData = MOIS_LABELS.map((label, i) => {
@@ -184,35 +184,18 @@ export default function Dashboard() {
         <Card>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
             <SectionTitle>Alertes Stock</SectionTitle>
-            {(alertes_stock.length + alertes_gammes.length) > 0 && (
+            {alertes_stock.length > 0 && (
               <span style={{ fontSize: 10, fontWeight: 800, background: "#dc2626", color: "white", padding: "2px 8px", borderRadius: 999 }}>
-                {alertes_stock.length + alertes_gammes.length}
+                {alertes_stock.length}
               </span>
             )}
           </div>
-          {alertes_stock.length === 0 && alertes_gammes.length === 0 ? (
+          {alertes_stock.length === 0 ? (
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#059669", fontWeight: 600, background: "#ecfdf5", borderRadius: 10, padding: "10px 14px" }}>
               ✅ Tous les stocks sont OK
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {alertes_gammes.map((g) => (
-                <div key={g.gamme_code} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", borderRadius: 10, background: "#faf5ff", border: "1px solid #e9d5ff" }}>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontSize: 9, fontWeight: 800, color: "#7c3aed", background: "#ede9fe", padding: "2px 6px", borderRadius: 5 }}>GAMME</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#4c1d95" }}>{g.gamme_nom}</span>
-                    </div>
-                    <div style={{ fontSize: 10, color: "#9ba5c9", marginTop: 2 }}>
-                      {g.nb_rupture > 0 && <span style={{ color: "#dc2626", fontWeight: 600 }}>{g.nb_rupture} rupture{g.nb_rupture > 1?"s":""}</span>}
-                      {g.nb_faible  > 0 && <span style={{ color: "#d97706", fontWeight: 600 }}> · {g.nb_faible} faible{g.nb_faible > 1?"s":""}</span>}
-                    </div>
-                  </div>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: g.statut === "Rupture stock" ? "#dc2626" : "#d97706" }}>
-                    {g.statut === "Rupture stock" ? "Rupture" : "Bas"}
-                  </span>
-                </div>
-              ))}
               {alertes_stock.map((a) => (
                 <div key={a.code} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", borderRadius: 10, background: "#f8fafc", border: "1px solid #e8ecff" }}>
                   <div>

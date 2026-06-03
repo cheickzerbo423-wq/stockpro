@@ -48,11 +48,10 @@ async function create(req, res) {
       return res.status(409).json({ message: `Le code article "${code}" existe déjà.` });
 
     const result = await db.query(
-      `INSERT INTO articles (code, libelle, prix_achat, prix_vente, stock_min, gamme_code, unite_par_base)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO articles (code, libelle, prix_achat, prix_vente, stock_min)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [code.toUpperCase(), libelle.toUpperCase(), prix_achat || 0, prix_vente || 0,
-       stock_min || 5, gamme_code || null, parseInt(unite_par_base) || 1]
+      [code.toUpperCase(), libelle.toUpperCase(), prix_achat || 0, prix_vente || 0, stock_min || 5]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -64,21 +63,17 @@ async function create(req, res) {
 // PUT /api/articles/:code — Modifier un article
 async function update(req, res) {
   try {
-    const { libelle, prix_achat, prix_vente, stock_min, gamme_code, unite_par_base } = req.body;
+    const { libelle, prix_achat, prix_vente, stock_min } = req.body;
     const result = await db.query(
       `UPDATE articles
-       SET libelle        = COALESCE($1, libelle),
-           prix_achat     = COALESCE($2, prix_achat),
-           prix_vente     = COALESCE($3, prix_vente),
-           stock_min      = COALESCE($4, stock_min),
-           gamme_code     = $5,
-           unite_par_base = COALESCE($6, unite_par_base),
-           updated_at     = NOW()
-       WHERE code = $7
+       SET libelle    = COALESCE($1, libelle),
+           prix_achat = COALESCE($2, prix_achat),
+           prix_vente = COALESCE($3, prix_vente),
+           stock_min  = COALESCE($4, stock_min),
+           updated_at = NOW()
+       WHERE code = $5
        RETURNING *`,
-      [libelle, prix_achat, prix_vente, stock_min,
-       gamme_code || null, unite_par_base ? parseInt(unite_par_base) : null,
-       req.params.code]
+      [libelle, prix_achat, prix_vente, stock_min, req.params.code]
     );
     if (!result.rows[0])
       return res.status(404).json({ message: "Article introuvable." });

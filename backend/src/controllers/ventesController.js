@@ -89,10 +89,10 @@ async function create(req, res) {
     for (const item of articles) {
       const art = await client.query(`SELECT libelle FROM articles WHERE code = $1`, [item.code]);
       const ligne = await client.query(
-        `INSERT INTO lignes_vente (facture_code, article_code, libelle, prix_vente, quantite, date_vente, client_nom, mois, annee, user_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `INSERT INTO lignes_vente (facture_code, article_code, libelle, prix_vente, quantite, date_vente, client_nom, user_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING *`,
-        [factCode, item.code, art.rows[0]?.libelle || item.code, item.prix_vente, item.quantite, date, client_nom, mois, annee, req.user?.id || null]
+        [factCode, item.code, art.rows[0]?.libelle || item.code, item.prix_vente, item.quantite, date, client_nom, req.user?.id || null]
       );
       lignes.push(ligne.rows[0]);
     }
@@ -122,11 +122,11 @@ async function stats(req, res) {
 
     // CA par mois
     const caMois = await db.query(
-      `SELECT mois, annee, SUM(montant_total) AS ca
+      `SELECT TO_CHAR(date_vente,'YYYY-MM') AS mois, SUM(montant_total) AS ca
        FROM lignes_vente
        WHERE annee = $1
-       GROUP BY mois, annee, EXTRACT(MONTH FROM date_vente)
-       ORDER BY EXTRACT(MONTH FROM date_vente)`,
+       GROUP BY TO_CHAR(date_vente,'YYYY-MM')
+       ORDER BY TO_CHAR(date_vente,'YYYY-MM')`,
       [yr]
     );
 

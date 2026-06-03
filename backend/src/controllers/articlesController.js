@@ -60,13 +60,10 @@ async function create(req, res) {
       const pu    = parseInt(prix_achat) || 0;
       const total = pu * qteInitiale;
       const date  = new Date().toISOString().split("T")[0];
-      const MOIS  = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
-      const mois  = MOIS[new Date().getMonth()];
-      const annee = new Date().getFullYear();
       await db.query(
-        `INSERT INTO achats (article_code, libelle, fournisseur_nom, prix_achat, prix_unitaire, quantite, montant_total, date_achat, mois, annee, user_id, montant_paye)
-         VALUES ($1, $2, $3, $4, $4, $5, $6, $7, $8, $9, $10, $6)`,
-        [code.toUpperCase(), libelle.toUpperCase(), "STOCK INITIAL", pu, qteInitiale, total, date, mois, annee, req.user?.id || null]
+        `INSERT INTO achats (article_code, libelle, fournisseur_nom, prix_achat, prix_unitaire, quantite, montant_total, date_achat, user_id, montant_paye)
+         VALUES ($1, $2, $3, $4, $4, $5, $6, $7, $8, $6)`,
+        [code.toUpperCase(), libelle.toUpperCase(), "STOCK INITIAL", pu, qteInitiale, total, date, req.user?.id || null]
       );
     }
 

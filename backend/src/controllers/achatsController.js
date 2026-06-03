@@ -98,10 +98,19 @@ async function updatePaiement(req, res) {
     if (parseFloat(montant_paye) < parseFloat(achat.rows[0].montant_paye))
       return res.status(400).json({ message: "Le montant payé ne peut pas diminuer." });
 
+    const nouveauPaye = parseFloat(montant_paye);
     const result = await db.query(
-      `UPDATE achats SET montant_paye = $1 WHERE id = $2
+      `UPDATE achats
+       SET montant_paye     = $1,
+           statut_paiement  = CASE
+             WHEN $1 >= montant_total THEN 'Payé'
+             WHEN $1 > 0             THEN 'Partiellement payé'
+             ELSE 'Non payé'
+           END,
+           updated_at       = NOW()
+       WHERE id = $2
        RETURNING *, (montant_total - montant_paye) AS reste, (montant_paye >= montant_total) AS statut`,
-      [parseFloat(montant_paye), id]
+      [nouveauPaye, id]
     );
     if (!result.rows[0]) return res.status(404).json({ message: "Achat introuvable." });
     res.json(result.rows[0]);

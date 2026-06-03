@@ -1,10 +1,11 @@
 // src/pages/Ventes.jsx
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useVentes, useArticles, useClients, useMutation, useSortableData } from "../hooks/useApi";
 import { ventesService, facturesService, clientsService } from "../services";
 import {
   fmt, fmtN, today, Spinner, ErrorBox,
-  Input, Btn, Modal, PageHeader, DataTable, TR, TD, Toast, SearchBox,
+  Input, Btn, Modal, Badge, PageHeader, DataTable, TR, TD, Toast, SearchBox,
 } from "../components/UI";
 
 /* ─── Mini-form création rapide ─────────────────────────── */
@@ -425,16 +426,39 @@ export default function Ventes() {
   const { data: clients  = [], reload: reloadClients } = useClients("Clients");
   const { mutate: createVente, loading: saving } = useMutation(ventesService.create);
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [showAdd, setShowAdd]   = useState(false);
   const [toast,   setToast]     = useState(null);
   const [search,  setSearch]    = useState("");
-  const [payModal, setPayModal] = useState(null); // { facture_code, montant_paye, reste }
+  const [payModal, setPayModal] = useState(null);
   const [payAmount, setPayAmount] = useState("");
   const { mutate: payFacture }  = useMutation(facturesService.updatePaiement);
+  const [factureDetail, setFactureDetail] = useState(null);
+  const [loadingDetail, setLoadingDetail] = useState(null);
 
   const notify = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
+  };
+
+  // Pré-filtrer si on arrive depuis la page Factures
+  useEffect(() => {
+    if (location.state?.factureSearch) {
+      setSearch(location.state.factureSearch);
+      window.history.replaceState({}, document.title);
+    }
+  }, []);
+
+  const viewFacture = async (code) => {
+    if (loadingDetail === code) return;
+    setLoadingDetail(code);
+    try {
+      const data = await facturesService.getOne(code);
+      setFactureDetail(data);
+    } catch { notify("Erreur lors du chargement de la facture.", "error"); }
+    finally { setLoadingDetail(null); }
   };
 
   const totalCA   = ventes.reduce((s, v) => s + parseFloat(v.montant_total || 0), 0);
@@ -494,7 +518,7 @@ export default function Ventes() {
       notify("Paiement enregistré !");
       setPayModal(null);
       setPayAmount("");
-      reload();
+      await reload();
     } catch (err) { notify(err.message, "error"); }
   };
 
@@ -550,9 +574,12 @@ export default function Ventes() {
                 return (
                   <div key={i} className="px-4 py-3">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-mono text-xs font-bold bg-orange-50 text-orange-600 px-2 py-0.5 rounded-lg border border-orange-100">
-                        {v.facture_code}
-                      </span>
+                      <button
+                        onClick={() => viewFacture(v.facture_code)}
+                        className="font-mono text-xs font-bold bg-orange-50 text-orange-600 px-2 py-0.5 rounded-lg border border-orange-100 hover:bg-orange-100 hover:border-orange-300 transition"
+                      >
+                        {loadingDetail === v.facture_code ? "…" : v.facture_code}
+                      </button>
                       <div className="flex items-center gap-2">
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${paid ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-600 border-red-200"}`}>
                           {paid ? "Payé" : "Crédit"}
@@ -604,7 +631,14 @@ export default function Ventes() {
                   const paid = v.facture_statut === true || v.facture_statut === "true";
                   return (
                     <TR key={i}>
-                      <TD><span className="font-mono text-xs bg-orange-50 text-orange-600 px-2 py-0.5 rounded-lg border border-orange-100">{v.facture_code}</span></TD>
+                      <TD>
+                        <button
+                          onClick={() => viewFacture(v.facture_code)}
+                          className="font-mono text-xs bg-orange-50 text-orange-600 px-2 py-0.5 rounded-lg border border-orange-100 hover:bg-orange-100 hover:border-orange-300 hover:underline transition"
+                        >
+                          {loadingDetail === v.facture_code ? "…" : v.facture_code}
+                        </button>
+                      </TD>
                       <TD>{v.date_vente?.split("T")[0]}</TD>
                       <TD bold>{v.libelle}</TD>
                       <TD>{v.client_nom}</TD>
@@ -682,6 +716,99 @@ export default function Ventes() {
           <div className="flex justify-end gap-2 mt-5">
             <Btn color="gray" onClick={() => { setPayModal(null); setPayAmount(""); }}>Annuler</Btn>
             <Btn onClick={handlePay}>Enregistrer</Btn>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── Modal détail facture (depuis Ventes) ── */}
+      {factureDetail && (
+        <Modal title={`Facture ${factureDetail.code}`} onClose={() => setFactureDetail(null)} wide>
+          <div className="flex justify-between items-start mb-5 pb-4 border-b border-gray-100">
+            <div>
+              <div className="text-xs text-gray-400 uppercase font-bold mb-1">Client</div>
+              <div className="text-lg font-black text-gray-900">{factureDetail.client_nom}</div>
+              <div className="text-sm text-gray-500 mt-0.5">{factureDetail.date_facture?.split("T")[0]}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-gray-400 uppercase font-bold mb-1">Référence</div>
+              <div className="font-mono text-sm font-bold text-orange-600">{factureDetail.code}</div>
+              <div className="mt-2">
+                <Badge color={factureDetail.statut ? "emerald" : "red"}>
+                  {factureDetail.statut ? "✓ Réglée" : "⏳ Impayée"}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl overflow-hidden border border-gray-200 mb-5">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-900 text-white">
+                  <th className="text-left px-4 py-3 font-semibold">Désignation</th>
+                  <th className="text-center px-3 py-3 font-semibold w-16">Qté</th>
+                  <th className="text-right px-4 py-3 font-semibold">Prix Unit.</th>
+                  <th className="text-right px-4 py-3 font-semibold">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(factureDetail.lignes || []).map((l, i) => (
+                  <tr key={i} className={`border-t border-gray-100 ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
+                    <td className="px-4 py-3 font-medium text-gray-800">{l.libelle}</td>
+                    <td className="px-3 py-3 text-center text-gray-600">{l.quantite}</td>
+                    <td className="px-4 py-3 text-right text-gray-600">{fmt(l.prix_vente)}</td>
+                    <td className="px-4 py-3 text-right font-bold text-gray-900">{fmt(l.montant_total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex justify-end">
+            <div className="w-full sm:w-64 space-y-2">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Sous-total</span>
+                <span className="font-semibold text-gray-900">{fmt(factureDetail.montant)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Montant payé</span>
+                <span className="font-bold text-emerald-600">{fmt(factureDetail.montant_paye)}</span>
+              </div>
+              {parseFloat(factureDetail.reste) > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Reste à payer</span>
+                  <span className="font-bold text-red-600">{fmt(factureDetail.reste)}</span>
+                </div>
+              )}
+              <div className="border-t-2 border-orange-500 pt-2 flex justify-between">
+                <span className="font-black text-gray-900">TOTAL</span>
+                <span className="font-black text-orange-600 text-lg">{fmt(factureDetail.montant)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mt-5 pt-4 border-t border-gray-100">
+            <div className="flex gap-2">
+              {!factureDetail.statut && (
+                <Btn color="orange" onClick={() => {
+                  setPayModal({ facture_code: factureDetail.code, montant_paye: factureDetail.montant_paye, reste: factureDetail.reste });
+                  setPayAmount(String(factureDetail.reste));
+                  setFactureDetail(null);
+                }}>
+                  Enregistrer paiement
+                </Btn>
+              )}
+              <Btn color="blue" onClick={() => {
+                setFactureDetail(null);
+                navigate("/factures", { state: { factureSearch: factureDetail.code } });
+              }}>
+                ↗ Voir dans Factures
+              </Btn>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Btn color="gray"  onClick={() => facturesService.openPDF(factureDetail.code)}>🖨 Facture PDF</Btn>
+              <Btn color="green" onClick={() => facturesService.openRecu(factureDetail.code)}>🎫 Ticket</Btn>
+              <Btn color="gray"  onClick={() => setFactureDetail(null)}>Fermer</Btn>
+            </div>
           </div>
         </Modal>
       )}

@@ -19,20 +19,24 @@ const MOIS = ["Janvier","Février","Mars","Avril","Mai","Juin",
 // GET /api/ventes — Historique des ventes
 async function getAll(req, res) {
   try {
-    const { client, mois, annee, facture } = req.query;
+    const { client, annee, facture } = req.query;
     let q = `
-      SELECT lv.*, f.client_nom, f.date_facture, f.montant AS facture_montant,
-             f.montant_paye, f.reste, f.statut AS facture_statut
+      SELECT
+        lv.id, lv.facture_code, lv.article_code, lv.libelle,
+        lv.quantite, lv.prix_vente, lv.montant_total,
+        lv.date_vente, lv.annee, lv.created_at,
+        f.client_nom, f.client_id, f.date_facture,
+        f.montant AS facture_montant,
+        f.montant_paye, f.reste, f.statut AS facture_statut
       FROM lignes_vente lv
       JOIN factures f ON f.code = lv.facture_code
       WHERE 1=1`;
     const params = [];
     let idx = 1;
     if (client)  { q += ` AND f.client_nom ILIKE $${idx++}`; params.push(`%${client}%`); }
-    if (mois)    { q += ` AND lv.mois = $${idx++}`;          params.push(mois); }
     if (annee)   { q += ` AND lv.annee = $${idx++}`;         params.push(annee); }
     if (facture) { q += ` AND lv.facture_code = $${idx++}`;  params.push(facture); }
-    q += ` ORDER BY lv.date_vente ASC, lv.id ASC`;
+    q += ` ORDER BY lv.date_vente DESC, lv.id DESC`;
     const result = await db.query(q, params);
     res.json(result.rows);
   } catch (err) {
@@ -76,10 +80,10 @@ async function create(req, res) {
     const mois = MOIS[new Date(date).getMonth()];
     const annee = new Date(date).getFullYear();
 
-    // Créer la facture
+    // Créer la facture (statut = payée si montant_paye >= total)
     const factResult = await client.query(
-      `INSERT INTO factures (code, date_facture, montant, montant_paye, monnaie_rendue, client_id, client_nom, user_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO factures (code, date_facture, montant, montant_paye, monnaie_rendue, client_id, client_nom, user_id, statut)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ($4 >= $3))
        RETURNING *`,
       [factCode, date, total, paye, monnaie, client_id || null, client_nom, req.user?.id || null]
     );

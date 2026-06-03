@@ -1,5 +1,6 @@
 // src/pages/Factures.jsx
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useFactures, useMutation, useSortableData } from "../hooks/useApi";
 import { facturesService } from "../services";
 import {
@@ -8,6 +9,9 @@ import {
 } from "../components/UI";
 
 export default function Factures() {
+  const navigate  = useNavigate();
+  const location  = useLocation();
+
   const { data: factures = [], loading, error, reload } = useFactures();
   const { mutate: payFacture } = useMutation(facturesService.updatePaiement);
 
@@ -20,6 +24,14 @@ export default function Factures() {
   const [loadingRecu,  setLoadingRecu]  = useState(null);
   const [search,       setSearch]       = useState("");
   const [filterStatut, setFilterStatut] = useState("all"); // all | paid | unpaid
+
+  // Pré-filtrer si on arrive depuis la page Ventes
+  useEffect(() => {
+    if (location.state?.factureSearch) {
+      setSearch(location.state.factureSearch);
+      window.history.replaceState({}, document.title);
+    }
+  }, []);
 
   const notify = (msg, type = "success") => {
     setToast({ message: msg, type });
@@ -60,7 +72,7 @@ export default function Factures() {
       await payFacture(payModal.code, nouveauTotal);
       notify("Paiement enregistré !");
       setPayModal(null); setPayAmount("");
-      reload();
+      await reload();
     } catch (err) { notify(err.message, "error"); }
   };
 
@@ -294,6 +306,12 @@ export default function Factures() {
                   Enregistrer paiement
                 </Btn>
               )}
+              <Btn color="blue" onClick={() => {
+                setSelected(null); setDetail(null);
+                navigate("/ventes", { state: { factureSearch: selected.code } });
+              }}>
+                ↗ Voir dans Ventes
+              </Btn>
             </div>
             <div className="flex flex-wrap gap-2">
               <Btn color="gray"   onClick={() => handlePDF(selected.code, true)} loading={loadingPDF === selected.code}>⬇ Télécharger</Btn>

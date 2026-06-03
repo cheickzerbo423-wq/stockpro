@@ -568,7 +568,7 @@ export default function Ventes() {
             {/* ── Mobile : cards ── */}
             <div className="md:hidden divide-y divide-gray-50">
               {ventesAffichées.map((v, i) => {
-                const paid = v.facture_statut === true || v.facture_statut === "true";
+                const paid = v.facture_statut === true || v.facture_statut === "true" || parseFloat(v.reste) <= 0;
                 return (
                   <div key={i} className="px-4 py-3">
                     <div className="flex items-center justify-between mb-1.5">
@@ -626,7 +626,7 @@ export default function Ventes() {
                 {ventesAffichées.map((v, i) => {
                   const isFirst = !seenFactures.has(v.facture_code);
                   if (isFirst) seenFactures.add(v.facture_code);
-                  const paid = v.facture_statut === true || v.facture_statut === "true";
+                  const paid = v.facture_statut === true || v.facture_statut === "true" || parseFloat(v.reste) <= 0;
                   return (
                     <TR key={i}>
                       <TD>

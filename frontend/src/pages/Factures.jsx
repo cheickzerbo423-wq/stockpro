@@ -76,16 +76,28 @@ export default function Factures() {
 
   // KPIs
   const totalCA    = factures.reduce((s, f) => s + parseFloat(f.montant || 0), 0);
+  // Source de vérité : reste = 0 → réglée (même si statut DB pas encore mis à jour)
+  const isReglée = (f) => f.statut || parseFloat(f.reste || 0) <= 0;
+
   const totalReste = factures.reduce((s, f) => s + parseFloat(f.reste || 0), 0);
-  const nbReglees  = factures.filter((f) => f.statut).length;
-  const nbImpayees = factures.filter((f) => !f.statut).length;
+  const nbReglees  = factures.filter(isReglée).length;
+  const nbImpayees = factures.filter((f) => !isReglée(f)).length;
   const tauxRegl   = factures.length ? Math.round((nbReglees / factures.length) * 100) : 0;
+
+  // Forcer le marquage réglée (pour factures bloquées : reste=0 mais statut=false)
+  const handleMarquerReglee = async (f) => {
+    try {
+      await payFacture(f.code, parseFloat(f.montant_paye));
+      notify("Facture marquée comme réglée !");
+      await reload();
+    } catch (err) { notify(err.message || "Erreur", "error"); }
+  };
 
   // Filtres
   const facturesFiltrees = useMemo(() => {
     let list = factures;
-    if (filterStatut === "paid")   list = list.filter((f) => f.statut);
-    if (filterStatut === "unpaid") list = list.filter((f) => !f.statut);
+    if (filterStatut === "paid")   list = list.filter(isReglée);
+    if (filterStatut === "unpaid") list = list.filter((f) => !isReglée(f));
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -207,18 +219,21 @@ export default function Factures() {
                   </span>
                 </TD>
                 <TD>
-                  <Badge color={f.statut ? "emerald" : "red"}>
-                    {f.statut ? "Réglée" : "Impayée"}
+                  <Badge color={isReglée(f) ? "emerald" : "red"}>
+                    {isReglée(f) ? "Réglée" : "Impayée"}
                   </Badge>
                 </TD>
                 <TD>
                   <div className="flex gap-1 flex-wrap">
                     <Btn sm color="gray"  onClick={() => handlePDF(f.code)}  loading={loadingPDF  === f.code}>🖨</Btn>
                     <Btn sm color="green" onClick={() => handleRecu(f.code)} loading={loadingRecu === f.code}>🎫</Btn>
-                    {!f.statut && parseFloat(f.reste) > 0 && (
+                    {!isReglée(f) && parseFloat(f.reste) > 0 && (
                       <Btn sm color="orange" onClick={() => { setPayModal(f); setPayAmount(String(f.reste)); }}>
                         Payer
                       </Btn>
+                    )}
+                    {!f.statut && parseFloat(f.reste) <= 0 && (
+                      <Btn sm color="emerald" onClick={() => handleMarquerReglee(f)}>✓</Btn>
                     )}
                   </div>
                 </TD>

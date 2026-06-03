@@ -285,15 +285,6 @@ function PrivateRoute({ children, adminOnly = false }) {
   return children;
 }
 
-function WiLogo({ size = 34 }) {
-  return (
-    <div style={{ width: size, height: size, borderRadius: size * 0.28, background: B, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", boxShadow: `0 4px 14px rgba(0,35,255,0.45)` }}>
-      <span style={{ color: "white", fontWeight: 900, fontSize: size * 0.38, letterSpacing: "-0.5px", lineHeight: 1 }}>Wi</span>
-      <div style={{ position: "absolute", top: size * 0.1, right: size * 0.12, width: size * 0.17, height: size * 0.17, borderRadius: "50%", background: Y }} />
-    </div>
-  );
-}
-
 export default function App() {
   return (
     <AuthProvider>

@@ -1,7 +1,7 @@
 // src/pages/Dashboard.jsx — WariGest
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from "recharts";
 import { useDashboard } from "../hooks/useApi";
-import { fmt, fmtN, Spinner, ErrorBox } from "../components/UI";
+import { fmt, fmtN, Spinner, ErrorBox, SectionLabel } from "../components/UI";
 
 const BLUE   = "#0023FF";
 const YELLOW = "#FFF900";
@@ -41,12 +41,7 @@ function KpiCard({ label, value, icon, sub, color = BLUE, bg = "#e8ecff" }) {
 }
 
 function SectionTitle({ children }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-      <div style={{ width: 3, height: 16, background: BLUE, borderRadius: 4 }} />
-      <h3 style={{ fontSize: 11, fontWeight: 800, color: "#9ba5c9", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>{children}</h3>
-    </div>
-  );
+  return <SectionLabel>{children}</SectionLabel>;
 }
 
 function Card({ children, style = {} }) {

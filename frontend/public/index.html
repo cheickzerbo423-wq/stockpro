@@ -6,31 +6,95 @@
     <meta name="theme-color" content="#0023FF" />
     <meta name="description" content="WariGest — Application de gestion de stock et facturation" />
     <title>WariGest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              brand: { 50:'#e6eaff', 100:'#c0caff', 200:'#8a9fff', 300:'#546eff', 400:'#1f43ff', 500:'#0023FF', 600:'#001fd9', 700:'#001ab3', 800:'#00148c', 900:'#000e66' },
-              accent: { 400:'#FFF900', 500:'#FFF900' }
-            }
-          }
-        }
-      }
-    </script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-      * { box-sizing: border-box; }
-      body { margin: 0; font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #F0F2FF; }
-      ::-webkit-scrollbar { width: 5px; height: 5px; }
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --blue: #0023FF;
+        --blue-light: #e8ecff;
+        --blue-mid: #c7d0ff;
+        --yellow: #FFF900;
+        --dark: #060d2e;
+        --gray: #f0f2ff;
+        --text: #1e2a4a;
+        --muted: #8492b4;
+        --border: #e8ecff;
+        --white: #ffffff;
+        --success: #059669;
+        --danger: #dc2626;
+        --warning: #d97706;
+      }
+
+      html { scroll-behavior: smooth; }
+
+      body {
+        font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background: #F0F2FF;
+        color: var(--text);
+        line-height: 1.5;
+      }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar { width: 4px; height: 4px; }
       ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: #c7d0ff; border-radius: 9999px; }
-      ::-webkit-scrollbar-thumb:hover { background: #0023FF; }
+      ::-webkit-scrollbar-thumb { background: var(--blue-mid); border-radius: 99px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--blue); }
+
+      /* Animations */
       @keyframes spin { to { transform: rotate(360deg); } }
-      @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-      .animate-fade-in { animation: fade-in 0.2s ease-out; }
+      @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+      @keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+      @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+      @keyframes toastIn { from { opacity: 0; transform: translateY(16px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+      .fade-up { animation: fadeUp 0.25s ease-out; }
+      .fade-in { animation: fadeIn 0.2s ease-out; }
+
+      /* Skeleton loader */
+      .skeleton {
+        background: linear-gradient(90deg, #e8ecff 25%, #f0f2ff 50%, #e8ecff 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 8px;
+      }
+
+      /* Hide bottom nav on desktop */
       @media (min-width: 768px) { .bottom-nav-mobile { display: none !important; } }
+
+      /* Smooth transitions */
+      button, a, input, select { transition: all 0.15s ease; }
+      button:active { transform: scale(0.97); }
+
+      /* Focus styles */
+      input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--blue) !important;
+        box-shadow: 0 0 0 3px rgba(0, 35, 255, 0.1) !important;
+      }
+
+      /* Glass effect */
+      .glass {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      /* Card hover */
+      .card-hover {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 35, 255, 0.12) !important;
+      }
     </style>
   </head>
   <body>

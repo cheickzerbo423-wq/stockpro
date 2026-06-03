@@ -445,11 +445,9 @@ export default function Ventes() {
 
   // Pré-filtrer si on arrive depuis la page Factures
   useEffect(() => {
-    if (location.state?.factureSearch) {
-      setSearch(location.state.factureSearch);
-      window.history.replaceState({}, document.title);
-    }
-  }, []);
+    const fs = location.state?.factureSearch; // eslint-disable-line
+    if (fs) { setSearch(fs); window.history.replaceState({}, document.title); }
+  }, []); // eslint-disable-line
 
   const viewFacture = async (code) => {
     if (loadingDetail === code) return;

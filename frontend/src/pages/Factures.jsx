@@ -27,11 +27,9 @@ export default function Factures() {
 
   // Pré-filtrer si on arrive depuis la page Ventes
   useEffect(() => {
-    if (location.state?.factureSearch) {
-      setSearch(location.state.factureSearch);
-      window.history.replaceState({}, document.title);
-    }
-  }, []);
+    const fs = location.state?.factureSearch; // eslint-disable-line
+    if (fs) { setSearch(fs); window.history.replaceState({}, document.title); }
+  }, []); // eslint-disable-line
 
   const notify = (msg, type = "success") => {
     setToast({ message: msg, type });

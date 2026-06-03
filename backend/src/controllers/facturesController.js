@@ -61,9 +61,19 @@ async function updatePaiement(req, res) {
     if (parseFloat(montant_paye) < parseFloat(facture.rows[0].montant_paye))
       return res.status(400).json({ message: "Le montant payé ne peut pas diminuer." });
 
+    const montant      = parseFloat(facture.rows[0].montant);
+    const paye         = parseFloat(montant_paye);
+    const nouveauReste = parseFloat(Math.max(0, montant - paye).toFixed(2));
+    const nouveauStatut = paye >= montant;
+
     const result = await db.query(
-      `UPDATE factures SET montant_paye = $1::numeric WHERE code = $2 RETURNING *`,
-      [parseFloat(montant_paye), code]
+      `UPDATE factures
+       SET montant_paye = $1::numeric,
+           reste        = $2::numeric,
+           statut       = $3::boolean
+       WHERE code = $4
+       RETURNING *`,
+      [paye, nouveauReste, nouveauStatut, code]
     );
     if (!result.rows[0]) return res.status(404).json({ message: "Facture introuvable." });
     res.json(result.rows[0]);

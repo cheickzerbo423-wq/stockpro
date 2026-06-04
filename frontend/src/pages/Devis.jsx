@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useDevis, useClients, useMutation, useSortableData } from "../hooks/useApi";
 import { devisService } from "../services";
 import {
-  fmt, today, Spinner, ErrorBox, Badge, Modal,
+  fmt, fmtDate, today, Spinner, ErrorBox, Badge, Modal,
   Select, Input, Btn, PageHeader, DataTable, TR, TD, Toast,
 } from "../components/UI";
 
@@ -129,7 +129,7 @@ export default function Devis() {
             {devisAffichés.map((d) => (
               <TR key={d.id} onClick={() => setSelected(d)}>
                 <TD><span className="font-mono text-xs text-purple-600">{d.numero}</span></TD>
-                <TD>{d.date_emission?.split("T")[0]}</TD>
+                <TD>{fmtDate(d.date_emission)}</TD>
                 <TD bold>{d.client_nom}</TD>
                 <TD right bold>{fmt(d.montant)}</TD>
                 <TD><Badge color={STATUTS[d.statut]?.color || "gray"}>{STATUTS[d.statut]?.icon} {d.statut}</Badge></TD>
@@ -165,7 +165,7 @@ export default function Devis() {
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-gray-50 rounded-xl p-3">
                 <p className="text-xs text-gray-400 font-bold mb-1">DATE D'ÉMISSION</p>
-                <p className="font-semibold text-sm">{selected.date_emission?.split("T")[0]}</p>
+                <p className="font-semibold text-sm">{selectefmtDate(d.date_emission)}</p>
               </div>
               <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
                 <p className="text-xs text-orange-500 font-bold mb-1">MONTANT</p>

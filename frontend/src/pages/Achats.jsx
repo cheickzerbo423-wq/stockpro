@@ -386,7 +386,7 @@ export default function Achats() {
       notify("Paiement enregistré !");
       setPayModal(null);
       setPayAmount("");
-      reload();
+      await reload();
     } catch (err) { notify(err.message, "error"); }
   };
 

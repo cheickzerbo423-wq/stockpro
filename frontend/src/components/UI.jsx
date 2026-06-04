@@ -1,4 +1,4 @@
-// src/components/UI.jsx — Design system StockPro
+// src/components/UI.jsx — Design system WariGest
 import React from "react";
 
 // ── Formatage ─────────────────────────────────────────────
@@ -16,7 +16,8 @@ export const fmtDate = (d) => {
 export function Spinner({ sm }) {
   return (
     <div className={`flex items-center justify-center ${sm ? "py-4" : "py-20"}`}>
-      <div className={`${sm ? "w-5 h-5 border-2" : "w-9 h-9 border-[3px]"} border-orange-100 border-t-orange-500 rounded-full animate-spin`} />
+      <div className={`${sm ? "w-5 h-5 border-2" : "w-9 h-9 border-[3px]"} rounded-full animate-spin`}
+        style={{ borderColor: "#E6EAFF", borderTopColor: "#0023FF" }} />
     </div>
   );
 }
@@ -47,8 +48,8 @@ export function Badge({ children, color = "emerald" }) {
     emerald: "bg-emerald-50  text-emerald-700 ring-1 ring-emerald-200",
     red:     "bg-red-50      text-red-700     ring-1 ring-red-200",
     amber:   "bg-amber-50    text-amber-700   ring-1 ring-amber-200",
-    orange:  "bg-orange-50   text-orange-700  ring-1 ring-orange-200",
-    blue:    "bg-blue-50     text-blue-700    ring-1 ring-blue-200",
+    orange:  "bg-[#E6EAFF]  text-[#0023FF]  ring-1 ring-[#B3BFFF]",
+    blue:    "bg-[#E6EAFF]  text-[#0023FF]  ring-1 ring-[#B3BFFF]",
     purple:  "bg-purple-50   text-purple-700  ring-1 ring-purple-200",
     gray:    "bg-gray-100    text-gray-600    ring-1 ring-gray-200",
   };
@@ -92,7 +93,7 @@ export function Input({ label, error, ...props }) {
         className={`w-full rounded-xl px-3 py-2.5 text-sm text-gray-800 placeholder-gray-300
           transition duration-150 outline-none
           border ${error ? "border-red-300 bg-red-50" : "border-gray-200 bg-white hover:border-gray-300"}
-          focus:border-orange-400 focus:ring-4 focus:ring-orange-100
+          focus:border-[#0023FF] focus:ring-4 focus:ring-[#E6EAFF]
           disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed`}
       />
       {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
@@ -113,7 +114,7 @@ export function Select({ label, children, ...props }) {
         {...props}
         className="w-full rounded-xl px-3 py-2.5 text-sm text-gray-800
           border border-gray-200 bg-white hover:border-gray-300
-          focus:border-orange-400 focus:ring-4 focus:ring-orange-100
+          focus:border-[#0023FF] focus:ring-4 focus:ring-[#E6EAFF]
           transition duration-150 outline-none cursor-pointer"
       >
         {children}
@@ -125,9 +126,9 @@ export function Select({ label, children, ...props }) {
 // ── Bouton ────────────────────────────────────────────────
 export function Btn({ children, onClick, color = "orange", sm, loading, type = "button" }) {
   const variants = {
-    orange: "bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white shadow-sm shadow-orange-200",
+    orange: "text-white shadow-sm",
     green:  "bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white shadow-sm shadow-emerald-200",
-    blue:   "bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white shadow-sm shadow-blue-200",
+    blue:   "text-white shadow-sm",
     red:    "bg-red-500 hover:bg-red-600 active:bg-red-700 text-white shadow-sm shadow-red-200",
     purple: "bg-purple-500 hover:bg-purple-600 active:bg-purple-700 text-white shadow-sm shadow-purple-200",
     gray:   "bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-700 border border-gray-200",
@@ -137,6 +138,7 @@ export function Btn({ children, onClick, color = "orange", sm, loading, type = "
       type={type}
       onClick={onClick}
       disabled={loading}
+      style={(color === "orange" || color === "blue") ? { backgroundColor: "#0023FF" } : (color === "orange-light") ? { backgroundColor: "#E6EAFF", color: "#0023FF" } : undefined}
       className={`
         inline-flex items-center justify-center gap-1.5 font-semibold rounded-xl
         transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed
@@ -178,7 +180,7 @@ export function SearchBox({ value, onChange, onSelect, suggestions = [], placeho
           onChange={e => { onChange(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
-          className="w-full pl-9 pr-8 py-2 border border-gray-200 rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300"
+          className="w-full pl-9 pr-8 py-2 border border-gray-200 rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] focus:border-[#0023FF]"
         />
         {value
           ? <button onClick={() => { onChange(""); onSelect && onSelect(""); setOpen(false); }}
@@ -194,8 +196,8 @@ export function SearchBox({ value, onChange, onSelect, suggestions = [], placeho
           {visible.map((s, i) => (
             <button key={i} onMouseDown={e => e.preventDefault()}
               onClick={() => { onChange(s.label); onSelect && onSelect(s.label); setOpen(false); }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-orange-50 transition text-left">
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-400 flex-shrink-0" />
+              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[#E6EAFF] transition text-left">
+              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: "#0023FF" }} />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold text-gray-800 truncate">{s.label}</div>
                 {s.sub && <div className="text-xs text-gray-400 truncate">{s.sub}</div>}
@@ -255,10 +257,10 @@ export function DataTable({ headers, children, empty = "Aucune donnée", sort, o
                   onClick={canSort ? () => onSort(sk) : undefined}
                   className={`px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-widest whitespace-nowrap bg-gray-50/80
                     ${right ? "text-right" : "text-left"}
-                    ${canSort ? "cursor-pointer hover:text-orange-500 select-none" : ""}`}>
+                    ${canSort ? "cursor-pointer hover:text-[#0023FF] select-none" : ""}`}>
                   {label}
                   {canSort && (
-                    <span className={`ml-1 text-[10px] ${active ? "text-orange-500" : "opacity-25"}`}>
+                    <span className={`ml-1 text-[10px] ${active ? "text-[#0023FF]" : "opacity-25"}`}>
                       {active ? (sort.dir === "asc" ? "▲" : "▼") : "⇅"}
                     </span>
                   )}
@@ -289,7 +291,7 @@ export function TR({ children, onClick }) {
     <tr
       onClick={onClick}
       className={`border-b border-gray-50 last:border-0 transition-colors duration-100
-        ${onClick ? "cursor-pointer hover:bg-orange-50/60" : "hover:bg-gray-50/40"}`}
+        ${onClick ? "cursor-pointer hover:bg-[#E6EAFF]" : "hover:bg-gray-50/40"}`}
     >
       {children}
     </tr>

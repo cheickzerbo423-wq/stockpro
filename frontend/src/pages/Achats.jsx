@@ -23,13 +23,13 @@ function MiniForm({ title, icon, onSave, onCancel, saving }) {
             <label className="block text-xs font-semibold text-gray-500 mb-1">Nom *</label>
             <input autoFocus value={nom} onChange={(e) => setNom(e.target.value)}
               placeholder="Nom complet…"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF]" />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">Téléphone</label>
             <input value={contact} onChange={(e) => setContact(e.target.value)}
               placeholder="ex: 07 00 00 00 00"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF]" />
           </div>
         </div>
         <div className="flex gap-2 mt-5">
@@ -38,7 +38,7 @@ function MiniForm({ title, icon, onSave, onCancel, saving }) {
             Annuler
           </button>
           <button disabled={!nom.trim() || saving} onClick={() => onSave({ nom: nom.trim(), contact })}
-            className="flex-1 py-2 rounded-xl bg-orange-500 text-white text-sm font-bold hover:bg-orange-600 transition disabled:opacity-40">
+            className="flex-1 py-2 rounded-xl bg-[#0023FF] text-white text-sm font-bold hover:bg-[#0023FF] transition disabled:opacity-40">
             {saving ? "Enregistrement…" : "Enregistrer"}
           </button>
         </div>
@@ -108,7 +108,7 @@ function LigneCommande({ ligne, articles, gammes = [], onUpdate, onRemove }) {
       ? color === "purple" ? "bg-purple-50 border-purple-200"
       : color === "teal"   ? "bg-teal-50 border-teal-200"
       : color === "blue"   ? "bg-blue-50 border-blue-200"
-      : "bg-orange-50 border-orange-200"
+      : "bg-[#E6EAFF] border-orange-200"
       : "bg-gray-50 border-gray-200"}`}>
 
       {/* Filtre par gamme */}
@@ -128,7 +128,7 @@ function LigneCommande({ ligne, articles, gammes = [], onUpdate, onRemove }) {
                 onClick={() => setGammeFilter(active ? "" : g.code)}
                 className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition
                   ${active
-                    ? c === "purple" ? "bg-purple-500 text-white" : c === "teal" ? "bg-teal-500 text-white" : c === "blue" ? "bg-blue-500 text-white" : "bg-orange-500 text-white"
+                    ? c === "purple" ? "bg-purple-500 text-white" : c === "teal" ? "bg-teal-500 text-white" : c === "blue" ? "bg-blue-500 text-white" : "bg-[#0023FF] text-white"
                     : c === "purple" ? "bg-purple-100 text-purple-700 hover:bg-purple-200" : c === "teal" ? "bg-teal-100 text-teal-700 hover:bg-teal-200" : c === "blue" ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : "bg-orange-100 text-orange-700 hover:bg-orange-200"}`}
               >🗂 {g.nom}</button>
             );
@@ -141,7 +141,7 @@ function LigneCommande({ ligne, articles, gammes = [], onUpdate, onRemove }) {
         <div className="flex-1 relative" ref={ref}>
           <label className="block text-xs font-semibold text-gray-500 mb-1">Article *</label>
           <input
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white pr-8"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white pr-8"
             placeholder="Rechercher par code ou nom…"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setOpen(true); onUpdate({ ...ligne, article_code: "", libelle: "" }); }}
@@ -172,10 +172,10 @@ function LigneCommande({ ligne, articles, gammes = [], onUpdate, onRemove }) {
                     <div
                       key={a.code}
                       onMouseDown={() => selectArticle(a)}
-                      className="px-3 py-2 cursor-pointer hover:bg-orange-50 text-sm flex justify-between items-center gap-2"
+                      className="px-3 py-2 cursor-pointer hover:bg-[#E6EAFF] text-sm flex justify-between items-center gap-2"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-bold text-orange-600 shrink-0">{a.code}</span>
+                        <span className="font-bold text-[#0023FF] shrink-0">{a.code}</span>
                         <span className="text-gray-700 truncate">{a.libelle}</span>
                         {a.gamme_code && (
                           <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-600 shrink-0">
@@ -218,7 +218,7 @@ function LigneCommande({ ligne, articles, gammes = [], onUpdate, onRemove }) {
           <label className="block text-xs font-semibold text-gray-500 mb-1">Quantité *</label>
           <input
             type="number" min="1"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white"
             value={ligne.quantite}
             onChange={(e) => onUpdate({ ...ligne, quantite: e.target.value })}
             placeholder="0"
@@ -228,14 +228,14 @@ function LigneCommande({ ligne, articles, gammes = [], onUpdate, onRemove }) {
           <label className="block text-xs font-semibold text-gray-500 mb-1">P.U. (FCFA) *</label>
           <input
             type="number" min="0"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white"
             value={ligne.prix_achat}
             onChange={(e) => onUpdate({ ...ligne, prix_achat: e.target.value })}
             placeholder="0"
           />
         </div>
-        <div className="flex flex-col items-center justify-center bg-orange-50 rounded-lg py-2 px-1 border border-orange-100">
-          <span className="text-xs text-orange-500 font-bold uppercase">Total</span>
+        <div className="flex flex-col items-center justify-center bg-[#E6EAFF] rounded-lg py-2 px-1 border border-[#B3BFFF]">
+          <span className="text-xs text-[#0023FF] font-bold uppercase">Total</span>
           <span className="text-sm font-black text-orange-700">{fmt(total)}</span>
         </div>
       </div>
@@ -493,8 +493,8 @@ export default function Achats() {
                   onFocus={() => { setFournisseurOpen(true); setFournisseurQ(""); }}
                   onBlur={() => setTimeout(() => setFournisseurOpen(false), 150)}
                   placeholder="Rechercher un fournisseur…"
-                  className={`w-full pl-8 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 transition
-                    ${fournisseurNom ? "border-orange-300 bg-orange-50 text-orange-700 font-semibold" : "border-gray-200 bg-white text-gray-800"}`}
+                  className={`w-full pl-8 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] transition
+                    ${fournisseurNom ? "border-[#B3BFFF] bg-[#E6EAFF] text-orange-700 font-semibold" : "border-gray-200 bg-white text-gray-800"}`}
                 />
                 {fournisseurNom && (
                   <button
@@ -510,9 +510,9 @@ export default function Achats() {
                   <button
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => { setFournisseurOpen(false); setShowNewFournisseur(true); }}
-                    className="w-full text-left px-4 py-2.5 text-sm font-bold text-orange-600 hover:bg-orange-50 transition flex items-center gap-2 border-b border-orange-100"
+                    className="w-full text-left px-4 py-2.5 text-sm font-bold text-[#0023FF] hover:bg-[#E6EAFF] transition flex items-center gap-2 border-b border-[#B3BFFF]"
                   >
-                    <span className="w-6 h-6 rounded-full bg-orange-500 text-white text-xs font-black flex items-center justify-center flex-shrink-0">+</span>
+                    <span className="w-6 h-6 rounded-full bg-[#0023FF] text-white text-xs font-black flex items-center justify-center flex-shrink-0">+</span>
                     Nouveau fournisseur
                   </button>
                   {fournisseursFiltres.length === 0 ? (
@@ -523,10 +523,10 @@ export default function Achats() {
                         key={f.id}
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={() => { setFournisseurNom(f.nom); setFournisseurId(f.id); setFournisseurQ(f.nom); setFournisseurOpen(false); }}
-                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-orange-50 hover:text-orange-700 transition flex items-center gap-2
-                          ${fournisseurNom === f.nom ? "bg-orange-50 text-orange-700 font-semibold" : "text-gray-700"}`}
+                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[#E6EAFF] hover:text-orange-700 transition flex items-center gap-2
+                          ${fournisseurNom === f.nom ? "bg-[#E6EAFF] text-orange-700 font-semibold" : "text-gray-700"}`}
                       >
-                        <span className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                        <span className="w-6 h-6 rounded-full bg-orange-100 text-[#0023FF] text-xs font-bold flex items-center justify-center flex-shrink-0">
                           {f.nom[0].toUpperCase()}
                         </span>
                         {f.nom}
@@ -587,7 +587,7 @@ export default function Achats() {
           <div className="flex gap-2 mb-4">
             <button
               onClick={() => setLignes([...lignes, emptyLigne()])}
-              className="flex-1 py-2 border-2 border-dashed border-orange-200 rounded-xl text-orange-500 text-sm font-bold hover:bg-orange-50 transition"
+              className="flex-1 py-2 border-2 border-dashed border-orange-200 rounded-xl text-[#0023FF] text-sm font-bold hover:bg-[#E6EAFF] transition"
             >
               + Ajouter un produit
             </button>
@@ -739,7 +739,7 @@ export default function Achats() {
           />
           <button
             onClick={() => setPayAmount(String(payModal.reste))}
-            className="text-xs text-orange-600 underline mt-1"
+            className="text-xs text-[#0023FF] underline mt-1"
           >
             Solder la dette ({fmt(payModal.reste)})
           </button>

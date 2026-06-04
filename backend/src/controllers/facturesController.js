@@ -115,7 +115,7 @@ async function generatePDF(req, res) {
 
     const PW    = 595;
     const PH    = 842;
-    const ACC   = "#E8500A";   // orange foncé — accent discret
+    const ACC   = "#0023FF";   // WariGest blue — accent principal
     const INK   = "#111827";   // quasi-noir pour textes
     const SUB   = "#6B7280";   // gris secondaire
     const RULE  = "#E5E7EB";   // gris très clair pour les lignes
@@ -281,7 +281,7 @@ async function generateRecu(req, res) {
     const W      = 226;
     const M      = 12;
     const INNER  = W - M * 2;
-    const ORANGE = "#F97316";
+    const ORANGE = "#0023FF";
     const DARK   = "#111827";
     const GREY   = "#6B7280";
 

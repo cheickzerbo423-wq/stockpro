@@ -65,7 +65,7 @@ function BottomNav({ visibleItems }) {
           end={item.path === "/"}
           className={({ isActive }) =>
             `flex-1 flex flex-col items-center justify-center gap-0.5 transition
-            ${isActive ? "text-orange-500" : "text-gray-400 hover:text-gray-600"}`
+            ${isActive ? "text-[#0023FF]" : "text-gray-400 hover:text-gray-600"}`
           }
         >
           {MOBILE_ICONS[item.path]}
@@ -111,14 +111,19 @@ function Layout({ children }) {
       >
         {/* Logo */}
         <div className={`flex items-center border-b border-white/5 flex-shrink-0 ${collapsed ? "justify-center p-4" : "gap-3 px-4 py-4"}`}>
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-white text-sm flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>
-            S
+          {/* Icône Wi */}
+          <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center"
+            style={{ background: "#0023FF" }}>
+            <svg viewBox="0 0 28 22" width="22" height="18" fill="none">
+              <path d="M2 2L6.5 16L11 7L15.5 16L20 2" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="24" y1="8" x2="24" y2="16" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
+              <circle cx="24" cy="3.5" r="2" fill="#FFF900"/>
+            </svg>
           </div>
           {!collapsed && (
             <div className="leading-tight overflow-hidden">
               <div className="font-black text-sm text-white tracking-tight">WariGest</div>
-              <div className="text-[10px] font-medium" style={{ color: "#f97316" }}>Gestion & Facturation</div>
+              <div className="text-[10px] font-medium text-white/50">Gestion & Facturation</div>
             </div>
           )}
         </div>
@@ -135,10 +140,11 @@ function Layout({ children }) {
                 flex items-center gap-3 rounded-xl transition-all duration-150
                 ${collapsed ? "justify-center px-0 py-3" : "px-3 py-2.5"}
                 ${isActive
-                  ? "bg-orange-500 text-white shadow-lg shadow-orange-900/30"
+                  ? "text-black font-bold"
                   : "text-slate-400 hover:text-white hover:bg-white/5"
                 }
               `}
+              style={({ isActive }) => isActive ? { backgroundColor: "#FFF900" } : undefined}
             >
               <span className={`flex-shrink-0 transition-transform ${collapsed ? "" : ""}`}>
                 <SidebarIcon path={item.path} />
@@ -155,7 +161,7 @@ function Layout({ children }) {
           {!collapsed && (
             <div className="px-3 py-3">
               <div className="flex items-center gap-2.5 bg-white/5 rounded-xl px-3 py-2.5">
-                <div className="w-7 h-7 rounded-lg bg-orange-500 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-black flex-shrink-0" style={{ backgroundColor: "#0023FF" }}>
                   {user?.login?.[0]?.toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -199,11 +205,17 @@ function Layout({ children }) {
           {/* Logo + fermer */}
           <div className="flex items-center justify-between px-4 py-4 border-b border-white/5 flex-shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-white text-sm"
-                style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>S</div>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: "#0023FF" }}>
+                <svg viewBox="0 0 28 22" width="22" height="18" fill="none">
+                  <path d="M2 2L6.5 16L11 7L15.5 16L20 2" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  <line x1="24" y1="8" x2="24" y2="16" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
+                  <circle cx="24" cy="3.5" r="2" fill="#FFF900"/>
+                </svg>
+              </div>
               <div>
                 <div className="font-black text-sm text-white">WariGest</div>
-                <div className="text-[10px] font-medium" style={{ color: "#f97316" }}>Gestion & Facturation</div>
+                <div className="text-[10px] font-medium text-white/50">Gestion & Facturation</div>
               </div>
             </div>
             <button onClick={() => setDrawerOpen(false)}
@@ -225,9 +237,10 @@ function Layout({ children }) {
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-150
                   ${isActive
-                    ? "bg-orange-500 text-white shadow-lg shadow-orange-900/30"
+                    ? "text-black font-bold"
                     : "text-slate-400 hover:text-white hover:bg-white/5"}`
                 }
+                style={({ isActive }) => isActive ? { backgroundColor: "#FFF900" } : undefined}
               >
                 <SidebarIcon path={item.path} />
                 <span className="text-sm font-semibold">{item.label}</span>
@@ -238,7 +251,7 @@ function Layout({ children }) {
           {/* Footer */}
           <div className="border-t border-white/5 px-3 py-3 flex-shrink-0">
             <div className="flex items-center gap-2.5 bg-white/5 rounded-xl px-3 py-2.5">
-              <div className="w-7 h-7 rounded-lg bg-orange-500 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-black flex-shrink-0" style={{ backgroundColor: "#0023FF" }}>
                 {user?.login?.[0]?.toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
@@ -276,13 +289,15 @@ function Layout({ children }) {
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="hidden sm:flex items-center gap-2 bg-orange-50 text-orange-700 text-xs font-semibold px-3 py-1.5 rounded-xl border border-orange-100">
-              <div className="w-5 h-5 rounded-lg bg-orange-500 text-white flex items-center justify-center text-[10px] font-black">
+            <div className="hidden sm:flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl border"
+              style={{ backgroundColor: "#E6EAFF", borderColor: "#B3BFFF", color: "#0023FF" }}>
+              <div className="w-5 h-5 rounded-lg text-white flex items-center justify-center text-[10px] font-black"
+                style={{ backgroundColor: "#0023FF" }}>
                 {user?.login?.[0]?.toUpperCase()}
               </div>
               <span>{user?.login}</span>
-              <span className="text-orange-400">·</span>
-              <span className="text-orange-500 font-bold">{user?.categorie}</span>
+              <span style={{ color: "#B3BFFF" }}>·</span>
+              <span className="font-bold">{user?.categorie}</span>
             </div>
           </div>
         </header>
@@ -303,7 +318,8 @@ function PrivateRoute({ children, adminOnly = false }) {
   const { user, loading } = useAuth();
   if (loading) return (
     <div className="flex items-center justify-center h-screen" style={{ background: "#F8F9FB" }}>
-      <div className="w-9 h-9 border-[3px] border-orange-100 border-t-orange-500 rounded-full animate-spin" />
+      <div className="w-9 h-9 border-[3px] rounded-full animate-spin"
+        style={{ borderColor: "#E6EAFF", borderTopColor: "#0023FF" }} />
     </div>
   );
   if (!user) return <Navigate to="/login" replace />;

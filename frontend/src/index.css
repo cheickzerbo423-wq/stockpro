@@ -1,14 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --wi-blue:   #0023FF;
+  --wi-yellow: #FFF900;
+  --wi-black:  #000000;
+  --wi-blue-dark:  #0019CC;
+  --wi-blue-light: #E6EAFF;
+  --wi-blue-mid:   #B3BFFF;
+}
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: 'Nunito', 'Segoe UI', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
-  background-color: #f9fafb;
+  background-color: #F5F6FA;
 }
 
 @keyframes fade-in {
@@ -18,8 +29,15 @@ body {
 
 .animate-fade-in { animation: fade-in 0.2s ease-out; }
 
-/* Scrollbar fine */
+/* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: #f97316; }
+::-webkit-scrollbar-thumb:hover { background: var(--wi-blue); }
+
+/* Utilitaires brand */
+.bg-wi-blue   { background-color: var(--wi-blue) !important; }
+.text-wi-blue { color: var(--wi-blue) !important; }
+.bg-wi-yellow { background-color: var(--wi-yellow) !important; }
+.border-wi-blue { border-color: var(--wi-blue) !important; }
+.ring-wi-blue { --tw-ring-color: var(--wi-blue) !important; }

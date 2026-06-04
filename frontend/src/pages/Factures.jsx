@@ -125,7 +125,7 @@ export default function Factures() {
           { label: "CA Total",          value: fmt(totalCA),     color: "text-gray-800",    bg: "bg-white",            border: "border-gray-200" },
           { label: "Factures réglées",  value: nbReglees,        color: "text-emerald-600", bg: "bg-emerald-50",       border: "border-emerald-100" },
           { label: "Factures impayées", value: nbImpayees,       color: "text-red-600",     bg: "bg-red-50",           border: "border-red-100" },
-          { label: "Reste à recouvrer", value: fmt(totalReste),  color: "text-orange-600",  bg: "bg-orange-50",        border: "border-orange-100" },
+          { label: "Reste à recouvrer", value: fmt(totalReste),  color: "text-[#0023FF]",  bg: "bg-[#E6EAFF]",        border: "border-orange-100" },
         ].map((k) => (
           <div key={k.label} className={`rounded-2xl border ${k.bg} ${k.border} p-4`}>
             <div className={`text-2xl font-black ${k.color}`}>{k.value}</div>
@@ -175,8 +175,8 @@ export default function Factures() {
               onClick={() => setFilterStatut(f.key)}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition
                 ${filterStatut === f.key
-                  ? "bg-orange-500 text-white shadow"
-                  : "bg-white border border-gray-200 text-gray-600 hover:border-orange-300"}`}
+                  ? "bg-[#0023FF] text-white shadow"
+                  : "bg-white border border-gray-200 text-gray-600 hover:border-[#B3BFFF]"}`}
             >{f.label}</button>
           ))}
         </div>
@@ -204,7 +204,7 @@ export default function Factures() {
                 <TD>
                   <button
                     onClick={() => viewFacture(f)}
-                    className="font-mono text-xs text-orange-600 hover:text-orange-800 hover:underline font-bold"
+                    className="font-mono text-xs text-[#0023FF] hover:text-orange-800 hover:underline font-bold"
                   >{f.code}</button>
                 </TD>
                 <TD>{fmtDate(f.date_facture)}</TD>
@@ -255,7 +255,7 @@ export default function Factures() {
             </div>
             <div className="text-right">
               <div className="text-xs text-gray-400 uppercase font-bold mb-1">Référence</div>
-              <div className="font-mono text-sm font-bold text-orange-600">{selected.code}</div>
+              <div className="font-mono text-sm font-bold text-[#0023FF]">{selected.code}</div>
               <div className="mt-2">
                 <Badge color={isReglée(selected) ? "emerald" : "red"}>
                   {isReglée(selected) ? "✓ Réglée" : "⏳ Impayée"}
@@ -305,9 +305,9 @@ export default function Factures() {
                   <span className="font-bold text-red-600">{fmt(selected.reste)}</span>
                 </div>
               )}
-              <div className="border-t-2 border-orange-500 pt-2 flex justify-between">
+              <div className="border-t-2 border-[#0023FF] pt-2 flex justify-between">
                 <span className="font-black text-gray-900">TOTAL</span>
-                <span className="font-black text-orange-600 text-lg">{fmt(selected.montant)}</span>
+                <span className="font-black text-[#0023FF] text-lg">{fmt(selected.montant)}</span>
               </div>
             </div>
           </div>
@@ -340,7 +340,7 @@ export default function Factures() {
       {payModal && (
         <Modal title="Enregistrer un paiement" onClose={() => { setPayModal(null); setPayAmount(""); }}>
           <div className="bg-gray-50 rounded-xl p-4 mb-4 space-y-1">
-            <div className="text-sm"><span className="text-gray-500">Facture :</span> <strong className="font-mono text-orange-600">{payModal.code}</strong></div>
+            <div className="text-sm"><span className="text-gray-500">Facture :</span> <strong className="font-mono text-[#0023FF]">{payModal.code}</strong></div>
             <div className="text-sm"><span className="text-gray-500">Client :</span> <strong>{payModal.client_nom}</strong></div>
             <div className="flex justify-between text-sm mt-2 pt-2 border-t border-gray-200">
               <span>Total : <strong>{fmt(payModal.montant)}</strong></span>
@@ -356,7 +356,7 @@ export default function Factures() {
           />
           <button
             onClick={() => setPayAmount(String(payModal.reste))}
-            className="text-xs text-orange-600 underline mt-1 hover:text-orange-800"
+            className="text-xs text-[#0023FF] underline mt-1 hover:text-orange-800"
           >
             Solder entièrement ({fmt(payModal.reste)})
           </button>

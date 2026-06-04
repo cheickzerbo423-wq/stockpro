@@ -295,7 +295,7 @@ export default function Articles() {
                   <TD right bold>{fmt(a.valeur_stock)}</TD>
                   <TD>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => openEdit(a)} className="text-gray-400 hover:text-orange-500 transition" title="Modifier">
+                      <button onClick={() => openEdit(a)} className="text-gray-400 hover:text-[#0023FF] transition" title="Modifier">
                         <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
                           <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
                         </svg>
@@ -322,12 +322,12 @@ export default function Articles() {
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">
                 Code Article *
-                {codeAuto && <span className="ml-2 text-orange-500 font-normal">{loadingCode ? "⏳ génération…" : "✦ auto-généré"}</span>}
+                {codeAuto && <span className="ml-2 text-[#0023FF] font-normal">{loadingCode ? "⏳ génération…" : "✦ auto-généré"}</span>}
               </label>
               <div className="flex gap-2 items-center">
                 <input
-                  className={`flex-1 border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-300
-                    ${codeAuto ? "bg-orange-50 border-orange-200 text-orange-700" : "bg-white border-gray-200 text-gray-900"}
+                  className={`flex-1 border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#B3BFFF]
+                    ${codeAuto ? "bg-[#E6EAFF] border-[#B3BFFF] text-[#0023FF]" : "bg-white border-gray-200 text-gray-900"}
                     ${formErr.code ? "border-red-400" : ""}`}
                   value={form.code}
                   onChange={(e) => { setCodeAuto(false); setForm({ ...form, code: e.target.value.toUpperCase() }); }}
@@ -340,7 +340,7 @@ export default function Articles() {
                     try { const { code } = await articlesService.generateCode(form.libelle); setForm((f) => ({ ...f, code })); }
                     catch { /* silencieux */ } finally { setLoadingCode(false); }
                   }}
-                  className="px-2 py-2 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200 text-sm"
+                  className="px-2 py-2 rounded-lg bg-[#E6EAFF] text-[#0023FF] hover:bg-[#D0D6FF] text-sm"
                 >↺</button>
               </div>
               {formErr.code && <p className="text-xs text-red-500 mt-1">{formErr.code}</p>}

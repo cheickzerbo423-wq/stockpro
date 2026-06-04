@@ -36,7 +36,7 @@ function KpiCard({ label, value, icon, sub, trend, accentBg, accentText, borderC
 function SectionTitle({ children }) {
   return (
     <div className="flex items-center gap-2 mb-3">
-      <div className="h-3.5 w-1 bg-orange-500 rounded-full" />
+      <div className="h-3.5 w-1 bg-[#0023FF] rounded-full" />
       <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{children}</h3>
     </div>
   );
@@ -100,7 +100,7 @@ export default function Dashboard() {
           </p>
         </div>
         <button onClick={reload}
-          className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-orange-500 transition bg-white border border-gray-200 px-3 py-1.5 rounded-xl shadow-sm">
+          className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-[#0023FF] transition bg-white border border-gray-200 px-3 py-1.5 rounded-xl shadow-sm">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
             <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
           </svg>
@@ -114,7 +114,7 @@ export default function Dashboard() {
           icon="📈" label={`Chiffre d'Affaires ${annee}`}
           value={fmt(kpis.ca_total)}
           sub={`Dépenses : ${fmt(kpis.depenses_total)}`}
-          accentBg="bg-orange-50" accentText="text-orange-600" borderColor="border-orange-100"
+          accentBg="bg-[#E6EAFF]" accentText="text-[#0023FF]" borderColor="border-[#B3BFFF]"
         />
         <KpiCard
           icon="💰" label="Bénéfice Net"
@@ -172,7 +172,7 @@ export default function Dashboard() {
               <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false}
                 tickFormatter={(v) => v >= 1e6 ? (v/1e6).toFixed(1)+"M" : v >= 1000 ? (v/1000).toFixed(0)+"k" : v} />
               <Tooltip content={<GraphTooltip />} />
-              <Line type="monotone" dataKey="ca" name="CA" stroke="#f97316" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
+              <Line type="monotone" dataKey="ca" name="CA" stroke="#0023FF" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         )}
@@ -213,7 +213,7 @@ export default function Dashboard() {
             {recent_factures.map((f) => (
               <div key={f.code} className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="text-xs font-bold text-orange-500 font-mono">{f.code}</div>
+                  <div className="text-xs font-bold text-[#0023FF] font-mono">{f.code}</div>
                   <div className="text-xs text-gray-500 truncate">{f.client_nom}</div>
                 </div>
                 <div className="text-right shrink-0">
@@ -296,7 +296,7 @@ export default function Dashboard() {
               <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false}
                 tickFormatter={(v) => v >= 1e6 ? (v/1e6).toFixed(1)+"M" : v >= 1000 ? (v/1000).toFixed(0)+"k" : v} />
               <Tooltip content={<GraphTooltip />} />
-              <Bar dataKey="ca" name="CA" fill="#f97316" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="ca" name="CA" fill="#0023FF" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

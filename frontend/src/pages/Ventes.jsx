@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useVentes, useArticles, useClients, useMutation, useSortableData } from "../hooks/useApi";
 import { ventesService, facturesService, clientsService } from "../services";
 import {
-  fmt, fmtN, today, Spinner, ErrorBox,
+  fmt, fmtN, fmtDate, today, Spinner, ErrorBox,
   Input, Btn, Modal, Badge, PageHeader, DataTable, TR, TD, Toast, SearchBox,
 } from "../components/UI";
 
@@ -582,7 +582,7 @@ export default function Ventes() {
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${paid ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-600 border-red-200"}`}>
                           {paid ? "Payé" : "Crédit"}
                         </span>
-                        <span className="text-xs text-gray-400">{v.date_vente?.split("T")[0]}</span>
+                        <span className="text-xs text-gray-400">{fmtDate(v.date_vente)}</span>
                       </div>
                     </div>
                     <div className="text-sm font-bold text-gray-800 truncate">{v.libelle}</div>
@@ -637,7 +637,7 @@ export default function Ventes() {
                           {loadingDetail === v.facture_code ? "…" : v.facture_code}
                         </button>
                       </TD>
-                      <TD>{v.date_vente?.split("T")[0]}</TD>
+                      <TD>{fmtDate(v.date_vente)}</TD>
                       <TD bold>{v.libelle}</TD>
                       <TD>{v.client_nom}</TD>
                       <TD right>{fmtN(v.quantite)}</TD>
@@ -725,14 +725,14 @@ export default function Ventes() {
             <div>
               <div className="text-xs text-gray-400 uppercase font-bold mb-1">Client</div>
               <div className="text-lg font-black text-gray-900">{factureDetail.client_nom}</div>
-              <div className="text-sm text-gray-500 mt-0.5">{factureDetail.date_facture?.split("T")[0]}</div>
+              <div className="text-sm text-gray-500 mt-0.5">{fmtDate(factureDetail.date_facture)}</div>
             </div>
             <div className="text-right">
               <div className="text-xs text-gray-400 uppercase font-bold mb-1">Référence</div>
               <div className="font-mono text-sm font-bold text-orange-600">{factureDetail.code}</div>
               <div className="mt-2">
-                <Badge color={factureDetail.statut ? "emerald" : "red"}>
-                  {factureDetail.statut ? "✓ Réglée" : "⏳ Impayée"}
+                <Badge color={factureDetail.statut || parseFloat(factureDetail.reste || 0) <= 0 ? "emerald" : "red"}>
+                  {factureDetail.statut || parseFloat(factureDetail.reste || 0) <= 0 ? "✓ Réglée" : "⏳ Impayée"}
                 </Badge>
               </div>
             </div>

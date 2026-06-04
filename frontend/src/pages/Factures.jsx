@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useFactures, useMutation, useSortableData } from "../hooks/useApi";
 import { facturesService } from "../services";
 import {
-  fmt, Spinner, ErrorBox, Badge, Modal, Input,
+  fmt, fmtDate, Spinner, ErrorBox, Badge, Modal, Input,
   Btn, PageHeader, DataTable, TR, TD, Toast, SearchBox,
 } from "../components/UI";
 
@@ -207,7 +207,7 @@ export default function Factures() {
                     className="font-mono text-xs text-orange-600 hover:text-orange-800 hover:underline font-bold"
                   >{f.code}</button>
                 </TD>
-                <TD>{f.date_facture?.split("T")[0]}</TD>
+                <TD>{fmtDate(f.date_facture)}</TD>
                 <TD bold>{f.client_nom}</TD>
                 <TD right bold>{fmt(f.montant)}</TD>
                 <TD right>
@@ -251,14 +251,14 @@ export default function Factures() {
             <div>
               <div className="text-xs text-gray-400 uppercase font-bold mb-1">Client</div>
               <div className="text-lg font-black text-gray-900">{selected.client_nom}</div>
-              <div className="text-sm text-gray-500 mt-0.5">{selected.date_facture?.split("T")[0]}</div>
+              <div className="text-sm text-gray-500 mt-0.5">{fmtDate(selected.date_facture)}</div>
             </div>
             <div className="text-right">
               <div className="text-xs text-gray-400 uppercase font-bold mb-1">Référence</div>
               <div className="font-mono text-sm font-bold text-orange-600">{selected.code}</div>
               <div className="mt-2">
-                <Badge color={selected.statut ? "emerald" : "red"}>
-                  {selected.statut ? "✓ Réglée" : "⏳ Impayée"}
+                <Badge color={isReglée(selected) ? "emerald" : "red"}>
+                  {isReglée(selected) ? "✓ Réglée" : "⏳ Impayée"}
                 </Badge>
               </div>
             </div>

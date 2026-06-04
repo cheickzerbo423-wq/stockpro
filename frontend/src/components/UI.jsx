@@ -1,36 +1,22 @@
-// src/components/UI.jsx — WariGest Design System v3
+// src/components/UI.jsx — Design system StockPro
 import React from "react";
 
-const B = "#0023FF";
-const Y = "#FFF900";
-const D = "#060d2e";
-
-export const fmt   = (n) => new Intl.NumberFormat("fr-FR").format(Math.round(n || 0)) + " FCFA";
-export const fmtN  = (n) => new Intl.NumberFormat("fr-FR").format(Math.round(n || 0));
-export const today = ()  => new Date().toISOString().split("T")[0];
-
-// ── Skeleton ──────────────────────────────────────────────
-function SkeletonRow() {
-  return (
-    <div style={{ display: "flex", gap: 12, padding: "14px 16px", borderBottom: "1px solid #f0f2ff" }}>
-      <div className="skeleton" style={{ width: 60, height: 16 }} />
-      <div className="skeleton" style={{ flex: 1, height: 16 }} />
-      <div className="skeleton" style={{ width: 80, height: 16 }} />
-      <div className="skeleton" style={{ width: 80, height: 16 }} />
-    </div>
-  );
-}
+// ── Formatage ─────────────────────────────────────────────
+export const fmt     = (n) => new Intl.NumberFormat("fr-FR").format(Math.round(n || 0)) + " FCFA";
+export const fmtN    = (n) => new Intl.NumberFormat("fr-FR").format(Math.round(n || 0));
+export const today   = ()  => new Date().toISOString().split("T")[0];
+export const fmtDate = (d) => {
+  if (!d) return "—";
+  const s = typeof d === "string" ? d.split("T")[0] : new Date(d).toISOString().split("T")[0];
+  const [y, m, day] = s.split("-");
+  return `${day}/${m}/${y}`;
+};
 
 // ── Spinner ───────────────────────────────────────────────
 export function Spinner({ sm }) {
-  if (sm) return (
-    <div style={{ display: "flex", justifyContent: "center", padding: 16 }}>
-      <div style={{ width: 20, height: 20, border: "2.5px solid #e8ecff", borderTopColor: B, borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
-    </div>
-  );
   return (
-    <div style={{ padding: "32px 0" }}>
-      {[1,2,3,4].map(i => <SkeletonRow key={i} />)}
+    <div className={`flex items-center justify-center ${sm ? "py-4" : "py-20"}`}>
+      <div className={`${sm ? "w-5 h-5 border-2" : "w-9 h-9 border-[3px]"} border-orange-100 border-t-orange-500 rounded-full animate-spin`} />
     </div>
   );
 }
@@ -38,16 +24,16 @@ export function Spinner({ sm }) {
 // ── Erreur ────────────────────────────────────────────────
 export function ErrorBox({ message, onRetry }) {
   return (
-    <div style={{ margin: 16, background: "#FEF2F2", border: "1.5px solid #FECACA", borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ width: 36, height: 36, background: "#FEE2E2", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <div className="m-4 bg-red-50 border border-red-100 rounded-xl p-4 flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+          <span className="text-red-500 text-sm">⚠</span>
         </div>
-        <span style={{ color: "#DC2626", fontSize: 13, fontWeight: 600 }}>{message}</span>
+        <span className="text-red-700 text-sm font-medium">{message}</span>
       </div>
       {onRetry && (
         <button onClick={onRetry}
-          style={{ fontSize: 12, color: "#DC2626", fontWeight: 700, padding: "6px 14px", background: "#FEE2E2", border: "none", borderRadius: 8, cursor: "pointer", flexShrink: 0, fontFamily: "inherit" }}>
+          className="text-xs text-red-600 font-semibold px-3 py-1.5 bg-red-100 hover:bg-red-200 rounded-lg transition flex-shrink-0">
           Réessayer
         </button>
       )}
@@ -56,19 +42,18 @@ export function ErrorBox({ message, onRetry }) {
 }
 
 // ── Badge ─────────────────────────────────────────────────
-export function Badge({ children, color = "blue" }) {
+export function Badge({ children, color = "emerald" }) {
   const styles = {
-    blue:    { background: "#e8ecff", color: B,        border: "1.5px solid #c7d0ff" },
-    emerald: { background: "#d1fae5", color: "#065f46", border: "1.5px solid #a7f3d0" },
-    red:     { background: "#fee2e2", color: "#991b1b", border: "1.5px solid #fca5a5" },
-    amber:   { background: "#fef3c7", color: "#92400e", border: "1.5px solid #fcd34d" },
-    orange:  { background: "#fff7ed", color: "#c2410c", border: "1.5px solid #fed7aa" },
-    purple:  { background: "#f3e8ff", color: "#6b21a8", border: "1.5px solid #d8b4fe" },
-    gray:    { background: "#f1f5f9", color: "#475569", border: "1.5px solid #e2e8f0" },
+    emerald: "bg-emerald-50  text-emerald-700 ring-1 ring-emerald-200",
+    red:     "bg-red-50      text-red-700     ring-1 ring-red-200",
+    amber:   "bg-amber-50    text-amber-700   ring-1 ring-amber-200",
+    orange:  "bg-orange-50   text-orange-700  ring-1 ring-orange-200",
+    blue:    "bg-blue-50     text-blue-700    ring-1 ring-blue-200",
+    purple:  "bg-purple-50   text-purple-700  ring-1 ring-purple-200",
+    gray:    "bg-gray-100    text-gray-600    ring-1 ring-gray-200",
   };
-  const s = styles[color] || styles.gray;
   return (
-    <span style={{ ...s, display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 99 }}>
+    <span className={`inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full ${styles[color] || styles.gray}`}>
       {children}
     </span>
   );
@@ -77,20 +62,17 @@ export function Badge({ children, color = "blue" }) {
 // ── Modal ─────────────────────────────────────────────────
 export function Modal({ title, onClose, children, wide }) {
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(6,13,46,0.7)", backdropFilter: "blur(10px)", animation: "fadeIn 0.15s" }}
-      className="sm:items-center sm:p-4">
-      <div style={{ background: "white", width: "100%", maxWidth: wide ? 640 : 520, borderRadius: "20px 20px 0 0", boxShadow: "0 -8px 40px rgba(0,35,255,0.15), 0 0 0 1px rgba(0,35,255,0.06)", maxHeight: "92vh", display: "flex", flexDirection: "column", overflow: "hidden", animation: "fadeUp 0.2s ease-out" }}
-        className="sm:rounded-2xl">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 24px", borderBottom: "1px solid #f0f2ff", flexShrink: 0 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 800, color: D, margin: 0, letterSpacing: "-0.2px" }}>{title}</h3>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}>
+      <div className={`bg-white w-full ${wide ? "sm:max-w-2xl" : "sm:max-w-lg"} sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[94vh] flex flex-col overflow-hidden`}>
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 flex-shrink-0">
+          <h3 className="text-sm font-bold text-gray-800">{title}</h3>
           <button onClick={onClose}
-            style={{ width: 30, height: 30, borderRadius: 8, background: "#f0f2ff", border: "none", cursor: "pointer", color: "#9ba5c9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 300, transition: "all 0.15s", fontFamily: "inherit" }}
-            onMouseEnter={e => { e.currentTarget.style.background = "#e8ecff"; e.currentTarget.style.color = D; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "#f0f2ff"; e.currentTarget.style.color = "#9ba5c9"; }}>
+            className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 flex items-center justify-center transition text-base leading-none">
             ×
           </button>
         </div>
-        <div style={{ padding: "20px 24px 24px", overflowY: "auto", flex: 1 }}>{children}</div>
+        <div className="px-5 sm:px-6 py-5 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );
@@ -100,11 +82,20 @@ export function Modal({ title, onClose, children, wide }) {
 export function Input({ label, error, ...props }) {
   return (
     <div>
-      {label && <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#8492b4", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</label>}
-      <input {...props}
-        style={{ width: "100%", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: D, background: error ? "#FEF2F2" : "white", border: `1.5px solid ${error ? "#FECACA" : "#e8ecff"}`, outline: "none", boxSizing: "border-box", fontFamily: "inherit", transition: "border-color 0.15s, box-shadow 0.15s" }}
+      {label && (
+        <label className="block text-[11px] font-semibold text-gray-400 mb-1.5 uppercase tracking-widest">
+          {label}
+        </label>
+      )}
+      <input
+        {...props}
+        className={`w-full rounded-xl px-3 py-2.5 text-sm text-gray-800 placeholder-gray-300
+          transition duration-150 outline-none
+          border ${error ? "border-red-300 bg-red-50" : "border-gray-200 bg-white hover:border-gray-300"}
+          focus:border-orange-400 focus:ring-4 focus:ring-orange-100
+          disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed`}
       />
-      {error && <p style={{ fontSize: 11, color: "#DC2626", marginTop: 4, fontWeight: 600 }}>{error}</p>}
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
     </div>
   );
 }
@@ -113,114 +104,164 @@ export function Input({ label, error, ...props }) {
 export function Select({ label, children, ...props }) {
   return (
     <div>
-      {label && <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#8492b4", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</label>}
-      <select {...props}
-        style={{ width: "100%", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: D, background: "white", border: "1.5px solid #e8ecff", outline: "none", boxSizing: "border-box", cursor: "pointer", fontFamily: "inherit" }}>
+      {label && (
+        <label className="block text-[11px] font-semibold text-gray-400 mb-1.5 uppercase tracking-widest">
+          {label}
+        </label>
+      )}
+      <select
+        {...props}
+        className="w-full rounded-xl px-3 py-2.5 text-sm text-gray-800
+          border border-gray-200 bg-white hover:border-gray-300
+          focus:border-orange-400 focus:ring-4 focus:ring-orange-100
+          transition duration-150 outline-none cursor-pointer"
+      >
         {children}
       </select>
     </div>
   );
 }
 
-// ── Button ────────────────────────────────────────────────
-export function Btn({ children, onClick, color = "blue", sm, loading, type = "button" }) {
-  const v = {
-    blue:   { bg: B,        text: "white",   shadow: "rgba(0,35,255,0.3)" },
-    yellow: { bg: Y,        text: D,         shadow: "rgba(255,249,0,0.3)" },
-    green:  { bg: "#059669", text: "white",  shadow: "rgba(5,150,105,0.3)" },
-    red:    { bg: "#dc2626", text: "white",  shadow: "rgba(220,38,38,0.3)" },
-    purple: { bg: "#7c3aed", text: "white",  shadow: "rgba(124,58,237,0.3)" },
-    orange: { bg: B,        text: "white",   shadow: "rgba(0,35,255,0.3)" },
-    gray:   { bg: "white",  text: "#475569", shadow: "transparent", border: "1.5px solid #e8ecff" },
-  }[color] || { bg: B, text: "white", shadow: "rgba(0,35,255,0.3)" };
-
+// ── Bouton ────────────────────────────────────────────────
+export function Btn({ children, onClick, color = "orange", sm, loading, type = "button" }) {
+  const variants = {
+    orange: "bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white shadow-sm shadow-orange-200",
+    green:  "bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white shadow-sm shadow-emerald-200",
+    blue:   "bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white shadow-sm shadow-blue-200",
+    red:    "bg-red-500 hover:bg-red-600 active:bg-red-700 text-white shadow-sm shadow-red-200",
+    purple: "bg-purple-500 hover:bg-purple-600 active:bg-purple-700 text-white shadow-sm shadow-purple-200",
+    gray:   "bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-700 border border-gray-200",
+  };
   return (
-    <button type={type} onClick={onClick} disabled={loading}
-      style={{ background: v.bg, color: v.text, border: v.border || "none", borderRadius: 10, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.65 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: sm ? 12 : 13, padding: sm ? "6px 12px" : "10px 18px", fontFamily: "inherit", letterSpacing: "0.01em", boxShadow: `0 4px 12px ${v.shadow}`, transition: "all 0.15s" }}
-      onMouseEnter={e => { if (!loading) e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = `0 6px 18px ${v.shadow}`; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = `0 4px 12px ${v.shadow}`; }}>
-      {loading && <span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "currentColor", borderRadius: "50%", animation: "spin 0.7s linear infinite", flexShrink: 0 }} />}
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={loading}
+      className={`
+        inline-flex items-center justify-center gap-1.5 font-semibold rounded-xl
+        transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed
+        ${sm ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm"}
+        ${variants[color] || variants.gray}
+      `}
+    >
+      {loading && <span className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin flex-shrink-0" />}
       {children}
     </button>
   );
 }
 
-// ── SearchBox ─────────────────────────────────────────────
+// ── SearchBox (input + dropdown combinés) ─────────────────
+// suggestions : [{ label, sub }] — label = texte principal, sub = texte secondaire
 export function SearchBox({ value, onChange, onSelect, suggestions = [], placeholder = "Rechercher…", className = "" }) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef(null);
+
+  // Ferme le dropdown si clic dehors
   React.useEffect(() => {
-    const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
-  const visible = suggestions.filter(s => !value || s.label?.toLowerCase().includes(value.toLowerCase())).slice(0, 8);
+
+  const visible = suggestions.filter(s =>
+    !value || s.label.toLowerCase().includes(value.toLowerCase()) || (s.sub || "").toLowerCase().includes(value.toLowerCase())
+  ).slice(0, 8);
+
   return (
-    <div ref={ref} style={{ position: "relative" }} className={className}>
-      <div style={{ position: "relative" }}>
-        <svg style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9ba5c9", pointerEvents: "none" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input value={value} onChange={e => { onChange(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)}
+    <div ref={ref} className={`relative ${className}`}>
+      <div className="relative">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          value={value}
+          onChange={e => { onChange(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
           placeholder={placeholder}
-          style={{ width: "100%", paddingLeft: 36, paddingRight: value ? 32 : 12, paddingTop: 9, paddingBottom: 9, border: "1.5px solid #e8ecff", borderRadius: 10, fontSize: 13, background: "white", outline: "none", boxSizing: "border-box", fontFamily: "inherit", color: D, transition: "border-color 0.15s" }} />
-        {value && (
-          <button onClick={() => { onChange(""); onSelect?.(""); setOpen(false); }}
-            style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, borderRadius: "50%", background: "#e8ecff", border: "none", cursor: "pointer", color: "#9ba5c9", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>✕</button>
-        )}
+          className="w-full pl-9 pr-8 py-2 border border-gray-200 rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300"
+        />
+        {value
+          ? <button onClick={() => { onChange(""); onSelect && onSelect(""); setOpen(false); }}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-500 text-xs transition">✕</button>
+          : <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+        }
       </div>
+
       {open && visible.length > 0 && (
-        <div style={{ position: "absolute", zIndex: 50, width: "100%", marginTop: 4, background: "white", border: "1.5px solid #e8ecff", borderRadius: 12, boxShadow: "0 8px 32px rgba(0,35,255,0.1)", overflow: "hidden", animation: "fadeUp 0.15s" }}>
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
           {visible.map((s, i) => (
-            <button key={i} onMouseDown={e => e.preventDefault()} onClick={() => { onChange(s.label); onSelect?.(s.label); setOpen(false); }}
-              style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "none", border: "none", borderBottom: "1px solid #f0f2ff", cursor: "pointer", textAlign: "left", fontFamily: "inherit", transition: "background 0.1s" }}
-              onMouseEnter={e => e.currentTarget.style.background = "#f0f2ff"}
-              onMouseLeave={e => e.currentTarget.style.background = "none"}>
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: B, flexShrink: 0 }} />
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: D }}>{s.label}</div>
-                {s.sub && <div style={{ fontSize: 11, color: "#9ba5c9" }}>{s.sub}</div>}
+            <button key={i} onMouseDown={e => e.preventDefault()}
+              onClick={() => { onChange(s.label); onSelect && onSelect(s.label); setOpen(false); }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-orange-50 transition text-left">
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-400 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-gray-800 truncate">{s.label}</div>
+                {s.sub && <div className="text-xs text-gray-400 truncate">{s.sub}</div>}
               </div>
             </button>
           ))}
+          {value && (
+            <div className="px-3 py-2 border-t border-gray-50 text-xs text-gray-400 text-center">
+              {visible.length} résultat(s) — Appuyez Entrée pour tout afficher
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-// ── PageHeader ────────────────────────────────────────────
+// ── En-tête de page ───────────────────────────────────────
 export function PageHeader({ title, sub, action }) {
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 24 }}>
-      <div style={{ minWidth: 0 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 900, color: D, margin: 0, letterSpacing: "-0.4px", lineHeight: 1.2 }}>{title}</h2>
-        {sub && <p style={{ fontSize: 12, color: "#8492b4", margin: "3px 0 0", fontWeight: 500 }}>{sub}</p>}
+    <div className="flex flex-wrap items-center justify-between gap-3 mb-5 md:mb-6">
+      <div className="min-w-0">
+        <h2 className="text-lg font-bold text-gray-900 leading-tight">{title}</h2>
+        {sub && <p className="text-xs text-gray-400 mt-0.5 font-medium">{sub}</p>}
       </div>
-      {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+      {action && <div className="flex-shrink-0">{action}</div>}
     </div>
   );
 }
 
-// ── DataTable ─────────────────────────────────────────────
+// ── Tableau générique ─────────────────────────────────────
 export function DataTable({ headers, children, empty = "Aucune donnée", sort, onSort }) {
   const hasRows = children && (Array.isArray(children) ? children.length > 0 : true);
+  const hasWidths = headers.some((h) => typeof h === "object" && h.w);
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", minWidth: 600, fontSize: 13, borderCollapse: "collapse" }}>
+    <div className="overflow-x-auto rounded-2xl">
+      {/* Sur mobile : min-w-[640px] force le défilement horizontal (colonnes lisibles).
+          Sur desktop (md+) : table-fixed + w-full répartit proprement les % de largeur. */}
+      <table className={`text-sm min-w-[640px] ${hasWidths ? "md:table-fixed md:w-full md:min-w-full" : "w-full"}`}>
+        {hasWidths && (
+          <colgroup>
+            {headers.map((h, i) => (
+              <col key={i} style={{ width: typeof h === "object" && h.w ? h.w : "auto" }} />
+            ))}
+          </colgroup>
+        )}
         <thead>
-          <tr>
+          <tr className="border-b border-gray-100">
             {headers.map((h, i) => {
-              const label = typeof h === "object" ? h.label : h;
-              const right = typeof h === "object" ? h.right : false;
-              const sk    = typeof h === "object" ? h.sortKey : null;
-              const active = sort && sk && sort.key === sk;
+              const label   = typeof h === "object" ? h.label   : h;
+              const right   = typeof h === "object" ? h.right   : false;
+              const sk      = typeof h === "object" ? h.sortKey : null;
+              const active  = sort && sk && sort.key === sk;
               const canSort = !!onSort && !!sk;
               return (
-                <th key={i} onClick={canSort ? () => onSort(sk) : undefined}
-                  style={{ padding: "12px 16px", fontSize: 10, fontWeight: 800, color: "#8492b4", textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap", textAlign: right ? "right" : "left", background: "#f7f8ff", borderBottom: "2px solid #eef0ff", cursor: canSort ? "pointer" : "default", userSelect: "none", transition: "color 0.15s", width: typeof h === "object" && h.w ? h.w : "auto" }}
-                  onMouseEnter={e => canSort && (e.currentTarget.style.color = B)}
-                  onMouseLeave={e => canSort && (e.currentTarget.style.color = "#8492b4")}>
+                <th key={i}
+                  onClick={canSort ? () => onSort(sk) : undefined}
+                  className={`px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-widest whitespace-nowrap bg-gray-50/80
+                    ${right ? "text-right" : "text-left"}
+                    ${canSort ? "cursor-pointer hover:text-orange-500 select-none" : ""}`}>
                   {label}
-                  {canSort && <span style={{ marginLeft: 4, fontSize: 9, color: active ? B : "rgba(132,146,180,0.3)" }}>{active ? (sort.dir === "asc" ? "▲" : "▼") : "⇅"}</span>}
+                  {canSort && (
+                    <span className={`ml-1 text-[10px] ${active ? "text-orange-500" : "opacity-25"}`}>
+                      {active ? (sort.dir === "asc" ? "▲" : "▼") : "⇅"}
+                    </span>
+                  )}
                 </th>
               );
             })}
@@ -228,13 +269,14 @@ export function DataTable({ headers, children, empty = "Aucune donnée", sort, o
         </thead>
         <tbody>
           {hasRows ? children : (
-            <tr><td colSpan={headers.length}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 0" }}>
-                <div style={{ width: 64, height: 64, borderRadius: 20, background: "#f0f2ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, marginBottom: 14 }}>📭</div>
-                <p style={{ fontSize: 14, fontWeight: 700, color: "#8492b4", margin: 0 }}>{empty}</p>
-                <p style={{ fontSize: 12, color: "#c7d0ff", marginTop: 4 }}>Les données apparaîtront ici</p>
-              </div>
-            </td></tr>
+            <tr>
+              <td colSpan={headers.length}>
+                <div className="flex flex-col items-center justify-center py-16 text-gray-300">
+                  <div className="text-4xl mb-3">📭</div>
+                  <p className="text-sm font-medium text-gray-400">{empty}</p>
+                </div>
+              </td>
+            </tr>
           )}
         </tbody>
       </table>
@@ -244,10 +286,11 @@ export function DataTable({ headers, children, empty = "Aucune donnée", sort, o
 
 export function TR({ children, onClick }) {
   return (
-    <tr onClick={onClick}
-      style={{ borderBottom: "1px solid #f0f2ff", cursor: onClick ? "pointer" : "default", transition: "background 0.1s" }}
-      onMouseEnter={e => e.currentTarget.style.background = onClick ? "#f7f8ff" : "transparent"}
-      onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+    <tr
+      onClick={onClick}
+      className={`border-b border-gray-50 last:border-0 transition-colors duration-100
+        ${onClick ? "cursor-pointer hover:bg-orange-50/60" : "hover:bg-gray-50/40"}`}
+    >
       {children}
     </tr>
   );
@@ -255,57 +298,53 @@ export function TR({ children, onClick }) {
 
 export function TD({ children, right, bold, muted, truncate }) {
   return (
-    <td style={{ padding: "13px 16px", whiteSpace: "nowrap", textAlign: right ? "right" : "left", fontSize: muted ? 11 : 13, fontWeight: bold ? 700 : 400, color: muted ? "#9ba5c9" : bold ? D : "#3d4f6e", overflow: truncate ? "hidden" : "visible", textOverflow: truncate ? "ellipsis" : "clip", maxWidth: truncate ? 0 : "none" }}>
+    <td className={`px-4 py-3 whitespace-nowrap
+      ${truncate ? "overflow-hidden text-ellipsis max-w-0" : ""}
+      ${right ? "text-right" : ""}
+      ${bold  ? "font-semibold text-gray-800" : ""}
+      ${muted ? "text-gray-400 text-xs" : "text-gray-600 text-sm"}`}>
       {children}
     </td>
   );
 }
 
-// ── StatCard ──────────────────────────────────────────────
-export function StatCard({ label, value, icon, gradient, sub }) {
+// ── Carte statistique ─────────────────────────────────────
+export function StatCard({ label, value, icon, gradient }) {
   return (
-    <div className="card-hover" style={{ background: gradient || B, borderRadius: 18, padding: 20, color: "white", position: "relative", overflow: "hidden", boxShadow: "0 8px 28px rgba(0,35,255,0.18)" }}>
-      <div style={{ position: "absolute", right: -20, top: -20, fontSize: 80, opacity: 0.06, pointerEvents: "none" }}>{icon}</div>
-      <div style={{ position: "relative" }}>
-        <div style={{ width: 42, height: 42, borderRadius: 13, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, marginBottom: 14 }}>{icon}</div>
-        <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.12em", opacity: 0.6, marginBottom: 4 }}>{label}</div>
-        <div style={{ fontSize: 17, fontWeight: 900, lineHeight: 1.2 }}>{value}</div>
-        {sub && <div style={{ fontSize: 11, opacity: 0.55, marginTop: 5, fontWeight: 500 }}>{sub}</div>}
-      </div>
+    <div className={`${gradient} rounded-2xl p-5 text-white shadow-lg shadow-black/10 overflow-hidden relative`}>
+      <div className="absolute -right-3 -top-3 text-6xl opacity-10 select-none pointer-events-none">{icon}</div>
+      <div className="text-2xl mb-3 relative">{icon}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-widest opacity-75 mb-1">{label}</div>
+      <div className="text-base font-black leading-tight">{value}</div>
     </div>
   );
 }
 
 // ── Toast ─────────────────────────────────────────────────
 export function Toast({ message, type = "success", onClose }) {
-  const c = { success: { bg: D, icon: "✓", accent: "#059669" }, error: { bg: "#EF4444", icon: "✕", accent: "#fca5a5" }, info: { bg: B, icon: "ℹ", accent: Y } }[type] || {};
+  const styles = {
+    success: "bg-gray-900 text-white",
+    error:   "bg-red-600   text-white",
+    info:    "bg-blue-600  text-white",
+  };
+  const dotColors = { success: "bg-emerald-400", error: "bg-red-300", info: "bg-blue-300" };
   return (
-    <div style={{ position: "fixed", bottom: 88, right: 16, zIndex: 100, display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 14, maxWidth: 340, minWidth: 230, background: c.bg, color: "white", boxShadow: "0 10px 40px rgba(0,0,0,0.25)", animation: "toastIn 0.25s ease-out", fontFamily: "inherit" }}
-      className="md:bottom-6 md:right-6">
-      <div style={{ width: 30, height: 30, borderRadius: 9, background: "rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 14, fontWeight: 800 }}>{c.icon}</div>
-      <span style={{ fontSize: 13, fontWeight: 600, flex: 1, lineHeight: 1.4 }}>{message}</span>
-      <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: 20, lineHeight: 1, flexShrink: 0, fontFamily: "inherit", transition: "color 0.15s" }}
-        onMouseEnter={e => e.currentTarget.style.color = "white"}
-        onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.4)"}>×</button>
+    <div className={`fixed bottom-24 md:bottom-6 right-4 md:right-6 z-[100]
+      ${styles[type]} px-4 py-3 rounded-2xl shadow-2xl
+      flex items-center gap-3 max-w-sm min-w-[200px]`}>
+      <div className={`w-2 h-2 rounded-full ${dotColors[type]} flex-shrink-0`} />
+      <span className="text-sm font-medium flex-1">{message}</span>
+      <button onClick={onClose}
+        className="opacity-50 hover:opacity-100 transition text-lg leading-none flex-shrink-0 ml-1">×</button>
     </div>
   );
 }
 
-// ── Card ──────────────────────────────────────────────────
-export function Card({ children, className = "", style = {} }) {
+// ── Card wrapper ──────────────────────────────────────────
+export function Card({ children, className = "" }) {
   return (
-    <div style={{ background: "white", borderRadius: 16, border: "1.5px solid #eef0ff", boxShadow: "0 2px 16px rgba(0,35,255,0.05)", ...style }} className={className}>
+    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 ${className}`}>
       {children}
-    </div>
-  );
-}
-
-// ── Section divider ───────────────────────────────────────
-export function SectionLabel({ children }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-      <div style={{ width: 3, height: 16, background: B, borderRadius: 4 }} />
-      <span style={{ fontSize: 11, fontWeight: 800, color: "#8492b4", textTransform: "uppercase", letterSpacing: "0.1em" }}>{children}</span>
     </div>
   );
 }

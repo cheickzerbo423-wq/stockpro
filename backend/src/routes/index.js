@@ -13,6 +13,7 @@ const clientsCtrl  = require("../controllers/clientsController");
 const facturesCtrl = require("../controllers/facturesController");
 const usersCtrl    = require("../controllers/utilisateursController");
 const rapportsCtrl = require("../controllers/rapportsController");
+const gammesCtrl   = require("../controllers/gammesController");
 
 // ============================================================
 // AUTH — Public
@@ -75,6 +76,11 @@ router.delete("/utilisateurs/:id", authenticate, audit("SUPPRESSION_USER", "util
 
 router.post("/admin/reset", authenticate, usersCtrl.resetData);
 
+// ── Gammes (familles de produits avec stock partagé)
+router.get   ("/gammes",           authenticate, gammesCtrl.getAll);
+router.post  ("/gammes",           authenticate, authorize("articles"), gammesCtrl.create);
+router.put   ("/gammes/:code",     authenticate, authorize("articles"), gammesCtrl.rename);
+router.delete("/gammes/:code",     authenticate, authorize("articles"), gammesCtrl.remove);
 
 // ============================================================
 // RAPPORTS FINANCIERS
@@ -90,7 +96,7 @@ router.get("/dashboard", authenticate, async (req, res) => {
     const db = require("../config/db");
     const annee = new Date().getFullYear();
 
-    const [totaux, alertes, caAnnee, topClients, recentFactures] = await Promise.all([
+    const [totaux, alertes, alertesGammes, caAnnee, topClients, recentFactures] = await Promise.all([
       db.query(`
         SELECT
           (SELECT COALESCE(SUM(montant_total),0) FROM lignes_vente WHERE annee = $1)   AS ca_total,
@@ -107,8 +113,27 @@ router.get("/dashboard", authenticate, async (req, res) => {
           (SELECT COUNT(DISTINCT UPPER(client_nom)) FROM lignes_vente WHERE annee = $1)  AS nb_clients
       `, [annee]),
 
-      // Alertes stock
-      db.query(`SELECT code, libelle, stock_restant, stock_min, statut FROM vue_stock WHERE stock_restant <= stock_min ORDER BY stock_restant ASC LIMIT 6`),
+      // Alertes articles standalone (sans gamme)
+      db.query(`SELECT code, libelle, stock_restant, stock_min, statut FROM vue_stock WHERE stock_restant <= stock_min AND gamme_code IS NULL ORDER BY stock_restant ASC LIMIT 6`),
+
+      // Alertes gammes : 1 ligne par gamme avec nb variantes en alerte
+      db.query(`
+        SELECT
+          g.code  AS gamme_code,
+          g.nom   AS gamme_nom,
+          COUNT(v.code)::int                                                           AS nb_variantes,
+          COUNT(CASE WHEN v.stock_restant <= 0           THEN 1 END)::int              AS nb_rupture,
+          COUNT(CASE WHEN v.stock_restant > 0 AND v.stock_restant <= v.stock_min THEN 1 END)::int AS nb_faible,
+          MIN(v.stock_restant)                                                         AS stock_min_val,
+          CASE WHEN COUNT(CASE WHEN v.stock_restant <= 0 THEN 1 END) > 0 THEN 'Rupture stock' ELSE 'Stock faible' END AS statut
+        FROM gammes g
+        JOIN vue_stock v ON v.gamme_code = g.code
+        WHERE g.actif = TRUE
+        GROUP BY g.code, g.nom
+        HAVING COUNT(CASE WHEN v.stock_restant <= v.stock_min THEN 1 END) > 0
+        ORDER BY MIN(v.stock_restant) ASC
+        LIMIT 5
+      `),
 
       db.query(`
         SELECT TO_CHAR(date_vente, 'YYYY-MM') AS mois, SUM(montant_total)::bigint AS ca
@@ -130,9 +155,10 @@ router.get("/dashboard", authenticate, async (req, res) => {
     ]);
 
     res.json({
-      kpis:            totaux.rows[0],
-      alertes_stock:   alertes.rows,
-      ca_par_mois:     caAnnee.rows,
+      kpis:             totaux.rows[0],
+      alertes_stock:    alertes.rows,
+      alertes_gammes:   alertesGammes.rows,
+      ca_par_mois:      caAnnee.rows,
       top_clients:      topClients.rows,
       recent_factures:  recentFactures.rows,
     });

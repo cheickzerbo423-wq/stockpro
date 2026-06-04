@@ -211,3 +211,12 @@ export const rapportsService = {
 };
 
 
+// ══════════════════════════════════════════
+// GAMMES
+// ══════════════════════════════════════════
+export const gammesService = {
+  getAll:  ()           => api.get("/gammes").then((r) => r.data),
+  create:  (data)       => api.post("/gammes", data).then((r) => r.data),
+  rename:  (code, nom)  => api.put(`/gammes/${code}`, { nom }).then((r) => r.data),
+  delete:  (code)       => api.delete(`/gammes/${code}`).then((r) => r.data),
+};

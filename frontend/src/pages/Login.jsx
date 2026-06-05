@@ -32,18 +32,14 @@ export default function Login() {
         {/* Logo WariGest */}
         <div className="text-center mb-8">
           {/* Icône Wi — carré arrondi bleu avec le monogramme exact */}
-          <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-2xl shadow-[#0023FF]/30"
-            style={{ background: "#0023FF" }}>
-            <svg viewBox="0 0 36 26" width="30" height="22" fill="none">
-              {/* W : deux arches arrondies */}
-              <path
-                d="M2 4 C2 16 7 20 10.5 20 C14 20 14.5 11 14.5 11 C14.5 11 15 20 18.5 20 C22 20 27 16 27 4"
-                stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"
-              />
-              {/* i — tige */}
-              <line x1="32" y1="10" x2="32" y2="21" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-              {/* i — point jaune */}
-              <circle cx="32" cy="4.5" r="2.8" fill="#FFF900"/>
+          <div className="w-20 h-20 rounded-3xl mx-auto mb-5 shadow-2xl shadow-[#0023FF]/30 overflow-hidden">
+            <svg viewBox="0 0 52 52" width="80" height="80" fill="none">
+              <rect width="52" height="52" fill="#0023FF"/>
+              <rect x="4" y="4" width="44" height="44" rx="8" fill="white"/>
+              <path d="M9,13 L9,29 C9,40 27,40 27,29 L27,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <path d="M25,13 L25,29 C25,40 43,40 43,29 L43,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <line x1="47" y1="22" x2="47" y2="40" stroke="#0023FF" strokeWidth="5" strokeLinecap="round"/>
+              <circle cx="47" cy="14" r="4" fill="#FFF900"/>
             </svg>
           </div>
           <h1 className="text-4xl font-black text-white tracking-tight">WariGest</h1>
@@ -120,13 +116,14 @@ export default function Login() {
 
         {/* Badge WariGest bas */}
         <div className="flex items-center justify-center gap-2 mt-6">
-          <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
-            style={{ background: "#0023FF" }}>
-            <svg viewBox="0 0 18 14" width="12" height="10" fill="none">
-              <path d="M1 2 C1 8 3.5 10 5.5 10 C7.5 10 7.5 5.5 7.5 5.5 C7.5 5.5 7.5 10 9.5 10 C11.5 10 14 8 14 2"
-                stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
-              <line x1="16.5" y1="5" x2="16.5" y2="10.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-              <circle cx="16.5" cy="2" r="1.4" fill="#FFF900"/>
+          <div className="w-5 h-5 rounded-md flex-shrink-0 overflow-hidden">
+            <svg viewBox="0 0 52 52" width="20" height="20" fill="none">
+              <rect width="52" height="52" fill="#0023FF"/>
+              <rect x="4" y="4" width="44" height="44" rx="8" fill="white"/>
+              <path d="M9,13 L9,29 C9,40 27,40 27,29 L27,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <path d="M25,13 L25,29 C25,40 43,40 43,29 L43,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <line x1="47" y1="22" x2="47" y2="40" stroke="#0023FF" strokeWidth="5" strokeLinecap="round"/>
+              <circle cx="47" cy="14" r="4" fill="#FFF900"/>
             </svg>
           </div>
           <span className="text-slate-600 text-xs font-semibold">WariGest v1.0 — © 2026</span>

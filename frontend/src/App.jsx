@@ -111,17 +111,15 @@ function Layout({ children }) {
       >
         {/* Logo */}
         <div className={`flex items-center border-b border-white/5 flex-shrink-0 ${collapsed ? "justify-center p-4" : "gap-3 px-4 py-4"}`}>
-          {/* Icône Wi */}
-          <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center"
-            style={{ background: "#0023FF" }}>
-            <svg viewBox="0 0 34 24" width="22" height="17" fill="none">
-              {/* W — deux arches arrondies */}
-              <path d="M2 3 C2 14 6.5 18 10 18 C13.5 18 14 10 14 10 C14 10 14.5 18 18 18 C21.5 18 26 14 26 3"
-                stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              {/* i — tige */}
-              <line x1="31" y1="9" x2="31" y2="19" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
-              {/* i — point jaune */}
-              <circle cx="31" cy="4" r="2.4" fill="#FFF900"/>
+          {/* Icône Wi — carré bleu + carré blanc intérieur + Wi bleu sur blanc */}
+          <div className="w-9 h-9 rounded-xl flex-shrink-0 overflow-hidden">
+            <svg viewBox="0 0 52 52" width="36" height="36" fill="none">
+              <rect width="52" height="52" fill="#0023FF"/>
+              <rect x="4" y="4" width="44" height="44" rx="8" fill="white"/>
+              <path d="M9,13 L9,29 C9,40 27,40 27,29 L27,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <path d="M25,13 L25,29 C25,40 43,40 43,29 L43,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <line x1="47" y1="22" x2="47" y2="40" stroke="#0023FF" strokeWidth="5" strokeLinecap="round"/>
+              <circle cx="47" cy="14" r="4" fill="#FFF900"/>
             </svg>
           </div>
           {!collapsed && (
@@ -209,13 +207,14 @@ function Layout({ children }) {
           {/* Logo + fermer */}
           <div className="flex items-center justify-between px-4 py-4 border-b border-white/5 flex-shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: "#0023FF" }}>
-                <svg viewBox="0 0 34 24" width="22" height="17" fill="none">
-                  <path d="M2 3 C2 14 6.5 18 10 18 C13.5 18 14 10 14 10 C14 10 14.5 18 18 18 C21.5 18 26 14 26 3"
-                    stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                  <line x1="31" y1="9" x2="31" y2="19" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
-                  <circle cx="31" cy="4" r="2.4" fill="#FFF900"/>
+              <div className="w-9 h-9 rounded-xl flex-shrink-0 overflow-hidden">
+                <svg viewBox="0 0 52 52" width="36" height="36" fill="none">
+                  <rect width="52" height="52" fill="#0023FF"/>
+                  <rect x="4" y="4" width="44" height="44" rx="8" fill="white"/>
+                  <path d="M9,13 L9,29 C9,40 27,40 27,29 L27,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  <path d="M25,13 L25,29 C25,40 43,40 43,29 L43,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  <line x1="47" y1="22" x2="47" y2="40" stroke="#0023FF" strokeWidth="5" strokeLinecap="round"/>
+                  <circle cx="47" cy="14" r="4" fill="#FFF900"/>
                 </svg>
               </div>
               <div>

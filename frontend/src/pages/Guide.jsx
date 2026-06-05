@@ -107,13 +107,14 @@ export default function Guide() {
         style={{ background: "linear-gradient(135deg, #0F172A 0%, #0F172A 55%, #0023FF55 100%)" }}>
         <div className="px-6 py-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-              style={{ background: "#0023FF" }}>
-              <svg viewBox="0 0 34 24" width="24" height="18" fill="none">
-                <path d="M2 3 C2 14 6.5 18 10 18 C13.5 18 14 10 14 10 C14 10 14.5 18 18 18 C21.5 18 26 14 26 3"
-                  stroke="white" strokeWidth="2.8" strokeLinecap="round" fill="none"/>
-                <line x1="31" y1="9" x2="31" y2="19" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
-                <circle cx="31" cy="4" r="2.4" fill="#FFF900"/>
+            <div className="w-12 h-12 rounded-2xl overflow-hidden">
+              <svg viewBox="0 0 52 52" width="48" height="48" fill="none">
+                <rect width="52" height="52" fill="#0023FF"/>
+                <rect x="4" y="4" width="44" height="44" rx="8" fill="white"/>
+                <path d="M9,13 L9,29 C9,40 27,40 27,29 L27,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <path d="M25,13 L25,29 C25,40 43,40 43,29 L43,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <line x1="47" y1="22" x2="47" y2="40" stroke="#0023FF" strokeWidth="5" strokeLinecap="round"/>
+                <circle cx="47" cy="14" r="4" fill="#FFF900"/>
               </svg>
             </div>
             <div>
@@ -602,13 +603,14 @@ export default function Guide() {
       {/* ── Pied de page ── */}
       <div className="mt-4 mb-8 text-center text-xs text-gray-400 print:mt-2">
         <div className="inline-flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-4 py-2 shadow-sm">
-          <div className="w-5 h-5 rounded-md flex items-center justify-center"
-            style={{ background: BRAND }}>
-            <svg viewBox="0 0 18 14" width="12" height="9" fill="none">
-              <path d="M1 2 C1 8 3.5 10 5.5 10 C7.5 10 7.5 5.5 7.5 5.5 C7.5 5.5 7.5 10 9.5 10 C11.5 10 14 8 14 2"
-                stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
-              <line x1="16.5" y1="5" x2="16.5" y2="10.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-              <circle cx="16.5" cy="2" r="1.4" fill="#FFF900"/>
+          <div className="w-5 h-5 rounded-md overflow-hidden">
+            <svg viewBox="0 0 52 52" width="20" height="20" fill="none">
+              <rect width="52" height="52" fill="#0023FF"/>
+              <rect x="4" y="4" width="44" height="44" rx="8" fill="white"/>
+              <path d="M9,13 L9,29 C9,40 27,40 27,29 L27,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <path d="M25,13 L25,29 C25,40 43,40 43,29 L43,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <line x1="47" y1="22" x2="47" y2="40" stroke="#0023FF" strokeWidth="5" strokeLinecap="round"/>
+              <circle cx="47" cy="14" r="4" fill="#FFF900"/>
             </svg>
           </div>
           <span><strong className="text-gray-600">WariGest</strong> — Guide Utilisateur · Toutes les fonctionnalités</span>

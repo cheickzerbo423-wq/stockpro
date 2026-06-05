@@ -155,7 +155,7 @@ async function exportPDF(req, res) {
     doc.fontSize(9).font("Helvetica").fillColor("#94a3b8")
        .text(compAddr + (compTel ? "  ·  " + compTel : ""), 50, 55);
 
-    doc.fillColor("#f97316").fontSize(13).font("Helvetica-Bold")
+    doc.fillColor("#0023FF").fontSize(13).font("Helvetica-Bold")
        .text("RAPPORT FINANCIER", 595 - 220, 30, { width: 170, align: "right" });
     doc.fillColor("#cbd5e1").fontSize(9).font("Helvetica")
        .text(`Période : ${fmtDate(debut)} — ${fmtDate(fin)}`, 595 - 220, 52, { width: 170, align: "right" });
@@ -168,7 +168,7 @@ async function exportPDF(req, res) {
     const section = (title) => {
       doc.moveDown(0.5);
       doc.rect(50, doc.y, 495, 22).fill("#f1f5f9");
-      doc.fillColor("#f97316").fontSize(10).font("Helvetica-Bold")
+      doc.fillColor("#0023FF").fontSize(10).font("Helvetica-Bold")
          .text(title, 58, doc.y + 5);
       doc.y += 28;
     };
@@ -185,7 +185,7 @@ async function exportPDF(req, res) {
     /* ── KPIs ── */
     const kpiW = 115, kpiH = 60, kpiY = doc.y;
     const kpis = [
-      { label: "Chiffre d'Affaires", value: fmt(v.ca_total), color: "#f97316" },
+      { label: "Chiffre d'Affaires", value: fmt(v.ca_total), color: "#0023FF" },
       { label: "Total Dépenses",     value: fmt(a.total_achats), color: "#ef4444" },
       { label: "Bénéfice Net",       value: fmt(benefice), color: benefice >= 0 ? "#10b981" : "#ef4444" },
       { label: "Factures Émises",    value: fmtN(f.nb_total), color: "#3b82f6" },
@@ -202,7 +202,7 @@ async function exportPDF(req, res) {
 
     /* ── Ventes ── */
     section("VENTES");
-    row("Chiffre d'affaires",   fmt(v.ca_total),        "#f97316");
+    row("Chiffre d'affaires",   fmt(v.ca_total),        "#0023FF");
     row("Nombre de factures",   fmtN(v.nb_factures));
     row("Quantités vendues",    fmtN(v.qte_totale) + " unités");
 
@@ -225,7 +225,7 @@ async function exportPDF(req, res) {
     if (topArticles.rows.length > 0) {
       section("TOP 5 ARTICLES VENDUS");
       topArticles.rows.forEach((a, i) => {
-        row(`${i + 1}. ${a.libelle}`, fmt(a.ca) + " · " + fmtN(a.qte) + " u.", "#f97316");
+        row(`${i + 1}. ${a.libelle}`, fmt(a.ca) + " · " + fmtN(a.qte) + " u.", "#0023FF");
       });
     }
 

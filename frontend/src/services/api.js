@@ -2,7 +2,9 @@
 // Client HTTP central — toutes les requêtes passent ici
 import axios from "axios";
 
-const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:3000/api";
+// En production : Vercel proxy redirige /api/* vers Railway (voir vercel.json)
+// En développement : CRA proxy redirige /api/* vers localhost:3000 (voir package.json "proxy")
+const BASE_URL = process.env.REACT_APP_API_URL || "/api";
 
 const api = axios.create({
   baseURL: BASE_URL,

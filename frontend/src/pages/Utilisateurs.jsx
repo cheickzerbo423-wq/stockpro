@@ -24,7 +24,7 @@ const RESET_MODULES = [
 ];
 
 const COLOR_MAP = {
-  orange: { bg: "bg-orange-50",  border: "border-orange-200",  text: "text-orange-700"  },
+  orange: { bg: "bg-[#E6EAFF]", border: "border-[#B3BFFF]",   text: "text-[#0023FF]"   },
   blue:   { bg: "bg-blue-50",    border: "border-blue-200",    text: "text-blue-700"    },
   amber:  { bg: "bg-amber-50",   border: "border-amber-200",   text: "text-amber-700"   },
   purple: { bg: "bg-purple-50",  border: "border-purple-200",  text: "text-purple-700"  },
@@ -98,7 +98,7 @@ export default function Utilisateurs() {
 
           {/* Carte "Ajouter" */}
           <button onClick={() => setShowAdd(true)}
-            className="rounded-2xl border-2 border-dashed border-gray-200 p-6 flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-orange-300 hover:text-orange-400 transition min-h-[160px]">
+            className="rounded-2xl border-2 border-dashed border-gray-200 p-6 flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-[#B3BFFF] hover:text-[#0023FF] transition min-h-[160px]">
             <div className="w-10 h-10 rounded-full border-2 border-dashed border-current flex items-center justify-center text-xl font-light">+</div>
             <span className="text-sm font-semibold">Ajouter un utilisateur</span>
           </button>
@@ -123,13 +123,13 @@ export default function Utilisateurs() {
             <div className="grid grid-cols-2 gap-2">
               {MODULES.map((m) => (
                 <label key={m.key} className={`flex items-center gap-2 cursor-pointer p-2.5 rounded-xl border transition ${
-                  form[m.key] ? "bg-orange-50 border-orange-200" : "bg-white border-gray-200 hover:border-gray-300"
+                  form[m.key] ? "bg-[#E6EAFF] border-[#B3BFFF]" : "bg-white border-gray-200 hover:border-gray-300"
                 }`}>
                   <input type="checkbox" checked={form[m.key]}
                     onChange={(e) => setForm({ ...form, [m.key]: e.target.checked })}
-                    className="accent-orange-500 w-4 h-4" />
+                    className="accent-[#0023FF] w-4 h-4" />
                   <span className="text-sm">{m.icon}</span>
-                  <span className={`text-sm font-medium ${form[m.key] ? "text-orange-700" : "text-gray-600"}`}>{m.label}</span>
+                  <span className={`text-sm font-medium ${form[m.key] ? "text-[#0023FF]" : "text-gray-600"}`}>{m.label}</span>
                 </label>
               ))}
             </div>
@@ -202,7 +202,7 @@ function UserCard({ user: u, onDelete }) {
           <span className="text-xs font-bold text-gray-600">{permsActives.length}/{MODULES.length}</span>
         </div>
         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-          <div className="h-full bg-orange-400 rounded-full transition-all duration-500"
+          <div className="h-full bg-[#0023FF] rounded-full transition-all duration-500"
             style={{ width: `${Math.round((permsActives.length / MODULES.length) * 100)}%` }} />
         </div>
       </div>

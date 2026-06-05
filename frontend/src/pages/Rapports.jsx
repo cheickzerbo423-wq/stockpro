@@ -61,7 +61,7 @@ function KpiCard({ label, value, sub, icon, accent, dark }) {
 function SectionTitle({ children }) {
   return (
     <div className="flex items-center gap-2 mb-4">
-      <div className="h-4 w-1 bg-orange-500 rounded-full" />
+      <div className="h-4 w-1 bg-[#0023FF] rounded-full" />
       <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{children}</h3>
     </div>
   );
@@ -211,10 +211,11 @@ export default function Rapports() {
                 setPeriode(p.key);
                 if (p.key !== "custom") charger(p.key, custom);
               }}
+              style={periode === p.key ? { backgroundColor: "#0023FF" } : undefined}
               className={`px-4 py-1.5 rounded-xl text-xs font-bold transition border ${
                 periode === p.key
-                  ? "bg-orange-500 text-white border-orange-500 shadow-sm"
-                  : "bg-gray-50 text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-600"
+                  ? "text-white border-transparent shadow-sm"
+                  : "bg-gray-50 text-gray-600 border-gray-200 hover:border-[#B3BFFF] hover:text-[#0023FF]"
               }`}
             >
               {p.label}
@@ -230,7 +231,7 @@ export default function Rapports() {
                 type="date"
                 value={custom.debut}
                 onChange={(e) => setCustom((c) => ({ ...c, debut: e.target.value }))}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF]"
               />
             </div>
             <div>
@@ -239,7 +240,7 @@ export default function Rapports() {
                 type="date"
                 value={custom.fin}
                 onChange={(e) => setCustom((c) => ({ ...c, fin: e.target.value }))}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF]"
               />
             </div>
             <Btn onClick={() => charger("custom", custom)} loading={loading}>
@@ -260,7 +261,7 @@ export default function Rapports() {
             <KpiCard
               icon="📈" label="Chiffre d'Affaires"
               value={fmt(data.ventes.ca_total)}
-              accent={{ text: "text-orange-600", badge: "bg-orange-100 text-orange-700" }}
+              accent={{ text: "text-[#0023FF]", badge: "bg-[#E6EAFF] text-[#0023FF]" }}
             />
             <KpiCard
               icon="💸" label="Total Dépenses"
@@ -309,7 +310,7 @@ export default function Rapports() {
                       </span>
                     )}
                   />
-                  <Line type="monotone" dataKey="ca"     name="ca"     stroke="#f97316" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="ca"     name="ca"     stroke="#0023FF" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
                   <Line type="monotone" dataKey="achats" name="achats" stroke="#ef4444" strokeWidth={2}   dot={false} strokeDasharray="5 3" activeDot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
@@ -327,7 +328,7 @@ export default function Rapports() {
               <StatRow label="Quantités vendues"    value={fmtN(data.ventes.qte_totale) + " unités"} />
               <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
                 <span className="text-xs font-bold text-gray-500">CA Total</span>
-                <span className="text-base font-black text-orange-600">{fmt(data.ventes.ca_total)}</span>
+                <span className="text-base font-black text-[#0023FF]">{fmt(data.ventes.ca_total)}</span>
               </div>
             </div>
 
@@ -358,7 +359,7 @@ export default function Rapports() {
                   />
                 </div>
               </div>
-              <StatRow label="CA brut"              value={fmt(data.ventes.ca_total)}     color="text-orange-600" />
+              <StatRow label="CA brut"              value={fmt(data.ventes.ca_total)}     color="text-[#0023FF]" />
               <StatRow label="Coût des achats"      value={fmt(data.achats.total_achats)} color="text-red-500" />
               <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
                 <span className="text-xs font-bold text-gray-500">Marge nette</span>
@@ -448,7 +449,7 @@ export default function Rapports() {
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-orange-500 rounded-full transition-all duration-700"
+                          className="h-full bg-[#0023FF] rounded-full transition-all duration-700"
                           style={{
                             width: `${Math.round((a.ca / data.top_articles[0].ca) * 100)}%`,
                             opacity: 1 - i * 0.15,
@@ -470,7 +471,7 @@ export default function Rapports() {
                       tickFormatter={(v) => v.length > 10 ? v.slice(0, 10) + "…" : v}
                     />
                     <Tooltip formatter={(v) => [fmt(v), "CA"]} />
-                    <Bar dataKey="ca" fill="#f97316" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="ca" fill="#0023FF" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

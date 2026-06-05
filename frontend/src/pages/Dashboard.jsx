@@ -69,7 +69,6 @@ export default function Dashboard() {
   const {
     kpis,
     alertes_stock   = [],
-    alertes_gammes  = [],
     ca_par_mois     = [],
     top_clients     = [],
     recent_factures = [],
@@ -197,8 +196,8 @@ export default function Dashboard() {
                   <span className="font-bold text-gray-800">{fmt(c.ca)}</span>
                 </div>
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-orange-400 rounded-full transition-all duration-700"
-                    style={{ width: `${Math.round((c.ca / maxCa) * 100)}%`, opacity: 1 - i * 0.15 }} />
+                  <div className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${Math.round((c.ca / maxCa) * 100)}%`, opacity: 1 - i * 0.15, backgroundColor: "#0023FF" }} />
                 </div>
               </div>
             );
@@ -231,41 +230,19 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <div className="flex items-center justify-between mb-3">
             <SectionTitle>Alertes Stock</SectionTitle>
-            {(alertes_stock.length + alertes_gammes.length) > 0 && (
+            {alertes_stock.length > 0 && (
               <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">
-                {alertes_stock.length + alertes_gammes.length}
+                {alertes_stock.length}
               </span>
             )}
           </div>
 
-          {alertes_stock.length === 0 && alertes_gammes.length === 0 ? (
+          {alertes_stock.length === 0 ? (
             <div className="flex items-center gap-2 text-sm text-emerald-600 font-semibold bg-emerald-50 rounded-xl px-3 py-2.5">
               <span className="text-base">✅</span> Tous les stocks sont OK
             </div>
           ) : (
             <div className="space-y-1.5">
-              {/* Alertes gammes */}
-              {alertes_gammes.map((g) => (
-                <div key={g.gamme_code} className="flex items-center justify-between px-3 py-2 rounded-xl bg-purple-50 border border-purple-100">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-black text-purple-500 bg-purple-100 px-1.5 py-0.5 rounded-md">GAMME</span>
-                      <span className="text-xs font-bold text-purple-800 truncate">{g.gamme_nom}</span>
-                    </div>
-                    <div className="text-[10px] text-purple-400 mt-0.5">
-                      {g.nb_rupture > 0 && <span className="text-red-500 font-semibold">{g.nb_rupture} rupture{g.nb_rupture > 1 ? "s" : ""}</span>}
-                      {g.nb_rupture > 0 && g.nb_faible > 0 && <span className="text-purple-300"> · </span>}
-                      {g.nb_faible > 0 && <span className="text-amber-500 font-semibold">{g.nb_faible} faible{g.nb_faible > 1 ? "s" : ""}</span>}
-                      <span className="text-purple-300"> · {g.nb_variantes} variante{g.nb_variantes > 1 ? "s" : ""}</span>
-                    </div>
-                  </div>
-                  <div className={`text-xs font-black shrink-0 ml-2 ${g.statut === "Rupture stock" ? "text-red-600" : "text-amber-500"}`}>
-                    {g.statut === "Rupture stock" ? "Rupture" : "Stock bas"}
-                  </div>
-                </div>
-              ))}
-
-              {/* Alertes articles standalone */}
               {alertes_stock.map((a) => (
                 <div key={a.code} className="flex items-center justify-between px-3 py-2 rounded-xl bg-gray-50 border border-gray-100">
                   <div className="min-w-0">

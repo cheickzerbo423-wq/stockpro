@@ -114,10 +114,14 @@ function Layout({ children }) {
           {/* Icône Wi */}
           <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center"
             style={{ background: "#0023FF" }}>
-            <svg viewBox="0 0 28 22" width="22" height="18" fill="none">
-              <path d="M2 2L6.5 16L11 7L15.5 16L20 2" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-              <line x1="24" y1="8" x2="24" y2="16" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
-              <circle cx="24" cy="3.5" r="2" fill="#FFF900"/>
+            <svg viewBox="0 0 34 24" width="22" height="17" fill="none">
+              {/* W — deux arches arrondies */}
+              <path d="M2 3 C2 14 6.5 18 10 18 C13.5 18 14 10 14 10 C14 10 14.5 18 18 18 C21.5 18 26 14 26 3"
+                stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              {/* i — tige */}
+              <line x1="31" y1="9" x2="31" y2="19" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
+              {/* i — point jaune */}
+              <circle cx="31" cy="4" r="2.4" fill="#FFF900"/>
             </svg>
           </div>
           {!collapsed && (
@@ -207,10 +211,11 @@ function Layout({ children }) {
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: "#0023FF" }}>
-                <svg viewBox="0 0 28 22" width="22" height="18" fill="none">
-                  <path d="M2 2L6.5 16L11 7L15.5 16L20 2" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-                  <line x1="24" y1="8" x2="24" y2="16" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
-                  <circle cx="24" cy="3.5" r="2" fill="#FFF900"/>
+                <svg viewBox="0 0 34 24" width="22" height="17" fill="none">
+                  <path d="M2 3 C2 14 6.5 18 10 18 C13.5 18 14 10 14 10 C14 10 14.5 18 18 18 C21.5 18 26 14 26 3"
+                    stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  <line x1="31" y1="9" x2="31" y2="19" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
+                  <circle cx="31" cy="4" r="2.4" fill="#FFF900"/>
                 </svg>
               </div>
               <div>

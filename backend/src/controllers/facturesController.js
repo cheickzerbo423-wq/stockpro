@@ -162,6 +162,9 @@ async function generatePDF(req, res) {
     doc.fontSize(8).fillColor("white").font("Helvetica-Bold")
        .text(pillLabel, rBx + rBw - 70, topY + 79, { width: 70, align: "center" });
 
+    // ── Logo WariGest (texte, côté droit sous référence) ──
+    // Already displayed as part of company name. Mark brand in footer only.
+
     // ── Filet de séparation ──
     const hrY = 128;
     doc.moveTo(M, hrY).lineTo(PW - M, hrY).lineWidth(0.5).strokeColor(RULE).stroke();
@@ -246,11 +249,18 @@ async function generatePDF(req, res) {
        .text(money(f.montant), TotX, TotY - 2, { width: TotW, align: "right" });
 
     // ── PIED DE PAGE ──
-    const footY = PH - 42;
+    const footY = PH - 48;
     doc.moveTo(0, footY).lineTo(PW, footY).lineWidth(0.3).strokeColor(RULE).stroke();
+    // Bande accent gauche
     doc.rect(0, footY, 4, PH - footY).fillColor(ACC).fill();
-    doc.fontSize(8).fillColor(SUB).font("Helvetica-Oblique")
-       .text("Merci pour votre confiance. Ce document tient lieu de facture officielle.", M, footY + 14, { width: INN, align: "center" });
+    // Texte pied de page gauche : marque WariGest
+    doc.fontSize(7.5).fillColor(ACC).font("Helvetica-Bold")
+       .text("WariGest", M, footY + 12);
+    doc.fontSize(7).fillColor(SUB).font("Helvetica")
+       .text("Logiciel de gestion & facturation", M, footY + 23);
+    // Texte pied de page centré : message confiance
+    doc.fontSize(7.5).fillColor(SUB).font("Helvetica-Oblique")
+       .text("Merci pour votre confiance. Ce document tient lieu de facture officielle.", M, footY + 32, { width: INN, align: "center" });
 
     doc.end();
   } catch (err) {
@@ -281,13 +291,13 @@ async function generateRecu(req, res) {
     const W      = 226;
     const M      = 12;
     const INNER  = W - M * 2;
-    const ORANGE = "#0023FF";
+    const BRAND  = "#0023FF";   // WariGest blue
     const DARK   = "#111827";
     const GREY   = "#6B7280";
 
     const LINE_H = 15;
     const extraH = parseFloat(f.reste) > 0 ? 20 : 0;
-    const H      = 290 + lignes.rows.length * LINE_H + extraH;
+    const H      = 305 + lignes.rows.length * LINE_H + extraH;
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename="recu_${f.code}.pdf"`);
@@ -300,8 +310,8 @@ async function generateRecu(req, res) {
 
     let y = 0;
 
-    // ── Filet orange fin haut ──
-    doc.rect(0, 0, W, 3).fillColor(ORANGE).fill();
+    // ── Filet WariGest fin haut ──
+    doc.rect(0, 0, W, 3).fillColor(BRAND).fill();
     y = 12;
 
     // ── Nom entreprise ──
@@ -388,7 +398,7 @@ async function generateRecu(req, res) {
     y += 2;
     // Total final — ligne sobre
     doc.fontSize(10).fillColor(DARK).font("Helvetica-Bold").text("TOTAL", M, y);
-    doc.fontSize(12).fillColor(ORANGE).font("Helvetica-Bold")
+    doc.fontSize(12).fillColor(BRAND).font("Helvetica-Bold")
        .text(money(f.montant), M, y - 1, { width: INNER, align: "right" });
     y += 16;
 
@@ -407,10 +417,15 @@ async function generateRecu(req, res) {
 
     doc.fontSize(7).fillColor(GREY).font("Helvetica-Oblique")
        .text("Merci pour votre confiance !", 0, y, { width: W, align: "center" });
-    y += 11;
+    y += 12;
 
-    // ── Filet orange fin bas ──
-    doc.rect(0, H - 3, W, 3).fillColor(ORANGE).fill();
+    // ── Marque WariGest ──
+    doc.fontSize(6.5).fillColor(BRAND).font("Helvetica-Bold")
+       .text("Édité par WariGest", 0, y, { width: W, align: "center" });
+    y += 10;
+
+    // ── Filet WariGest fin bas ──
+    doc.rect(0, H - 3, W, 3).fillColor(BRAND).fill();
 
     doc.end();
   } catch (err) {

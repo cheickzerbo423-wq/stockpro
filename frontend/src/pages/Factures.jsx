@@ -125,7 +125,7 @@ export default function Factures() {
           { label: "CA Total",          value: fmt(totalCA),     color: "text-gray-800",    bg: "bg-white",            border: "border-gray-200" },
           { label: "Factures réglées",  value: nbReglees,        color: "text-emerald-600", bg: "bg-emerald-50",       border: "border-emerald-100" },
           { label: "Factures impayées", value: nbImpayees,       color: "text-red-600",     bg: "bg-red-50",           border: "border-red-100" },
-          { label: "Reste à recouvrer", value: fmt(totalReste),  color: "text-[#0023FF]",  bg: "bg-[#E6EAFF]",        border: "border-orange-100" },
+          { label: "Reste à recouvrer", value: fmt(totalReste),  color: "text-[#0023FF]",  bg: "bg-[#E6EAFF]",        border: "border-[#B3BFFF]" },
         ].map((k) => (
           <div key={k.label} className={`rounded-2xl border ${k.bg} ${k.border} p-4`}>
             <div className={`text-2xl font-black ${k.color}`}>{k.value}</div>
@@ -204,7 +204,7 @@ export default function Factures() {
                 <TD>
                   <button
                     onClick={() => viewFacture(f)}
-                    className="font-mono text-xs text-[#0023FF] hover:text-orange-800 hover:underline font-bold"
+                    className="font-mono text-xs text-[#0023FF] hover:text-[#0019CC] hover:underline font-bold"
                   >{f.code}</button>
                 </TD>
                 <TD>{fmtDate(f.date_facture)}</TD>
@@ -356,7 +356,7 @@ export default function Factures() {
           />
           <button
             onClick={() => setPayAmount(String(payModal.reste))}
-            className="text-xs text-[#0023FF] underline mt-1 hover:text-orange-800"
+            className="text-xs text-[#0023FF] underline mt-1 hover:text-[#0019CC]"
           >
             Solder entièrement ({fmt(payModal.reste)})
           </button>

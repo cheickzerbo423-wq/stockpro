@@ -168,7 +168,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                       className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[#E6EAFF] hover:text-[#0019CC] transition flex items-center gap-2
                         ${client === c.nom ? "bg-[#E6EAFF] text-[#0019CC] font-semibold" : "text-gray-700"}`}
                     >
-                      <span className="w-6 h-6 rounded-full bg-orange-100 text-[#0023FF] text-xs font-bold flex items-center justify-center flex-shrink-0">
+                      <span className="w-6 h-6 rounded-full bg-[#E6EAFF] text-[#0023FF] text-xs font-bold flex items-center justify-center flex-shrink-0">
                         {c.nom[0].toUpperCase()}
                       </span>
                       {c.nom}
@@ -203,13 +203,13 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
         <div className="flex md:hidden border-b border-gray-100 flex-shrink-0">
           <button
             onClick={() => setMobileTab("catalogue")}
-            className={`flex-1 py-2.5 text-xs font-bold transition ${mobileTab === "catalogue" ? "border-b-2 border-orange-500 text-[#0023FF] bg-[#E6EAFF]" : "text-gray-500"}`}
+            className={`flex-1 py-2.5 text-xs font-bold transition ${mobileTab === "catalogue" ? "border-b-2 border-[#0023FF] text-[#0023FF] bg-[#E6EAFF]" : "text-gray-500"}`}
           >
             🛍️ Catalogue
           </button>
           <button
             onClick={() => setMobileTab("panier")}
-            className={`flex-1 py-2.5 text-xs font-bold transition relative ${mobileTab === "panier" ? "border-b-2 border-orange-500 text-[#0023FF] bg-[#E6EAFF]" : "text-gray-500"}`}
+            className={`flex-1 py-2.5 text-xs font-bold transition relative ${mobileTab === "panier" ? "border-b-2 border-[#0023FF] text-[#0023FF] bg-[#E6EAFF]" : "text-gray-500"}`}
           >
             🛒 Panier
             {panier.length > 0 && (
@@ -250,7 +250,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                     key={a.code}
                     onClick={() => !rupture && addToCart(a)}
                     className={`flex items-center gap-3 px-4 py-3 border-b border-gray-50 transition-colors
-                      ${rupture ? "opacity-40 cursor-not-allowed bg-white" : "cursor-pointer hover:bg-[#E6EAFF] active:bg-orange-100"}
+                      ${rupture ? "opacity-40 cursor-not-allowed bg-white" : "cursor-pointer hover:bg-[#E6EAFF] active:bg-[#E6EAFF]"}
                       ${inCart > 0 ? "bg-[#E6EAFF]" : ""}`}
                   >
                     {/* Code + Libellé */}
@@ -574,7 +574,7 @@ export default function Ventes() {
                     <div className="flex items-center justify-between mb-1.5">
                       <button
                         onClick={() => viewFacture(v.facture_code)}
-                        className="font-mono text-xs font-bold bg-[#E6EAFF] text-[#0023FF] px-2 py-0.5 rounded-lg border border-[#B3BFFF] hover:bg-orange-100 hover:border-[#B3BFFF] transition"
+                        className="font-mono text-xs font-bold bg-[#E6EAFF] text-[#0023FF] px-2 py-0.5 rounded-lg border border-[#B3BFFF] hover:bg-[#E6EAFF] hover:border-[#B3BFFF] transition"
                       >
                         {loadingDetail === v.facture_code ? "…" : v.facture_code}
                       </button>
@@ -632,7 +632,7 @@ export default function Ventes() {
                       <TD>
                         <button
                           onClick={() => viewFacture(v.facture_code)}
-                          className="font-mono text-xs bg-[#E6EAFF] text-[#0023FF] px-2 py-0.5 rounded-lg border border-[#B3BFFF] hover:bg-orange-100 hover:border-[#B3BFFF] hover:underline transition"
+                          className="font-mono text-xs bg-[#E6EAFF] text-[#0023FF] px-2 py-0.5 rounded-lg border border-[#B3BFFF] hover:bg-[#E6EAFF] hover:border-[#B3BFFF] hover:underline transition"
                         >
                           {loadingDetail === v.facture_code ? "…" : v.facture_code}
                         </button>

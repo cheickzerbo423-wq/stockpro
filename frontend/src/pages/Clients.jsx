@@ -82,7 +82,7 @@ function FichePanel({ bilan, onClose, onPay }) {
                 <span className="text-3xl">{isClient ? "👤" : "🏭"}</span>
                 <h2 className="text-xl font-black truncate">{bilan.nom}</h2>
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${
-                  isClient ? "bg-blue-500 text-white" : "bg-orange-500 text-white"
+                  isClient ? "bg-[#0023FF] text-white" : "bg-[#FFF900] text-black"
                 }`}>
                   {isClient ? "Client" : "Fournisseur"}
                 </span>
@@ -139,7 +139,7 @@ function FichePanel({ bilan, onClose, onPay }) {
             {/* Évolution mensuelle */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-3">
-                <div className="h-4 w-1 bg-orange-500 rounded-full" />
+                <div className="h-4 w-1 bg-[#0023FF] rounded-full" />
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   {isClient ? "CA par mois" : "Achats par mois"}
                 </h3>
@@ -161,7 +161,7 @@ function FichePanel({ bilan, onClose, onPay }) {
                       </>
                     ) : (
                       <>
-                        <Bar dataKey="total" name="Achats" fill="#f97316" radius={[4,4,0,0]} />
+                        <Bar dataKey="total" name="Achats" fill="#0023FF" radius={[4,4,0,0]} />
                         <Bar dataKey="paye"  name="Payé"   fill="#10b981" radius={[4,4,0,0]} />
                       </>
                     )}
@@ -173,7 +173,7 @@ function FichePanel({ bilan, onClose, onPay }) {
             {/* Top articles */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-3">
-                <div className="h-4 w-1 bg-orange-500 rounded-full" />
+                <div className="h-4 w-1 bg-[#0023FF] rounded-full" />
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Top articles {isClient ? "achetés" : "fournis"}
                 </h3>
@@ -195,7 +195,7 @@ function FichePanel({ bilan, onClose, onPay }) {
                         <div className="flex items-center gap-2">
                           <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                             <div
-                              className="h-full rounded-full bg-orange-400"
+                              className="h-full rounded-full bg-[#0023FF]"
                               style={{ width: `${Math.round((val / topMax) * 100)}%`, opacity: 1 - i * 0.15 }}
                             />
                           </div>
@@ -212,7 +212,7 @@ function FichePanel({ bilan, onClose, onPay }) {
           {/* ── Historique des transactions ── */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b border-gray-50">
-              <div className="h-4 w-1 bg-orange-500 rounded-full" />
+              <div className="h-4 w-1 bg-[#0023FF] rounded-full" />
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                 {isClient ? `Factures (${bilan.transactions?.length || 0})` : `Achats (${bilan.transactions?.length || 0})`}
               </h3>
@@ -235,7 +235,7 @@ function FichePanel({ bilan, onClose, onPay }) {
                   )}
                   {isClient
                     ? bilan.transactions.map((t) => (
-                        <tr key={t.code} className="border-t border-gray-50 hover:bg-orange-50/40 transition-colors">
+                        <tr key={t.code} className="border-t border-gray-50 hover:bg-[#E6EAFF]/40 transition-colors">
                           <td className="px-3 py-2.5 font-mono font-bold text-blue-600">{t.code}</td>
                           <td className="px-3 py-2.5 text-gray-500">{fmtDate(t.date_facture)}</td>
                           <td className="px-3 py-2.5 font-bold text-gray-800">{fmt(t.montant)}</td>
@@ -247,7 +247,7 @@ function FichePanel({ bilan, onClose, onPay }) {
                         </tr>
                       ))
                     : bilan.transactions.map((t) => (
-                        <tr key={t.id} className="border-t border-gray-50 hover:bg-orange-50/40 transition-colors">
+                        <tr key={t.id} className="border-t border-gray-50 hover:bg-[#E6EAFF]/40 transition-colors">
                           <td className="px-3 py-2.5 font-medium text-gray-700 max-w-[120px] truncate">{t.libelle}</td>
                           <td className="px-3 py-2.5 text-gray-500">{fmtDate(t.date_achat)}</td>
                           <td className="px-3 py-2.5 text-right text-gray-700">{fmtN(t.quantite)}</td>
@@ -264,7 +264,8 @@ function FichePanel({ bilan, onClose, onPay }) {
                             {!t.statut && (
                               <button
                                 onClick={() => onPay(t)}
-                                className="text-xs bg-orange-500 text-white px-2 py-1 rounded-lg font-bold hover:bg-orange-600 transition-colors whitespace-nowrap"
+                                className="text-xs text-white px-2 py-1 rounded-lg font-bold transition-colors whitespace-nowrap"
+                                style={{ backgroundColor: "#0023FF" }}
                               >
                                 Payer
                               </button>
@@ -442,7 +443,8 @@ export default function Clients() {
       <div className="flex gap-2 mb-5">
         {["Clients", "Fournisseurs"].map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-5 py-2 rounded-xl text-sm font-bold transition border ${tab === t ? "bg-orange-500 text-white border-orange-500 shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"}`}>
+            style={tab === t ? { backgroundColor: "#0023FF" } : undefined}
+            className={`px-5 py-2 rounded-xl text-sm font-bold transition border ${tab === t ? "text-white border-transparent shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:border-[#B3BFFF]"}`}>
             {t === "Clients" ? "👤" : "🏭"} {t}
             <span className="ml-1 opacity-60">({all.filter(c => c.type === t).length})</span>
           </button>
@@ -494,7 +496,7 @@ export default function Clients() {
               <TR key={c.id} onClick={() => openBilan(c)}>
                 <TD bold>
                   <div className="flex items-center gap-2">
-                    {bilanLoading && <span className="w-3 h-3 border-2 border-orange-400 border-t-transparent rounded-full animate-spin inline-block" />}
+                    {bilanLoading && <span className="w-3 h-3 border-2 border-[#0023FF] border-t-transparent rounded-full animate-spin inline-block" />}
                     {c.nom}
                   </div>
                 </TD>
@@ -513,7 +515,7 @@ export default function Clients() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={(e) => { e.stopPropagation(); openEdit(c); }}
-                      className="text-gray-400 hover:text-orange-500 transition"
+                      className="text-gray-400 hover:text-[#0023FF] transition"
                       title="Modifier"
                     >
                       <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
@@ -559,7 +561,7 @@ export default function Clients() {
           />
           <div className="flex gap-2 mt-2">
             <button onClick={() => setPayAmount(String(payModal.reste))}
-              className="text-xs text-orange-600 underline">
+              className="text-xs text-[#0023FF] underline">
               Solder la dette ({fmt(payModal.reste)})
             </button>
           </div>

@@ -1,14 +1,14 @@
 // src/pages/Guide.jsx
 import { useState } from "react";
 
-const ORANGE = "#f97316";
+const BRAND = "#0023FF";
 
 /* ── Petits composants ─────────────────────────── */
 function Step({ n, children }) {
   return (
     <div className="flex gap-3 items-start">
       <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-white flex-shrink-0 mt-0.5"
-        style={{ background: ORANGE }}>
+        style={{ background: BRAND }}>
         {n}
       </div>
       <p className="text-sm text-gray-700 leading-relaxed">{children}</p>
@@ -33,7 +33,7 @@ function Tip({ icon = "💡", color = "amber", children }) {
 
 function Badge({ children, color }) {
   const map = {
-    orange: "bg-orange-100 text-orange-700 border-orange-200",
+    orange: "bg-[#E6EAFF] text-[#0023FF] border-[#B3BFFF]",
     blue:   "bg-blue-100 text-blue-700 border-blue-200",
     green:  "bg-emerald-100 text-emerald-700 border-emerald-200",
     red:    "bg-red-100 text-red-700 border-red-200",
@@ -46,7 +46,7 @@ function Badge({ children, color }) {
   );
 }
 
-function Section({ id, icon, title, subtitle, accentColor = "#f97316", children }) {
+function Section({ id, icon, title, subtitle, accentColor = "#0023FF", children }) {
   const [open, setOpen] = useState(true);
   return (
     <div id={id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-5 print:mb-4 print:break-inside-avoid">
@@ -78,7 +78,7 @@ function Section({ id, icon, title, subtitle, accentColor = "#f97316", children 
 function SectionTitle({ children }) {
   return (
     <div className="flex items-center gap-2 mt-1 mb-2">
-      <div className="h-3 w-0.5 bg-orange-400 rounded-full" />
+      <div className="h-3 w-0.5 bg-[#0023FF] rounded-full" />
       <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{children}</p>
     </div>
   );
@@ -104,28 +104,33 @@ export default function Guide() {
 
       {/* ── Hero ── */}
       <div className="rounded-2xl mb-6 overflow-hidden print:rounded-none print:mb-4"
-        style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #f97316 150%)" }}>
+        style={{ background: "linear-gradient(135deg, #0F172A 0%, #0F172A 55%, #0023FF55 100%)" }}>
         <div className="px-6 py-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-lg"
-              style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>
-              S
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+              style={{ background: "#0023FF" }}>
+              <svg viewBox="0 0 34 24" width="24" height="18" fill="none">
+                <path d="M2 3 C2 14 6.5 18 10 18 C13.5 18 14 10 14 10 C14 10 14.5 18 18 18 C21.5 18 26 14 26 3"
+                  stroke="white" strokeWidth="2.8" strokeLinecap="round" fill="none"/>
+                <line x1="31" y1="9" x2="31" y2="19" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
+                <circle cx="31" cy="4" r="2.4" fill="#FFF900"/>
+              </svg>
             </div>
             <div>
-              <div className="text-white font-black text-xl tracking-tight">StockPro</div>
-              <div className="text-orange-400 text-xs font-semibold">Gestion & Facturation</div>
+              <div className="text-white font-black text-xl tracking-tight">WariGest</div>
+              <div className="text-[#B3BFFF] text-xs font-semibold">Gestion & Facturation</div>
             </div>
           </div>
           <h1 className="text-2xl font-black text-white leading-tight mb-1">
             Guide Utilisateur
           </h1>
           <p className="text-slate-300 text-sm">
-            Tout ce qu'il faut savoir pour utiliser StockPro efficacement.
+            Tout ce qu'il faut savoir pour utiliser WariGest efficacement.
           </p>
           <div className="flex flex-wrap gap-2 mt-4">
             {modules.map(m => (
               <a key={m.id} href={`#${m.id}`}
-                className="text-xs font-bold px-3 py-1.5 rounded-xl bg-white/10 text-white hover:bg-orange-500 transition border border-white/10">
+                className="text-xs font-bold px-3 py-1.5 rounded-xl bg-white/10 text-white hover:bg-[#0023FF] transition border border-white/10">
                 {m.icon} {m.label}
               </a>
             ))}
@@ -137,7 +142,7 @@ export default function Guide() {
       <div className="flex justify-end mb-4 print:hidden">
         <button
           onClick={handlePrint}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm font-bold text-gray-600 hover:border-orange-300 hover:text-orange-600 transition shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm font-bold text-gray-600 hover:border-[#B3BFFF] hover:text-[#0023FF] transition shadow-sm"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
             <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
@@ -431,9 +436,9 @@ export default function Guide() {
             <div className="text-xs font-bold text-blue-800 mb-1">👤 Fiche Client</div>
             <p className="text-xs text-blue-600">CA · Encaissé · Créances · Historique factures</p>
           </div>
-          <div className="p-3 bg-orange-50 rounded-xl border border-orange-100">
-            <div className="text-xs font-bold text-orange-800 mb-1">🏭 Fiche Fournisseur</div>
-            <p className="text-xs text-orange-600">Total achats · Payé · Dettes · Bouton Payer intégré</p>
+          <div className="p-3 bg-[#E6EAFF] rounded-xl border border-[#B3BFFF]">
+            <div className="text-xs font-bold text-[#0023FF] mb-1">🏭 Fiche Fournisseur</div>
+            <p className="text-xs text-[#0023FF]/70">Total achats · Payé · Dettes · Bouton Payer intégré</p>
           </div>
         </div>
 
@@ -597,9 +602,16 @@ export default function Guide() {
       {/* ── Pied de page ── */}
       <div className="mt-4 mb-8 text-center text-xs text-gray-400 print:mt-2">
         <div className="inline-flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-4 py-2 shadow-sm">
-          <div className="w-5 h-5 rounded-md flex items-center justify-center text-white text-[10px] font-black"
-            style={{ background: ORANGE }}>S</div>
-          <span><strong className="text-gray-600">StockPro</strong> — Guide Utilisateur · Toutes les fonctionnalités</span>
+          <div className="w-5 h-5 rounded-md flex items-center justify-center"
+            style={{ background: BRAND }}>
+            <svg viewBox="0 0 18 14" width="12" height="9" fill="none">
+              <path d="M1 2 C1 8 3.5 10 5.5 10 C7.5 10 7.5 5.5 7.5 5.5 C7.5 5.5 7.5 10 9.5 10 C11.5 10 14 8 14 2"
+                stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
+              <line x1="16.5" y1="5" x2="16.5" y2="10.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+              <circle cx="16.5" cy="2" r="1.4" fill="#FFF900"/>
+            </svg>
+          </div>
+          <span><strong className="text-gray-600">WariGest</strong> — Guide Utilisateur · Toutes les fonctionnalités</span>
         </div>
       </div>
 

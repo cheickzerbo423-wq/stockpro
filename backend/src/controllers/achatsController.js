@@ -8,16 +8,17 @@ const MOIS = ["Janvier","Février","Mars","Avril","Mai","Juin",
 // GET /api/achats
 async function getAll(req, res) {
   try {
-    const { fournisseur, article, annee } = req.query;
+    const { fournisseur, article, mois, annee } = req.query;
     let q = `
       SELECT *,
-        (montant_total - montant_paye) AS reste,
-        (montant_paye >= montant_total) AS statut
+        (montant_total - montant_paye)          AS reste,
+        (montant_paye >= montant_total)          AS statut
       FROM achats WHERE 1=1`;
     const params = [];
     let idx = 1;
     if (fournisseur) { q += ` AND fournisseur_nom ILIKE $${idx++}`; params.push(`%${fournisseur}%`); }
     if (article)     { q += ` AND article_code = $${idx++}`;        params.push(article); }
+    if (mois)        { q += ` AND mois = $${idx++}`;                params.push(mois); }
     if (annee)       { q += ` AND annee = $${idx++}`;               params.push(annee); }
     q += ` ORDER BY date_achat ASC, id ASC`;
     const result = await db.query(q, params);
@@ -40,17 +41,20 @@ async function create(req, res) {
     if (!art.rows[0])
       return res.status(404).json({ message: "Article introuvable." });
 
-    const date       = date_achat || new Date().toISOString().split("T")[0];
+    const date  = date_achat || new Date().toISOString().split("T")[0];
+    const mois  = MOIS[new Date(date).getMonth()];
+    const annee = new Date(date).getFullYear();
+
     const montantTotal = parseInt(prix_achat) * parseInt(quantite);
     const montantPaye  = req.body.montant_paye !== undefined
       ? Math.min(parseFloat(req.body.montant_paye), montantTotal)
       : montantTotal;
 
     const result = await db.query(
-      `INSERT INTO achats (article_code, libelle, fournisseur_id, fournisseur_nom, prix_achat, prix_unitaire, quantite, montant_total, date_achat, user_id, montant_paye)
-       VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO achats (article_code, libelle, fournisseur_id, fournisseur_nom, prix_achat, quantite, date_achat, mois, annee, user_id, montant_paye)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
-      [article_code, art.rows[0].libelle, fournisseur_id || null, fournisseur_nom || "", parseInt(prix_achat), parseInt(quantite), montantTotal, date, req.user?.id || null, montantPaye]
+      [article_code, art.rows[0].libelle, fournisseur_id || null, fournisseur_nom || "", parseInt(prix_achat), parseInt(quantite), date, mois, annee, req.user?.id || null, montantPaye]
     );
 
     // Retourner aussi le stock mis à jour
@@ -98,19 +102,10 @@ async function updatePaiement(req, res) {
     if (parseFloat(montant_paye) < parseFloat(achat.rows[0].montant_paye))
       return res.status(400).json({ message: "Le montant payé ne peut pas diminuer." });
 
-    const nouveauPaye = parseFloat(montant_paye);
     const result = await db.query(
-      `UPDATE achats
-       SET montant_paye     = $1,
-           statut_paiement  = CASE
-             WHEN $1 >= montant_total THEN 'Payé'
-             WHEN $1 > 0             THEN 'Partiellement payé'
-             ELSE 'Non payé'
-           END,
-           updated_at       = NOW()
-       WHERE id = $2
+      `UPDATE achats SET montant_paye = $1 WHERE id = $2
        RETURNING *, (montant_total - montant_paye) AS reste, (montant_paye >= montant_total) AS statut`,
-      [nouveauPaye, id]
+      [parseFloat(montant_paye), id]
     );
     if (!result.rows[0]) return res.status(404).json({ message: "Achat introuvable." });
     res.json(result.rows[0]);

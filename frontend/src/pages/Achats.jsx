@@ -349,7 +349,7 @@ export default function Achats() {
                   onBlur={() => setTimeout(() => setFournisseurOpen(false), 150)}
                   placeholder="Rechercher un fournisseur…"
                   className={`w-full pl-8 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] transition
-                    ${fournisseurNom ? "border-[#B3BFFF] bg-[#E6EAFF] text-orange-700 font-semibold" : "border-gray-200 bg-white text-gray-800"}`}
+                    ${fournisseurNom ? "border-[#B3BFFF] bg-[#E6EAFF] text-[#0023FF] font-semibold" : "border-gray-200 bg-white text-gray-800"}`}
                 />
                 {fournisseurNom && (
                   <button
@@ -378,10 +378,10 @@ export default function Achats() {
                         key={f.id}
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={() => { setFournisseurNom(f.nom); setFournisseurId(f.id); setFournisseurQ(f.nom); setFournisseurOpen(false); }}
-                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[#E6EAFF] hover:text-orange-700 transition flex items-center gap-2
-                          ${fournisseurNom === f.nom ? "bg-[#E6EAFF] text-orange-700 font-semibold" : "text-gray-700"}`}
+                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[#E6EAFF] hover:text-[#0023FF] transition flex items-center gap-2
+                          ${fournisseurNom === f.nom ? "bg-[#E6EAFF] text-[#0023FF] font-semibold" : "text-gray-700"}`}
                       >
-                        <span className="w-6 h-6 rounded-full bg-orange-100 text-[#0023FF] text-xs font-bold flex items-center justify-center flex-shrink-0">
+                        <span className="w-6 h-6 rounded-full bg-[#E6EAFF] text-[#0023FF] text-xs font-bold flex items-center justify-center flex-shrink-0">
                           {f.nom[0].toUpperCase()}
                         </span>
                         {f.nom}

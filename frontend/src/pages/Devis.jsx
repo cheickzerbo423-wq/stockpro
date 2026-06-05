@@ -101,10 +101,11 @@ export default function Devis() {
           { key: "Facture",    label: "🧾 Facturés" },
         ].map(f => (
           <button key={f.key} onClick={() => setFilterStatut(f.key)}
+            style={filterStatut === f.key ? { backgroundColor: "#0023FF" } : undefined}
             className={`px-4 py-1.5 rounded-xl text-xs font-bold transition border ${
               filterStatut === f.key
-                ? "bg-orange-500 text-white border-orange-500"
-                : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
+                ? "text-white border-transparent"
+                : "bg-white text-gray-600 border-gray-200 hover:border-[#B3BFFF]"
             }`}>
             {f.label}
             <span className="ml-1 opacity-60">({f.key === "tous" ? devis.length : devis.filter(d => d.statut === f.key).length})</span>
@@ -167,9 +168,9 @@ export default function Devis() {
                 <p className="text-xs text-gray-400 font-bold mb-1">DATE D'ÉMISSION</p>
                 <p className="font-semibold text-sm">{selectefmtDate(d.date_emission)}</p>
               </div>
-              <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
-                <p className="text-xs text-orange-500 font-bold mb-1">MONTANT</p>
-                <p className="font-black text-orange-700 text-lg">{fmt(selected.montant)}</p>
+              <div className="bg-[#E6EAFF] rounded-xl p-3 border border-[#B3BFFF]">
+                <p className="text-xs text-[#0023FF] font-bold mb-1">MONTANT</p>
+                <p className="font-black text-[#0023FF] text-lg">{fmt(selected.montant)}</p>
               </div>
             </div>
             {selected.num_commande && (

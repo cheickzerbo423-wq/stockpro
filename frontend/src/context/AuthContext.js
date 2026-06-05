@@ -11,8 +11,8 @@ export function AuthProvider({ children }) {
 
   // Au démarrage : vérifier si un token valide existe déjà
   useEffect(() => {
-    const token = localStorage.getItem("stockpro_token");
-    const savedUser = localStorage.getItem("stockpro_user");
+    const token = localStorage.getItem("warigest_token");
+    const savedUser = localStorage.getItem("warigest_user");
     if (token && savedUser) {
       try {
         setUser(JSON.parse(savedUser));
@@ -26,8 +26,8 @@ export function AuthProvider({ children }) {
   // Connexion
   const login = async (login, mdp) => {
     const data = await authService.login(login, mdp);
-    localStorage.setItem("stockpro_token", data.token);
-    localStorage.setItem("stockpro_user", JSON.stringify(data.user));
+    localStorage.setItem("warigest_token", data.token);
+    localStorage.setItem("warigest_user", JSON.stringify(data.user));
     setUser(data.user);
     return data.user;
   };

@@ -1,7 +1,7 @@
 {
-  "name": "stockpro-backend",
+  "name": "warigest-backend",
   "version": "1.0.0",
-  "description": "StockPro - API Backend Node.js + Express + PostgreSQL",
+  "description": "WariGest - API Backend Node.js + Express + PostgreSQL",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

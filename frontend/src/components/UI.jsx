@@ -124,7 +124,7 @@ export function Select({ label, children, ...props }) {
 }
 
 // ── Bouton ────────────────────────────────────────────────
-export function Btn({ children, onClick, color = "orange", sm, loading, type = "button" }) {
+export function Btn({ children, onClick, color = "blue", sm, loading, type = "button" }) {
   const variants = {
     orange: "text-white shadow-sm",
     green:  "bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white shadow-sm shadow-emerald-200",

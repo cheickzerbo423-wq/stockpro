@@ -149,7 +149,7 @@ export default function Articles() {
                     </span>
                   </TD>
                   <TD>
-                    <Badge color={stock > 0 ? (stock <= parseInt(a.stock_min) ? "orange" : "emerald") : "red"}>
+                    <Badge color={stock > 0 ? (stock <= parseInt(a.stock_min) ? "amber" : "emerald") : "red"}>
                       {a.statut}
                     </Badge>
                   </TD>

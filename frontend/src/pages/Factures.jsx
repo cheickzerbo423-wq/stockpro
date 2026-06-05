@@ -145,7 +145,7 @@ export default function Factures() {
             className="h-2 rounded-full transition-all duration-500"
             style={{
               width: `${tauxRegl}%`,
-              background: tauxRegl >= 80 ? "#16A34A" : tauxRegl >= 50 ? "#F97316" : "#DC2626",
+              background: tauxRegl >= 80 ? "#16A34A" : tauxRegl >= 50 ? "#EAB308" : "#DC2626",
             }}
           />
         </div>

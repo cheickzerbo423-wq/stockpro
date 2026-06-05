@@ -13,7 +13,7 @@ const api = axios.create({
 // ─── Intercepteur REQUEST : ajoute le token JWT automatiquement ───
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("stockpro_token");
+    const token = localStorage.getItem("warigest_token");
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
@@ -26,8 +26,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token expiré → déconnexion automatique
-      localStorage.removeItem("stockpro_token");
-      localStorage.removeItem("stockpro_user");
+      localStorage.removeItem("warigest_token");
+      localStorage.removeItem("warigest_user");
       window.location.href = "/login";
     }
     return Promise.reject(error);

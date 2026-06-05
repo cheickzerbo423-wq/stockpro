@@ -93,7 +93,7 @@ function Layout({ children }) {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: "#F8F9FB", fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: "#F8F9FB", fontFamily: "'Nunito', 'Segoe UI', system-ui, sans-serif" }}>
 
       {/* ── Overlay mobile ── */}
       {drawerOpen && (

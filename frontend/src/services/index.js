@@ -13,8 +13,8 @@ export const authService = {
     api.get("/auth/me").then((r) => r.data),
 
   logout: () => {
-    localStorage.removeItem("stockpro_token");
-    localStorage.removeItem("stockpro_user");
+    localStorage.removeItem("warigest_token");
+    localStorage.removeItem("warigest_user");
   },
 };
 
@@ -120,7 +120,7 @@ export const facturesService = {
 
   // Ouvre le PDF dans un nouvel onglet
   openPDF: async (code) => {
-    const token = localStorage.getItem("stockpro_token");
+    const token = localStorage.getItem("warigest_token");
     const url = `${process.env.REACT_APP_API_URL || "http://localhost:3000/api"}/factures/${encodeURIComponent(code)}/pdf`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) throw new Error("Erreur serveur");
@@ -132,7 +132,7 @@ export const facturesService = {
 
   // Télécharge le PDF directement
   downloadPDF: async (code) => {
-    const token = localStorage.getItem("stockpro_token");
+    const token = localStorage.getItem("warigest_token");
     const url = `${process.env.REACT_APP_API_URL || "http://localhost:3000/api"}/factures/${encodeURIComponent(code)}/pdf`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) throw new Error("Erreur serveur");
@@ -148,7 +148,7 @@ export const facturesService = {
   },
 
   openRecu: async (code) => {
-    const token = localStorage.getItem("stockpro_token");
+    const token = localStorage.getItem("warigest_token");
     const url = `${process.env.REACT_APP_API_URL || "http://localhost:3000/api"}/factures/${encodeURIComponent(code)}/recu`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) throw new Error("Erreur serveur");
@@ -192,7 +192,7 @@ export const rapportsService = {
     api.get("/rapports", { params: { debut, fin } }).then((r) => r.data),
 
   exportPDF: async (debut, fin) => {
-    const token = localStorage.getItem("stockpro_token");
+    const token = localStorage.getItem("warigest_token");
     const base  = process.env.REACT_APP_API_URL || "http://localhost:3000/api";
     const res   = await fetch(`${base}/rapports/pdf?debut=${debut}&fin=${fin}`, {
       headers: { Authorization: `Bearer ${token}` },

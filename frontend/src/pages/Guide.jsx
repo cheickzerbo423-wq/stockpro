@@ -283,7 +283,7 @@ export default function Guide() {
             <div className="text-xs text-gray-500 mt-0.5">Stock OK</div>
           </div>
           <div className="text-center p-2 bg-amber-50 border border-amber-100 rounded-xl">
-            <div className="text-amber-600 font-black text-sm">Orange</div>
+            <div className="text-amber-600 font-black text-sm">Ambre</div>
             <div className="text-xs text-gray-500 mt-0.5">Stock bas</div>
           </div>
           <div className="text-center p-2 bg-red-50 border border-red-100 rounded-xl">

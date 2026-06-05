@@ -1,6 +1,6 @@
 // src/pages/Achats.jsx
 import { useState, useMemo, useRef, useEffect } from "react";
-import { useAchats, useArticles, useClients, useGammes, useMutation, useSortableData } from "../hooks/useApi";
+import { useAchats, useArticles, useClients, useMutation, useSortableData } from "../hooks/useApi";
 import { achatsService, clientsService } from "../services";
 import {
   fmt, fmtN, fmtDate, today, Spinner, ErrorBox, Badge,
@@ -47,46 +47,19 @@ function MiniForm({ title, icon, onSave, onCancel, saving }) {
   );
 }
 
-const GAMME_COLORS = ["purple","teal","blue","orange","pink","indigo"];
-
 /* ─── Ligne de commande ─────────────────────────────── */
-function LigneCommande({ ligne, articles, gammes = [], onUpdate, onRemove }) {
-  const [search, setSearch]       = useState(ligne.libelle || "");
-  const [open, setOpen]           = useState(false);
-  const [gammeFilter, setGammeFilter] = useState(""); // "" = tous
-  const ref                       = useRef(null);
-
-  // Couleur par gamme
-  const gammeColorMap = Object.fromEntries(
-    gammes.map((g, i) => [g.code, GAMME_COLORS[i % GAMME_COLORS.length]])
-  );
+function LigneCommande({ ligne, articles, onUpdate, onRemove }) {
+  const [search, setSearch] = useState(ligne.libelle || "");
+  const [open, setOpen]     = useState(false);
+  const ref                 = useRef(null);
 
   const suggestions = useMemo(() => {
-    let pool = articles;
-    if (gammeFilter) pool = pool.filter((a) => a.gamme_code === gammeFilter);
-    if (!search.trim() || ligne.article_code) return pool.slice(0, 60);
+    if (!search.trim() || ligne.article_code) return articles.slice(0, 60);
     const q = search.toLowerCase();
-    return pool.filter(
+    return articles.filter(
       (a) => a.code.toLowerCase().includes(q) || a.libelle.toLowerCase().includes(q)
     ).slice(0, 60);
-  }, [search, articles, gammeFilter, ligne.article_code]);
-
-  // Groupement : gammes en premier, puis standalone
-  const grouped = useMemo(() => {
-    if (gammeFilter) return [{ type: "list", items: suggestions }];
-    const withGamme    = suggestions.filter((a) => a.gamme_code);
-    const withoutGamme = suggestions.filter((a) => !a.gamme_code);
-    const gammeGroups  = gammes
-      .map((g) => ({ type: "gamme", gamme: g, items: withGamme.filter((a) => a.gamme_code === g.code) }))
-      .filter((g) => g.items.length > 0);
-    const result = [...gammeGroups];
-    if (withoutGamme.length > 0) result.push({ type: "standalone", items: withoutGamme });
-    return result.length > 0 ? result : [{ type: "list", items: suggestions }];
-  }, [suggestions, gammes, gammeFilter]);
-
-  // Infos gamme de l'article sélectionné
-  const selectedArticle = ligne.article_code ? articles.find((a) => a.code === ligne.article_code) : null;
-  const selectedGamme   = selectedArticle?.gamme_code ? gammes.find((g) => g.code === selectedArticle.gamme_code) : null;
+  }, [search, articles, ligne.article_code]);
 
   useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
@@ -101,42 +74,9 @@ function LigneCommande({ ligne, articles, gammes = [], onUpdate, onRemove }) {
   };
 
   const total = (+ligne.prix_achat || 0) * (+ligne.quantite || 0);
-  const color = gammeFilter ? gammeColorMap[gammeFilter] : null;
 
   return (
-    <div className={`rounded-xl p-3 border space-y-2 ${gammeFilter
-      ? color === "purple" ? "bg-purple-50 border-purple-200"
-      : color === "teal"   ? "bg-teal-50 border-teal-200"
-      : color === "blue"   ? "bg-blue-50 border-blue-200"
-      : "bg-[#E6EAFF] border-orange-200"
-      : "bg-gray-50 border-gray-200"}`}>
-
-      {/* Filtre par gamme */}
-      {gammes.length > 0 && (
-        <div className="flex flex-wrap gap-1 pb-1">
-          <button
-            type="button"
-            onClick={() => setGammeFilter("")}
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition
-              ${!gammeFilter ? "bg-gray-700 text-white" : "bg-white border border-gray-200 text-gray-500 hover:border-gray-400"}`}
-          >Tous</button>
-          {gammes.map((g, i) => {
-            const c = GAMME_COLORS[i % GAMME_COLORS.length];
-            const active = gammeFilter === g.code;
-            return (
-              <button key={g.code} type="button"
-                onClick={() => setGammeFilter(active ? "" : g.code)}
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition
-                  ${active
-                    ? c === "purple" ? "bg-purple-500 text-white" : c === "teal" ? "bg-teal-500 text-white" : c === "blue" ? "bg-blue-500 text-white" : "bg-[#0023FF] text-white"
-                    : c === "purple" ? "bg-purple-100 text-purple-700 hover:bg-purple-200" : c === "teal" ? "bg-teal-100 text-teal-700 hover:bg-teal-200" : c === "blue" ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : "bg-orange-100 text-orange-700 hover:bg-orange-200"}`}
-              >🗂 {g.nom}</button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Ligne 1 : Article + supprimer */}
+    <div className="rounded-xl p-3 border bg-gray-50 border-gray-200 space-y-2">
       <div className="flex items-end gap-2">
         <div className="flex-1 relative" ref={ref}>
           <label className="block text-xs font-semibold text-gray-500 mb-1">Article *</label>
@@ -147,96 +87,47 @@ function LigneCommande({ ligne, articles, gammes = [], onUpdate, onRemove }) {
             onChange={(e) => { setSearch(e.target.value); setOpen(true); onUpdate({ ...ligne, article_code: "", libelle: "" }); }}
             onFocus={() => setOpen(true)}
           />
-          <span
-            className="absolute right-3 top-8 text-gray-400 cursor-pointer select-none"
-            onMouseDown={(e) => { e.preventDefault(); setOpen((v) => !v); }}
-          >▾</span>
+          <span className="absolute right-3 top-8 text-gray-400 cursor-pointer select-none"
+            onMouseDown={(e) => { e.preventDefault(); setOpen((v) => !v); }}>▾</span>
 
           {open && (
             <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
-              {grouped.map((group, gi) => (
-                <div key={gi}>
-                  {/* En-tête de groupe gamme */}
-                  {group.type === "gamme" && (
-                    <div className="sticky top-0 px-3 py-1.5 bg-purple-50 border-b border-purple-100 flex items-center gap-1.5">
-                      <span className="text-[10px] font-black text-purple-600 uppercase tracking-wider">🗂 {group.gamme.nom}</span>
-                      <span className="text-[10px] text-purple-400">— stock partagé</span>
-                    </div>
-                  )}
-                  {group.type === "standalone" && grouped.some((g) => g.type === "gamme") && (
-                    <div className="sticky top-0 px-3 py-1.5 bg-gray-50 border-b border-gray-100">
-                      <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider">Articles individuels</span>
-                    </div>
-                  )}
-                  {group.items.length === 0 && group.type !== "list" ? null : group.items.map((a) => (
-                    <div
-                      key={a.code}
-                      onMouseDown={() => selectArticle(a)}
-                      className="px-3 py-2 cursor-pointer hover:bg-[#E6EAFF] text-sm flex justify-between items-center gap-2"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-bold text-[#0023FF] shrink-0">{a.code}</span>
-                        <span className="text-gray-700 truncate">{a.libelle}</span>
-                        {a.gamme_code && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-600 shrink-0">
-                            ×{a.unite_par_base}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-xs text-gray-400 shrink-0">Stock: {a.stock_restant ?? "?"}</span>
-                    </div>
-                  ))}
+              {suggestions.length === 0 ? (
+                <div className="px-3 py-3 text-xs text-gray-400 text-center">Aucun article trouvé</div>
+              ) : suggestions.map((a) => (
+                <div key={a.code} onMouseDown={() => selectArticle(a)}
+                  className="px-3 py-2 cursor-pointer hover:bg-[#E6EAFF] text-sm flex justify-between items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-bold text-[#0023FF] shrink-0">{a.code}</span>
+                    <span className="text-gray-700 truncate">{a.libelle}</span>
+                  </div>
+                  <span className="text-xs text-gray-400 shrink-0">Stock: {a.stock_restant ?? "?"}</span>
                 </div>
               ))}
-              {grouped.every((g) => g.items.length === 0) && (
-                <div className="px-3 py-3 text-xs text-gray-400 text-center">Aucun article trouvé</div>
-              )}
             </div>
           )}
         </div>
-        <button
-          onClick={onRemove}
+        <button onClick={onRemove}
           className="w-8 h-8 mb-0.5 flex items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 transition shrink-0"
-          title="Supprimer cette ligne"
-        >✕</button>
+          title="Supprimer">✕</button>
       </div>
 
-      {/* Info gamme si article sélectionné appartient à une gamme */}
-      {selectedGamme && (
-        <div className="flex items-center gap-2 px-2 py-1.5 bg-purple-50 rounded-lg border border-purple-100 text-xs text-purple-700">
-          <span className="font-bold">🗂 {selectedGamme.nom}</span>
-          <span className="text-purple-400">·</span>
-          <span>×{selectedArticle.unite_par_base} unité(s) de base par article</span>
-          <span className="text-purple-400">·</span>
-          <span>Stock actuel : {selectedArticle.stock_restant}</span>
-        </div>
-      )}
-
-      {/* Ligne 2 : Quantité + Prix unitaire + Total */}
       <div className="grid grid-cols-3 gap-2 items-end">
         <div>
           <label className="block text-xs font-semibold text-gray-500 mb-1">Quantité *</label>
-          <input
-            type="number" min="1"
+          <input type="number" min="1"
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white"
-            value={ligne.quantite}
-            onChange={(e) => onUpdate({ ...ligne, quantite: e.target.value })}
-            placeholder="0"
-          />
+            value={ligne.quantite} onChange={(e) => onUpdate({ ...ligne, quantite: e.target.value })} placeholder="0" />
         </div>
         <div>
           <label className="block text-xs font-semibold text-gray-500 mb-1">P.U. (FCFA) *</label>
-          <input
-            type="number" min="0"
+          <input type="number" min="0"
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white"
-            value={ligne.prix_achat}
-            onChange={(e) => onUpdate({ ...ligne, prix_achat: e.target.value })}
-            placeholder="0"
-          />
+            value={ligne.prix_achat} onChange={(e) => onUpdate({ ...ligne, prix_achat: e.target.value })} placeholder="0" />
         </div>
         <div className="flex flex-col items-center justify-center bg-[#E6EAFF] rounded-lg py-2 px-1 border border-[#B3BFFF]">
           <span className="text-xs text-[#0023FF] font-bold uppercase">Total</span>
-          <span className="text-sm font-black text-orange-700">{fmt(total)}</span>
+          <span className="text-sm font-black text-[#0023FF]">{fmt(total)}</span>
         </div>
       </div>
     </div>
@@ -247,7 +138,6 @@ function LigneCommande({ ligne, articles, gammes = [], onUpdate, onRemove }) {
 export default function Achats() {
   const { data: achats = [], loading, error, reload } = useAchats();
   const { data: articles = [] }     = useArticles();
-  const { data: gammes = [] }       = useGammes();
   const { data: fournisseurs = [], reload: reloadFournisseurs } = useClients("Fournisseurs");
   const { mutate: createAchat, loading: saving } = useMutation(achatsService.create);
   const { mutate: payAchat }        = useMutation(achatsService.updatePaiement);
@@ -258,10 +148,6 @@ export default function Achats() {
   const [payAmount, setPayAmount] = useState("");
   const [toast, setToast]       = useState(null);
   const [searchTable, setSearchTable] = useState("");
-  const [showGammePanel,  setShowGammePanel]  = useState(false);
-  const [gammeSelectee,   setGammeSelectee]   = useState(null);
-  const [gammeQteBase,    setGammeQteBase]    = useState("");
-  const [gammePrixBase,   setGammePrixBase]   = useState("");
 
   /* ── Formulaire multi-lignes ── */
   const emptyLigne = () => ({ id: Date.now() + Math.random(), article_code: "", libelle: "", quantite: "", prix_achat: "" });
@@ -295,37 +181,6 @@ export default function Achats() {
     setFournisseurQ("");
     setDateAchat(today());
     setMontantPaye("");
-    setShowGammePanel(false);
-    setGammeSelectee(null);
-    setGammeQteBase("");
-    setGammePrixBase("");
-  };
-
-  /* ── Ravitaillement rapide : 1 ligne pour l'article de référence ── */
-  const addGammeRapide = () => {
-    if (!gammeSelectee || !gammeQteBase) return;
-    // Article de référence = celui avec le plus petit unite_par_base (idéalement 1)
-    const ref = articles
-      .filter((a) => a.gamme_code === gammeSelectee.code)
-      .sort((a, b) => (a.unite_par_base || 1) - (b.unite_par_base || 1))[0];
-    if (!ref) return;
-    const upb      = ref.unite_par_base || 1;
-    const qteBase  = parseFloat(gammeQteBase)  || 0;
-    const prixBase = parseFloat(gammePrixBase) || 0;
-    const quantite   = Math.round(qteBase * upb);
-    const prix_achat = upb > 0 ? Math.round(prixBase / upb) : prixBase;
-    const lignesNonVides = lignes.filter((l) => l.article_code);
-    setLignes([...lignesNonVides, {
-      id: Date.now() + Math.random(),
-      article_code: ref.code,
-      libelle: ref.libelle,
-      quantite: String(quantite),
-      prix_achat: String(prix_achat),
-    }]);
-    setShowGammePanel(false);
-    setGammeSelectee(null);
-    setGammeQteBase("");
-    setGammePrixBase("");
   };
 
   /* ── Enregistrement multi-produits ── */
@@ -576,7 +431,6 @@ export default function Achats() {
                 key={ligne.id}
                 ligne={ligne}
                 articles={articles}
-                gammes={gammes}
                 onUpdate={(updated) => setLignes(lignes.map((l) => l.id === ligne.id ? updated : l))}
                 onRemove={() => lignes.length > 1 && setLignes(lignes.filter((l) => l.id !== ligne.id))}
               />
@@ -587,103 +441,17 @@ export default function Achats() {
           <div className="flex gap-2 mb-4">
             <button
               onClick={() => setLignes([...lignes, emptyLigne()])}
-              className="flex-1 py-2 border-2 border-dashed border-orange-200 rounded-xl text-[#0023FF] text-sm font-bold hover:bg-[#E6EAFF] transition"
+              className="flex-1 py-2 border-2 border-dashed border-[#B3BFFF] rounded-xl text-[#0023FF] text-sm font-bold hover:bg-[#E6EAFF] transition"
             >
               + Ajouter un produit
             </button>
-            {gammes.length > 0 && (
-              <div className="relative">
-                <button
-                  onClick={() => { setShowGammePanel((v) => !v); setGammeSelectee(null); setGammeQteBase(""); setGammePrixBase(""); }}
-                  className={`py-2 px-4 border-2 rounded-xl text-sm font-bold transition
-                    ${showGammePanel
-                      ? "border-purple-400 bg-purple-500 text-white"
-                      : "border-dashed border-purple-300 text-purple-600 hover:bg-purple-50"}`}
-                >
-                  🗂 Gamme rapide
-                </button>
-
-                {showGammePanel && (
-                  <div className="absolute right-0 top-full mt-1 z-30 bg-white border border-purple-200 rounded-xl shadow-lg overflow-hidden"
-                    style={{ width: 280 }}>
-
-                    {/* Étape 1 — choisir la gamme */}
-                    {!gammeSelectee && (<>
-                      <div className="px-3 py-2 bg-purple-50 border-b border-purple-100">
-                        <p className="text-xs font-black text-purple-700">Choisir une gamme</p>
-                        <p className="text-[10px] text-purple-400">1 seule opération pour toute la famille</p>
-                      </div>
-                      {gammes.map((g) => {
-                        const variantes = articles.filter((a) => a.gamme_code === g.code);
-                        return (
-                          <button key={g.code}
-                            onClick={() => { setGammeSelectee(g); setGammePrixBase(""); setGammeQteBase(""); }}
-                            className="w-full text-left px-3 py-2.5 hover:bg-purple-50 transition flex items-center justify-between border-b border-gray-50 last:border-0">
-                            <span className="text-sm font-bold text-gray-800">{g.nom}</span>
-                            <span className="text-xs text-purple-400 font-semibold">{variantes.length} variante{variantes.length > 1 ? "s" : ""} →</span>
-                          </button>
-                        );
-                      })}
-                    </>)}
-
-                    {/* Étape 2 — saisir qté et prix en base */}
-                    {gammeSelectee && (() => {
-                      const ref = articles
-                        .filter((a) => a.gamme_code === gammeSelectee.code)
-                        .sort((a, b) => (a.unite_par_base || 1) - (b.unite_par_base || 1))[0];
-                      const upb = ref?.unite_par_base || 1;
-                      const qte = parseFloat(gammeQteBase) || 0;
-                      const px  = parseFloat(gammePrixBase) || 0;
-                      const total = qte * px;
-                      return (
-                        <div className="p-3 space-y-3">
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => setGammeSelectee(null)}
-                              className="text-purple-400 hover:text-purple-600 text-lg leading-none">‹</button>
-                            <div>
-                              <p className="text-xs font-black text-purple-800">{gammeSelectee.nom}</p>
-                              <p className="text-[10px] text-purple-400">Réf. : {ref?.libelle} (×{upb})</p>
-                            </div>
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-bold text-gray-500 uppercase">Quantité reçue (unités de base)</label>
-                            <input autoFocus type="number" min="1" value={gammeQteBase}
-                              onChange={(e) => setGammeQteBase(e.target.value)}
-                              placeholder="ex: 10"
-                              className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300" />
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-bold text-gray-500 uppercase">Prix par unité de base (FCFA)</label>
-                            <input type="number" min="0" value={gammePrixBase}
-                              onChange={(e) => setGammePrixBase(e.target.value)}
-                              placeholder="ex: 5000"
-                              className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300" />
-                          </div>
-                          {total > 0 && (
-                            <div className="text-center py-1 bg-purple-50 rounded-lg text-xs font-black text-purple-700">
-                              Total : {fmt(total)}
-                            </div>
-                          )}
-                          <button
-                            onClick={addGammeRapide}
-                            disabled={!gammeQteBase || parseFloat(gammeQteBase) <= 0}
-                            className="w-full py-2 bg-purple-600 text-white text-sm font-bold rounded-xl hover:bg-purple-700 disabled:opacity-40 transition">
-                            Ajouter cette gamme
-                          </button>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Total & Paiement */}
           <div className="border-t border-gray-100 pt-4">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-bold text-gray-600">Montant total de la commande</span>
-              <span className="text-2xl font-black text-orange-700">{fmt(totalCommande)}</span>
+              <span className="text-2xl font-black text-[#0023FF]">{fmt(totalCommande)}</span>
             </div>
             <p className="text-xs font-bold text-gray-500 uppercase mb-2">Mode de paiement</p>
             <div className="flex gap-2 mb-2">

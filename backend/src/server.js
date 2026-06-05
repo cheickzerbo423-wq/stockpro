@@ -1,4 +1,4 @@
-// src/server.js — Point d'entrée principal de StockPro API
+// src/server.js — Point d'entrée principal de WariGest API
 require("dotenv").config();
 const express = require("express");
 const cors    = require("cors");
@@ -39,7 +39,7 @@ app.use("/api", routes);
 app.get("/health", (_req, res) => {
   res.json({
     status: "OK",
-    app:    "StockPro API",
+    app:    "WariGest API",
     version: "1.0.0",
     time:   new Date().toISOString(),
     env:    process.env.NODE_ENV || "development",
@@ -49,7 +49,7 @@ app.get("/health", (_req, res) => {
 // Route racine
 app.get("/", (_req, res) => {
   res.json({
-    message: "Bienvenue sur l'API StockPro",
+    message: "Bienvenue sur l'API WariGest",
     version: "1.0.0",
     docs:    "/api/...",
     health:  "/health",
@@ -76,7 +76,7 @@ app.use((err, _req, res, _next) => {
 // ============================================================
 app.listen(PORT, () => {
   console.log("\n╔════════════════════════════════════════╗");
-  console.log(`║  StockPro API  — v1.0.0                ║`);
+  console.log(`║  WariGest API  — v1.0.0                ║`);
   console.log(`║  Port    : ${PORT}                          ║`);
   console.log(`║  Env     : ${(process.env.NODE_ENV || "development").padEnd(27)}║`);
   console.log("╚════════════════════════════════════════╝\n");

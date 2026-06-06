@@ -71,19 +71,21 @@ async function create(req, res) {
     const total   = articles.reduce((s, a) => s + a.prix_vente * a.quantite, 0);
     const paye    = (montant_paye !== undefined && montant_paye !== null) ? parseFloat(montant_paye) : total;
     const monnaie = Math.max(0, paye - total);
-    const reste   = parseFloat(Math.max(0, total - paye).toFixed(2));
-    const statut  = paye >= total;
     const date    = date_vente || new Date().toISOString().split("T")[0];
     const factCode = await genFactureCode(client, date);
     const mois = MOIS[new Date(date).getMonth()];
     const annee = new Date(date).getFullYear();
 
     // Créer la facture
+    // NB : "reste" et "statut" sont des colonnes GENERATED ALWAYS ... STORED en base
+    // (calculées automatiquement à partir de montant/montant_paye) — il ne faut
+    // jamais leur fournir de valeur explicite (Postgres rejette avec
+    // "column ... can only be updated to DEFAULT"). On les omet, la base les calcule.
     const factResult = await client.query(
-      `INSERT INTO factures (code, date_facture, montant, montant_paye, monnaie_rendue, reste, statut, client_id, client_nom, user_id)
-       VALUES ($1, $2, $3::numeric, $4::numeric, $5::numeric, $6::numeric, $7, $8, $9, $10)
+      `INSERT INTO factures (code, date_facture, montant, montant_paye, monnaie_rendue, client_id, client_nom, user_id)
+       VALUES ($1, $2, $3::numeric, $4::numeric, $5::numeric, $6, $7, $8)
        RETURNING *`,
-      [factCode, date, parseFloat(total), paye, parseFloat(monnaie), reste, statut, client_id || null, client_nom, req.user?.id || null]
+      [factCode, date, parseFloat(total), paye, parseFloat(monnaie), client_id || null, client_nom, req.user?.id || null]
     );
 
     // Créer les lignes de vente

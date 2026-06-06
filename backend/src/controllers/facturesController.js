@@ -62,18 +62,19 @@ async function updatePaiement(req, res) {
     if (parseFloat(montant_paye) < parseFloat(facture.rows[0].montant_paye))
       return res.status(400).json({ message: "Le montant payé ne peut pas diminuer." });
 
-    const montant      = parseFloat(facture.rows[0].montant);
-    const paye         = parseFloat(montant_paye);
-    const nouveauReste = parseFloat(Math.max(0, montant - paye).toFixed(2));
+    const paye = parseFloat(montant_paye);
 
+    // "reste" et "statut" sont des colonnes GENERATED ALWAYS ... STORED en base
+    // (calculées automatiquement par PostgreSQL à partir de montant/montant_paye).
+    // On ne doit JAMAIS leur assigner de valeur directement (Postgres rejette avec
+    // "column ... can only be updated to DEFAULT") — on met à jour seulement
+    // montant_paye, et la base recalcule reste/statut toute seule.
     const result = await db.query(
       `UPDATE factures
-       SET montant_paye = $1::numeric,
-           reste        = $2::numeric,
-           statut       = CASE WHEN $2::numeric <= 0 THEN true ELSE false END
-       WHERE code = $3
+       SET montant_paye = $1::numeric
+       WHERE code = $2
        RETURNING *`,
-      [paye, nouveauReste, code]
+      [paye, code]
     );
     if (!result.rows[0]) return res.status(404).json({ message: "Facture introuvable." });
     res.json(result.rows[0]);

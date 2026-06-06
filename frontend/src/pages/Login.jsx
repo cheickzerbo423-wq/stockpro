@@ -4,17 +4,20 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const WiLogo = ({ size = 52 }) => (
-  <svg viewBox="0 0 52 52" width={size} height={size} fill="none" style={{ flexShrink: 0 }}>
-    {/* Fond bleu arrondi */}
-    <rect width="52" height="52" rx="12" fill="#0023FF"/>
-    {/* Arche gauche du W — trait blanc */}
-    <path d="M8 13 L8 31 C8 42 21 42 21 31 L21 13"
-          stroke="white" strokeWidth="6.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    {/* Arche droite du W (aussi le corps du "i") — trait blanc */}
-    <path d="M19 13 L19 31 C19 42 32 42 32 31 L32 13"
-          stroke="white" strokeWidth="6.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    {/* Point jaune — le point du "i" */}
-    <circle cx="40" cy="12" r="5.5" fill="#FFF900"/>
+  <svg viewBox="0 0 100 100" width={size} height={size} fill="none" style={{ flexShrink: 0 }}>
+    {/* Fond bleu — grands coins arrondis */}
+    <rect width="100" height="100" rx="24" fill="#0023FF"/>
+    {/* W — arche gauche */}
+    <path d="M 21 20 L 21 63 C 21 77 40 77 40 63 L 40 20"
+          stroke="white" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    {/* W — arche droite (bras centre partagé) */}
+    <path d="M 37 20 L 37 63 C 37 77 58 77 58 63 L 58 20"
+          stroke="white" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    {/* i — corps court avec crochet arrondi en bas */}
+    <path d="M 70 38 L 70 70 C 70 81 81 81 81 70"
+          stroke="white" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    {/* Point jaune — point du i */}
+    <circle cx="76" cy="23" r="8.5" fill="#FFF900"/>
   </svg>
 );
 

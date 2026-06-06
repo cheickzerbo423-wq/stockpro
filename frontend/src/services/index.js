@@ -78,6 +78,13 @@ export const achatsService = {
   create: (data) =>
     api.post("/achats", data).then((r) => r.data),
 
+  // Scan OCR d'une photo de facture fournisseur → proposition de remplissage.
+  // Timeout étendu : l'OCR (Tesseract) peut prendre 30-60s, surtout au "réveil"
+  // du serveur Railway (chargement des données de langue).
+  scanFacture: (imageBase64) =>
+    api.post("/achats/scanner-facture", { image: imageBase64 }, { timeout: 120000 })
+       .then((r) => r.data),
+
   updatePaiement: (id, montant_paye) =>
     api.put(`/achats/${id}/paiement`, { montant_paye }).then((r) => r.data),
 

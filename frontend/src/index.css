@@ -1,35 +1,4 @@
-/* ── Google Fonts : Montserrat (police secondaire garantie en web) ── */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
-
-/*
- * ── Police principale : Groote Regular ──────────────────────────────
- * Placez le fichier Groote-Regular.woff2 dans public/fonts/ pour
- * activer la police. Montserrat prend le relais si le fichier est absent.
- */
-@font-face {
-  font-family: 'Groote';
-  src: url('/fonts/Groote-Regular.woff2') format('woff2'),
-       url('/fonts/Groote-Regular.woff')  format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Groote';
-  src: url('/fonts/Groote-Medium.woff2') format('woff2'),
-       url('/fonts/Groote-Medium.woff')  format('woff');
-  font-weight: 500 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Groote';
-  src: url('/fonts/Groote-Bold.woff2') format('woff2'),
-       url('/fonts/Groote-Bold.woff')  format('woff');
-  font-weight: 700 900;
-  font-style: normal;
-  font-display: swap;
-}
+/* @font-face Groote déclaré dans public/index.html (hors webpack) */
 
 @tailwind base;
 @tailwind components;

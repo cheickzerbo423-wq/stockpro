@@ -59,7 +59,19 @@ pool.connect((err, client, release) => {
         console.log(`🧹 ${r.rowCount} connexion(s) "idle in transaction" nettoyée(s) au démarrage.`);
     })
     .catch((e) => console.error("Nettoyage connexions zombies — ignoré :", e.message))
-    .finally(() => release());
+    .finally(() => {
+      // Migration légère : la table "achats" a été créée avant l'ajout du
+      // suivi mensuel/annuel (filtres "mois"/"annee" dans achatsController).
+      // IF NOT EXISTS rend l'opération idempotente — sûre à rejouer à chaque
+      // démarrage, sans script de migration séparé à exécuter manuellement.
+      client.query(
+        `ALTER TABLE achats ADD COLUMN IF NOT EXISTS mois  VARCHAR(20);
+         ALTER TABLE achats ADD COLUMN IF NOT EXISTS annee INTEGER;`
+      )
+        .then(() => console.log("✅ Schéma 'achats' vérifié (colonnes mois/annee OK)."))
+        .catch((e) => console.error("⚠️  Migration achats (mois/annee) ignorée :", e.message))
+        .finally(() => release());
+    });
 });
 
 module.exports = pool;

@@ -1,0 +1,10 @@
+/*
+ * Polices locales — WariGest
+ *
+ * Placer ici le fichier Groote-Regular.woff2 pour activer la police locale.
+ * En son absence, le @font-face défini dans public/index.html
+ * bascule automatiquement sur le CDN (cdnfonts.com).
+ *
+ * Police principale  : Groote Regular  → Groote-Regular.woff2
+ * Police secondaire  : Montserrat       → via Google Fonts (index.html)
+ */

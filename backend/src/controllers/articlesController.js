@@ -70,9 +70,9 @@ async function create(req, res) {
       const montantTotal = prixUnitaire * qteInitiale;
 
       await client.query(
-        `INSERT INTO achats (article_code, libelle, fournisseur_nom, prix_achat, quantite, date_achat, mois, annee, user_id, montant_paye)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-        [article.code, article.libelle, "Stock initial (solde d'ouverture)", prixUnitaire, qteInitiale, date, mois, annee, req.user?.id || null, montantTotal]
+        `INSERT INTO achats (article_code, libelle, fournisseur_nom, prix_achat, quantite, date_achat, user_id, montant_paye)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [article.code, article.libelle, "Stock initial (solde d'ouverture)", prixUnitaire, qteInitiale, date, req.user?.id || null, montantTotal]
       );
     }
 

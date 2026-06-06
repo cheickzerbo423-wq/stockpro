@@ -128,7 +128,7 @@ export const facturesService = {
   // Ouvre le PDF dans un nouvel onglet
   openPDF: async (code) => {
     const token = localStorage.getItem("warigest_token");
-    const url = `${process.env.REACT_APP_API_URL || "http://localhost:3000/api"}/factures/${encodeURIComponent(code)}/pdf`;
+    const url = `${process.env.REACT_APP_API_URL || "/api"}/factures/${encodeURIComponent(code)}/pdf`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) throw new Error("Erreur serveur");
     const blob = await res.blob();
@@ -140,7 +140,7 @@ export const facturesService = {
   // Télécharge le PDF directement
   downloadPDF: async (code) => {
     const token = localStorage.getItem("warigest_token");
-    const url = `${process.env.REACT_APP_API_URL || "http://localhost:3000/api"}/factures/${encodeURIComponent(code)}/pdf`;
+    const url = `${process.env.REACT_APP_API_URL || "/api"}/factures/${encodeURIComponent(code)}/pdf`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) throw new Error("Erreur serveur");
     const blob = await res.blob();
@@ -156,7 +156,7 @@ export const facturesService = {
 
   openRecu: async (code) => {
     const token = localStorage.getItem("warigest_token");
-    const url = `${process.env.REACT_APP_API_URL || "http://localhost:3000/api"}/factures/${encodeURIComponent(code)}/recu`;
+    const url = `${process.env.REACT_APP_API_URL || "/api"}/factures/${encodeURIComponent(code)}/recu`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) throw new Error("Erreur serveur");
     const blob = await res.blob();
@@ -200,7 +200,7 @@ export const rapportsService = {
 
   exportPDF: async (debut, fin) => {
     const token = localStorage.getItem("warigest_token");
-    const base  = process.env.REACT_APP_API_URL || "http://localhost:3000/api";
+    const base  = process.env.REACT_APP_API_URL || "/api";
     const res   = await fetch(`${base}/rapports/pdf?debut=${debut}&fin=${fin}`, {
       headers: { Authorization: `Bearer ${token}` },
     });

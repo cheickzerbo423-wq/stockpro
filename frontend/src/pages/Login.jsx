@@ -5,19 +5,18 @@ import { useAuth } from "../context/AuthContext";
 
 const WiLogo = ({ size = 52 }) => (
   <svg viewBox="0 0 100 100" width={size} height={size} fill="none" style={{ flexShrink: 0 }}>
-    {/* Fond bleu — grands coins arrondis */}
-    <rect width="100" height="100" rx="24" fill="#0023FF"/>
-    {/* W — arche gauche */}
-    <path d="M 21 20 L 21 63 C 21 77 40 77 40 63 L 40 20"
+    <rect width="100" height="100" rx="25" fill="#0023FF"/>
+    {/* W — arche gauche (bras gauche → U profond → bras centre) */}
+    <path d="M 22 16 L 22 62 C 22 77 41 77 41 62 L 41 16"
           stroke="white" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    {/* W — arche droite (bras centre partagé) */}
-    <path d="M 37 20 L 37 63 C 37 77 58 77 58 63 L 58 20"
+    {/* W — arche droite (bras centre partagé → U profond → bras droit) */}
+    <path d="M 41 16 L 41 62 C 41 77 60 77 60 62 L 60 16"
           stroke="white" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    {/* i — corps court avec crochet arrondi en bas */}
-    <path d="M 70 38 L 70 70 C 70 81 81 81 81 70"
+    {/* i — tige courte avec crochet J vers la droite */}
+    <path d="M 73 37 L 73 70 Q 73 81 83 81"
           stroke="white" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    {/* Point jaune — point du i */}
-    <circle cx="76" cy="23" r="8.5" fill="#FFF900"/>
+    {/* Point jaune */}
+    <circle cx="76" cy="24" r="7.5" fill="#FFF900"/>
   </svg>
 );
 

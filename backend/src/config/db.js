@@ -28,14 +28,38 @@ pool.on("error", (err) => {
   console.error("Erreur inattendue sur le pool PostgreSQL :", err);
 });
 
-// Test de connexion au démarrage
+// Filet de sécurité : si une connexion reste bloquée "idle in transaction"
+// (BEGIN sans COMMIT/ROLLBACK, suite à un bug applicatif), PostgreSQL la
+// termine automatiquement après 30s — ce qui libère la connexion et les
+// verrous au lieu de bloquer en cascade tout le reste de l'application.
+pool.on("connect", (client) => {
+  client.query("SET idle_in_transaction_session_timeout = 30000").catch(() => {});
+});
+
+// Test de connexion au démarrage + nettoyage des connexions "zombies"
+// (sessions restées "idle in transaction" suite à un ancien bug applicatif :
+// elles bloquent des verrous et saturent le pool tant qu'elles ne sont pas
+// fermées. On les termine une bonne fois au démarrage du serveur.)
 pool.connect((err, client, release) => {
   if (err) {
     console.error("❌ Impossible de se connecter à PostgreSQL :", err.message);
     return;
   }
-  release();
   console.log("✅ Connecté à PostgreSQL — Base :", process.env.DB_NAME);
+
+  client.query(
+    `SELECT pg_terminate_backend(pid)
+     FROM pg_stat_activity
+     WHERE state = 'idle in transaction'
+       AND pid <> pg_backend_pid()
+       AND datname = current_database()`
+  )
+    .then((r) => {
+      if (r.rowCount > 0)
+        console.log(`🧹 ${r.rowCount} connexion(s) "idle in transaction" nettoyée(s) au démarrage.`);
+    })
+    .catch((e) => console.error("Nettoyage connexions zombies — ignoré :", e.message))
+    .finally(() => release());
 });
 
 module.exports = pool;

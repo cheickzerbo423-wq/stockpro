@@ -42,6 +42,7 @@ async function getOne(req, res) {
     );
     res.json({ ...facture.rows[0], lignes: lignes.rows });
   } catch (err) {
+    console.error("getOne facture error:", err);
     res.status(500).json({ message: "Erreur serveur." });
   }
 }
@@ -77,7 +78,8 @@ async function updatePaiement(req, res) {
     if (!result.rows[0]) return res.status(404).json({ message: "Facture introuvable." });
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ message: "Erreur serveur." });
+    console.error("updatePaiement error:", err);
+    res.status(500).json({ message: err.message || "Erreur serveur." });
   }
 }
 

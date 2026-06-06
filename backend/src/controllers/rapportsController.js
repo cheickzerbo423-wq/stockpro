@@ -242,9 +242,14 @@ async function exportPDF(req, res) {
        .text(`CA ${fmt(v.ca_total)}  —  Dépenses ${fmt(a.total_achats)}`, 60, benY + 50);
 
     /* ── Pied de page ── */
-    const pageH = doc.page.height;
+    // IMPORTANT : rester DANS la zone imprimable (au-dessus de doc.page.maxY(), c.-à-d.
+    // hauteur de page - marge basse). Un Y situé dans la marge basse fait que PDFKit
+    // déclenche un saut de page automatique avant d'écrire le texte — d'où la page 2
+    // quasi-vide qui ne contenait que ce pied de page. On calcule donc sa position à
+    // partir de maxY() plutôt que d'un offset fixe depuis le bas physique de la page.
+    const footerY = doc.page.maxY() - 15;
     doc.fillColor("#94a3b8").fontSize(7).font("Helvetica")
-       .text("Document généré automatiquement par WariGest — Logiciel de gestion & facturation", 50, pageH - 40, { width: 495, align: "center" });
+       .text("Document généré automatiquement par WariGest — Logiciel de gestion & facturation", 50, footerY, { width: 495, align: "center" });
 
     doc.end();
   } catch (err) {

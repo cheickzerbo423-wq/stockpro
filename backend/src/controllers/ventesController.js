@@ -46,14 +46,14 @@ async function getAll(req, res) {
 async function create(req, res) {
   const client = await db.connect();
   try {
-    await client.query("BEGIN");
-
     const { client_id, client_nom, date_vente, montant_paye, articles } = req.body;
 
     if (!articles || articles.length === 0)
       return res.status(400).json({ message: "Le panier est vide." });
     if (!client_nom)
       return res.status(400).json({ message: "Client obligatoire." });
+
+    await client.query("BEGIN");
 
     // Vérification des stocks avant toute transaction
     for (const item of articles) {

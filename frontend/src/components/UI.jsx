@@ -89,15 +89,15 @@ export function Badge({ children, color = "emerald", dot }) {
 export function Modal({ title, onClose, children, wide }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-      style={{ background: "rgba(15,23,42,0.6)", backdropFilter: "blur(6px)" }}>
-      <div className={`bg-white w-full ${wide ? "sm:max-w-2xl" : "sm:max-w-lg"} sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden`}
-        style={{ boxShadow: "0 25px 60px rgba(0,0,0,0.25)" }}>
+      style={{ background: "rgba(10,18,37,0.55)", backdropFilter: "blur(8px)" }}>
+      <div className={`bg-white w-full ${wide ? "sm:max-w-2xl" : "sm:max-w-lg"} sm:rounded-2xl rounded-t-2xl max-h-[92vh] flex flex-col overflow-hidden animate-fade-in-scale`}
+        style={{ boxShadow: "0 24px 64px rgba(0,0,0,0.2), 0 8px 24px rgba(0,0,0,0.1)", border: "1px solid rgba(234,236,242,0.8)" }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 flex-shrink-0">
-          <h3 className="text-sm font-bold text-gray-900">{title}</h3>
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "#F0F2F8" }}>
+          <h3 className="text-sm font-bold text-gray-900 tracking-tight">{title}</h3>
           <button onClick={onClose}
-            className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 flex items-center justify-center transition text-lg leading-none">
-            ×
+            className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-600 flex items-center justify-center transition-colors text-base leading-none font-medium">
+            ✕
           </button>
         </div>
         {/* Contenu */}
@@ -266,10 +266,13 @@ export function SearchBox({ value, onChange, onSelect, suggestions = [], placeho
 // ── En-tête de page ───────────────────────────────────────
 export function PageHeader({ title, sub, action }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4 mb-5 md:mb-6">
-      <div className="min-w-0">
-        <h2 className="text-xl font-black text-gray-900 leading-tight">{title}</h2>
-        {sub && <p className="text-xs text-gray-400 mt-1 font-medium">{sub}</p>}
+    <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+      <div className="min-w-0 flex items-start gap-3">
+        <div className="w-1 h-6 rounded-full mt-0.5 flex-shrink-0" style={{ backgroundColor: "#0023FF" }} />
+        <div>
+          <h2 className="text-xl font-black text-gray-900 leading-tight tracking-tight">{title}</h2>
+          {sub && <p className="text-xs text-gray-400 mt-0.5 font-medium">{sub}</p>}
+        </div>
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}
     </div>
@@ -281,8 +284,8 @@ export function DataTable({ headers, children, empty = "Aucune donnée", sort, o
   const hasRows = children && (Array.isArray(children) ? children.filter(Boolean).length > 0 : true);
   const hasWidths = headers.some((h) => typeof h === "object" && h.w);
   return (
-    <div className="overflow-x-auto rounded-2xl border border-gray-100"
-      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+    <div className="overflow-x-auto rounded-2xl"
+      style={{ border: "1px solid #EAECF2", boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)" }}>
       <table className={`text-sm min-w-[640px] ${hasWidths ? "md:table-fixed md:w-full md:min-w-full" : "w-full"}`}>
         {hasWidths && (
           <colgroup>
@@ -292,7 +295,7 @@ export function DataTable({ headers, children, empty = "Aucune donnée", sort, o
           </colgroup>
         )}
         <thead>
-          <tr>
+          <tr style={{ background: "#F8F9FC" }}>
             {headers.map((h, i) => {
               const label   = typeof h === "object" ? h.label   : h;
               const right   = typeof h === "object" ? h.right   : false;
@@ -302,14 +305,14 @@ export function DataTable({ headers, children, empty = "Aucune donnée", sort, o
               return (
                 <th key={i}
                   onClick={canSort ? () => onSort(sk) : undefined}
-                  className={`px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-[0.08em] whitespace-nowrap bg-gray-50/60
+                  className={`px-4 py-3.5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.1em] whitespace-nowrap
                     ${right ? "text-right" : "text-left"}
-                    ${canSort ? "cursor-pointer hover:text-[#0023FF] select-none transition-colors" : ""}
-                    ${i === 0 ? "rounded-tl-xl" : ""} ${i === headers.length - 1 ? "rounded-tr-xl" : ""}`}>
+                    ${canSort ? "cursor-pointer hover:text-[#0023FF] select-none" : ""}
+                    ${i === 0 ? "rounded-tl-2xl" : ""} ${i === headers.length - 1 ? "rounded-tr-2xl" : ""}`}>
                   <span className="inline-flex items-center gap-1">
                     {label}
                     {canSort && (
-                      <span className={`text-[9px] ${active ? "text-[#0023FF]" : "opacity-30"}`}>
+                      <span className={`text-[9px] transition-colors ${active ? "text-[#0023FF]" : "opacity-25"}`}>
                         {active ? (sort.dir === "asc" ? "▲" : "▼") : "⇅"}
                       </span>
                     )}
@@ -323,8 +326,8 @@ export function DataTable({ headers, children, empty = "Aucune donnée", sort, o
           {hasRows ? children : (
             <tr>
               <td colSpan={headers.length}>
-                <div className="flex flex-col items-center justify-center py-16 gap-3">
-                  <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center text-3xl">
+                <div className="flex flex-col items-center justify-center py-16 gap-3 bg-white">
+                  <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center text-2xl">
                     📭
                   </div>
                   <div className="text-center">
@@ -345,8 +348,9 @@ export function TR({ children, onClick }) {
   return (
     <tr
       onClick={onClick}
-      className={`border-b border-gray-50 last:border-0 transition-all duration-100
-        ${onClick ? "cursor-pointer hover:bg-[#F0F3FF]" : "hover:bg-gray-50/60"}`}
+      className={`border-b last:border-0 transition-colors duration-100 bg-white
+        ${onClick ? "cursor-pointer hover:bg-[#F3F5FF]" : "hover:bg-gray-50/40"}`}
+      style={{ borderColor: "#F2F4F8" }}
     >
       {children}
     </tr>
@@ -438,8 +442,8 @@ export function Toast({ message, type = "success", onClose }) {
 // ── Card wrapper ──────────────────────────────────────────
 export function Card({ children, className = "", padding = true }) {
   return (
-    <div className={`bg-white rounded-2xl border border-gray-100 ${padding ? "p-5" : ""} ${className}`}
-      style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+    <div className={`bg-white rounded-2xl border ${padding ? "p-5" : ""} ${className}`}
+      style={{ borderColor: "#EAECF2", boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.03)" }}>
       {children}
     </div>
   );
@@ -449,9 +453,8 @@ export function Card({ children, className = "", padding = true }) {
 export function SectionTitle({ children, action }) {
   return (
     <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center gap-2.5">
-        <div className="w-1 h-4 rounded-full" style={{ backgroundColor: "#0023FF" }} />
-        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-[0.08em]">{children}</h3>
+      <div className="flex items-center gap-2">
+        <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.1em]">{children}</h3>
       </div>
       {action && <div>{action}</div>}
     </div>

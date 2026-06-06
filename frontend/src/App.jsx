@@ -172,7 +172,7 @@ function NavItem({ item, collapsed, onClick }) {
 function Sidebar({ collapsed, setCollapsed, user, onLogout, visibleSections }) {
   return (
     <aside className="hidden md:flex flex-col flex-shrink-0 transition-all duration-200"
-      style={{ width: collapsed ? 68 : 232, background: "#0F172A" }}>
+      style={{ width: collapsed ? 68 : 232, background: "linear-gradient(170deg, #0A1225 0%, #0C1740 60%, #0A1635 100%)" }}>
 
       {/* Logo */}
       <div className={`flex items-center border-b border-white/5 flex-shrink-0 transition-all
@@ -270,7 +270,7 @@ function MobileDrawer({ open, onClose, visibleSections, user, onLogout }) {
         onClick={onClose}
       />
       <div className="md:hidden fixed inset-y-0 left-0 z-50 flex flex-col"
-        style={{ width: 256, background: "#0F172A" }}>
+        style={{ width: 256, background: "linear-gradient(170deg, #0A1225 0%, #0C1740 60%, #0A1635 100%)" }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-white/5 flex-shrink-0">
           <div className="flex items-center gap-3">
@@ -335,7 +335,7 @@ function BottomNav({ allItems }) {
   const bottomItems = allItems.filter(i => BOTTOM_NAV_PATHS.includes(i.path));
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 flex h-16"
-      style={{ background: "#0F172A", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+      style={{ background: "#0A1225", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
       {bottomItems.map(item => (
         <NavLink
           key={item.path}
@@ -382,7 +382,7 @@ function Layout({ children }) {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: "#F4F6F9", fontFamily: "'Groote', 'Montserrat', 'Segoe UI', sans-serif" }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: "#F2F4F8", fontFamily: "'Groote', 'Montserrat', 'Segoe UI', sans-serif" }}>
 
       {/* Sidebar desktop */}
       <Sidebar
@@ -406,8 +406,14 @@ function Layout({ children }) {
       <main className="flex-1 flex flex-col overflow-hidden min-w-0">
 
         {/* Header top */}
-        <header className="flex-shrink-0 flex items-center gap-4 px-4 md:px-6 h-14"
-          style={{ background: "#fff", borderBottom: "1px solid #E8ECF1" }}>
+        <header className="flex-shrink-0 flex items-center gap-4 px-4 md:px-6 h-16 sticky top-0 z-20"
+          style={{
+            background: "rgba(255,255,255,0.92)",
+            backdropFilter: "blur(20px) saturate(180%)",
+            WebkitBackdropFilter: "blur(20px) saturate(180%)",
+            borderBottom: "1px solid rgba(234,236,242,0.9)",
+            boxShadow: "0 1px 0 rgba(0,0,0,0.04)"
+          }}>
 
           {/* Hamburger mobile */}
           <button className="md:hidden p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition flex-shrink-0"
@@ -419,13 +425,11 @@ function Layout({ children }) {
 
           {/* Breadcrumb / titre */}
           <div className="flex-1 flex items-center gap-2 min-w-0">
-            <div className="flex items-center gap-1.5 text-gray-400 text-xs font-medium hidden sm:flex">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
-                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-                <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+            <div className="hidden sm:flex items-center gap-1.5">
+              <span className="text-xs text-gray-400 font-medium">WariGest</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3 h-3 text-gray-200">
+                <polyline points="9 18 15 12 9 6"/>
               </svg>
-              <span>WariGest</span>
-              <span className="text-gray-200">/</span>
             </div>
             <h1 className="text-sm font-bold text-gray-800 truncate">{currentItem?.label || "WariGest"}</h1>
           </div>
@@ -464,11 +468,15 @@ function Layout({ children }) {
 function PrivateRoute({ children, adminOnly = false }) {
   const { user, loading } = useAuth();
   if (loading) return (
-    <div className="flex items-center justify-center h-screen" style={{ background: "#F4F6F9" }}>
+    <div className="flex items-center justify-center h-screen" style={{ background: "#F2F4F8" }}>
       <div className="flex flex-col items-center gap-4">
-        <div className="w-10 h-10 border-[3px] rounded-full animate-spin"
-          style={{ borderColor: "#E6EAFF", borderTopColor: "#0023FF" }} />
-        <div className="text-xs text-gray-400 font-medium">Chargement…</div>
+        <div className="relative w-12 h-12">
+          <div className="absolute inset-0 border-[3px] rounded-full animate-spin"
+            style={{ borderColor: "#E6EAFF", borderTopColor: "#0023FF" }} />
+          <div className="absolute inset-[5px] border-2 rounded-full animate-spin"
+            style={{ borderColor: "transparent", borderTopColor: "#B3BFFF", animationDirection: "reverse", animationDuration: "0.6s" }} />
+        </div>
+        <div className="text-xs text-gray-400 font-semibold tracking-wide">Chargement…</div>
       </div>
     </div>
   );

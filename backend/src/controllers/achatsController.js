@@ -260,27 +260,20 @@ async function create(req, res) {
     // plus courantes en message clair pour l'utilisateur (au lieu d'un message
     // générique qui ne dit pas quoi corriger).
     console.error("Erreur enregistrement achat :", err.code, err.message, err.detail || "");
-    let message = "Erreur lors de l'enregistrement de l'achat.";
-    switch (err.code) {
-      case "22003": // numeric_value_out_of_range
-        message = "La quantité ou le prix saisi est trop élevé (le total dépasse la limite acceptée). Vérifiez ces deux valeurs pour cet article.";
-        break;
-      case "22001": // string_data_right_truncation
-        message = "Le nom de l'article ou du fournisseur est trop long pour être enregistré tel quel. Raccourcissez-le.";
-        break;
-      case "22P02": // invalid_text_representation
-        message = "La quantité, le prix ou la date saisi est dans un format invalide.";
-        break;
-      case "23502": // not_null_violation
-        message = "Une information obligatoire est manquante (fournisseur, date, quantité ou prix).";
-        break;
-      case "23503": // foreign_key_violation
-        message = "Le fournisseur sélectionné est introuvable en base. Resélectionnez-le dans la liste ou recréez-le.";
-        break;
-      case "23505": // unique_violation
-        message = "Cet approvisionnement semble déjà enregistré (doublon détecté).";
-        break;
-    }
+    const messagesParCode = {
+      "22003": "La quantité ou le prix saisi est trop élevé (le total dépasse la limite acceptée). Vérifiez ces deux valeurs pour cet article.",
+      "22001": "Le nom de l'article ou du fournisseur est trop long pour être enregistré tel quel. Raccourcissez-le.",
+      "22P02": "La quantité, le prix ou la date saisi est dans un format invalide.",
+      "23502": "Une information obligatoire est manquante (fournisseur, date, quantité ou prix).",
+      "23503": "Le fournisseur sélectionné est introuvable en base. Resélectionnez-le dans la liste ou recréez-le.",
+      "23505": "Cet approvisionnement semble déjà enregistré (doublon détecté).",
+      "23514": "Une valeur saisie ne respecte pas une règle de validation de la base (quantité, prix ou montant). Vérifiez ces valeurs.",
+    };
+    // Si le code Postgres n'est pas dans notre liste, on l'affiche quand même
+    // (entre parenthèses) : ça permet de voir immédiatement la cause exacte
+    // sans devoir consulter les logs serveur, et de l'ajouter ensuite à la liste.
+    const message = messagesParCode[err.code]
+      || `Erreur lors de l'enregistrement de l'achat${err.code ? ` (code base de données : ${err.code} — ${err.message || ""})` : ""}.`;
     res.status(500).json({ message });
   }
 }

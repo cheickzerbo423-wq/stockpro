@@ -16,16 +16,18 @@ import Guide        from "./pages/Guide";
 
 // ── Logo SVG Wi ───────────────────────────────────────────
 const WiLogo = ({ size = 36 }) => (
-  <div style={{ width: size, height: size }} className="rounded-xl overflow-hidden flex-shrink-0">
-    <svg viewBox="0 0 52 52" width={size} height={size} fill="none">
-      <rect width="52" height="52" fill="#0023FF"/>
-      <rect x="4" y="4" width="44" height="44" rx="8" fill="white"/>
-      <path d="M9,13 L9,29 C9,40 27,40 27,29 L27,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <path d="M25,13 L25,29 C25,40 43,40 43,29 L43,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <line x1="47" y1="22" x2="47" y2="40" stroke="#0023FF" strokeWidth="5" strokeLinecap="round"/>
-      <circle cx="47" cy="14" r="4" fill="#FFF900"/>
-    </svg>
-  </div>
+  <svg viewBox="0 0 52 52" width={size} height={size} fill="none" style={{ flexShrink: 0 }}>
+    {/* Fond bleu arrondi */}
+    <rect width="52" height="52" rx="12" fill="#0023FF"/>
+    {/* Arche gauche du W — trait blanc */}
+    <path d="M8 13 L8 31 C8 42 21 42 21 31 L21 13"
+          stroke="white" strokeWidth="6.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    {/* Arche droite du W (aussi le corps du "i") — trait blanc */}
+    <path d="M19 13 L19 31 C19 42 32 42 32 31 L32 13"
+          stroke="white" strokeWidth="6.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    {/* Point jaune — le point du "i" */}
+    <circle cx="40" cy="12" r="5.5" fill="#FFF900"/>
+  </svg>
 );
 
 // ── Icônes SVG par route ──────────────────────────────────

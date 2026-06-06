@@ -14,21 +14,15 @@ import Utilisateurs from "./pages/Utilisateurs";
 import Rapports     from "./pages/Rapports";
 import Guide        from "./pages/Guide";
 
-// ── Logo SVG Wi ───────────────────────────────────────────
+// ── Logo SVG Wi — tracé vectoriel officiel (fichier .svg fourni) ──
 const WiLogo = ({ size = 36 }) => (
-  <svg viewBox="0 0 100 100" width={size} height={size} fill="none" style={{ flexShrink: 0 }}>
-    <rect width="100" height="100" rx="25" fill="#0023FF"/>
-    {/* W — arche gauche (bras gauche → U profond → bras centre) */}
-    <path d="M 22 16 L 22 62 C 22 77 41 77 41 62 L 41 16"
-          stroke="white" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    {/* W — arche droite (bras centre partagé → U profond → bras droit) */}
-    <path d="M 41 16 L 41 62 C 41 77 60 77 60 62 L 60 16"
-          stroke="white" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    {/* i — tige courte avec crochet J vers la droite */}
-    <path d="M 73 37 L 73 70 Q 73 81 83 81"
-          stroke="white" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    {/* Point jaune */}
-    <circle cx="76" cy="24" r="7.5" fill="#FFF900"/>
+  <svg viewBox="555 550 1372 1380" width={size} height={size}
+       style={{ flexShrink: 0, fillRule: "evenodd", clipRule: "evenodd" }}>
+    <path d="M1921.296,898.435l0,683.444c0,189.808 -154.1,343.908 -343.908,343.908l-674.461,0c-189.808,0 -343.908,-154.1 -343.908,-343.908l0,-683.444c0,-189.808 154.1,-343.908 343.908,-343.908l674.461,0c189.808,0 343.908,154.1 343.908,343.908Z" fill="#0023ff"/>
+    <ellipse cx="1569.466" cy="974.341" rx="113.239" ry="117.957" fill="#fff900"/>
+    <path d="M1121.277,1160.585l0,164.319c-0.337,-2.607 -0.511,-5.264 -0.511,-7.962l0,-156.512l0.511,0.155Z" fill="#fff"/>
+    <path d="M1121.277,905.88l0,419.025c-0.337,-2.607 -0.511,-5.264 -0.511,-7.962l0,-403.1c0,-2.698 0.174,-5.356 0.511,-7.962Z" fill="#fff"/>
+    <path d="M1448.414,1149.957c10.344,-14.463 27.279,-23.898 46.4,-23.898l129.693,0c31.464,0 57.009,25.545 57.009,57.009l0,111.803c0,10.837 -3.03,20.972 -8.29,29.603c5.406,19.518 8.29,40.031 8.29,61.191c0,130.211 -109.178,235.926 -243.655,235.926c-79.644,0 -150.414,-37.081 -194.886,-94.37c-44.471,57.289 -115.242,94.37 -194.886,94.37c-134.477,0 -243.655,-105.715 -243.655,-235.926c-0,-15.783 1.604,-31.206 4.663,-46.124c-2.768,-6.997 -4.29,-14.622 -4.29,-22.599l0,-403.1c0,-33.956 27.568,-61.525 61.525,-61.525l120.66,0c33.956,0 61.525,27.568 61.525,61.525l0,446.257c0,10.138 8.23,18.368 18.368,18.368l36.023,0c10.138,0 18.368,-8.23 18.368,-18.368l0,-454.219c3.91,-30.201 29.755,-53.562 61.013,-53.562l120.66,0c33.956,0 61.525,27.568 61.525,61.525l0,246.804l0.572,-0.174l0,199.627c0,10.138 8.23,18.368 18.368,18.368l36.023,0c10.138,0 18.368,-8.23 18.368,-18.368l-0,-177.031c0,-12.343 3.931,-23.775 10.608,-33.111Z" fill="#fff"/>
   </svg>
 );
 

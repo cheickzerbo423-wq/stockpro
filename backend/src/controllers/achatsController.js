@@ -222,7 +222,18 @@ async function create(req, res) {
     const mois  = MOIS[new Date(date).getMonth()];
     const annee = new Date(date).getFullYear();
 
-    const montantTotal = parseInt(prix_achat) * parseInt(quantite);
+    const prixNum = parseInt(prix_achat, 10);
+    const qteNum  = parseInt(quantite, 10);
+    if (!Number.isFinite(prixNum) || !Number.isFinite(qteNum) || prixNum <= 0 || qteNum <= 0)
+      return res.status(400).json({ message: "Quantité ou prix d'achat invalide. Saisissez des nombres positifs." });
+
+    const montantTotal = prixNum * qteNum;
+    // La colonne montant_total (générée) est de type entier : au-delà d'environ
+    // 2,1 milliards, Postgres renvoie une erreur "out of range" peu compréhensible.
+    // On bloque ici avec un message clair plutôt que de laisser planter l'insertion.
+    if (montantTotal > 2_000_000_000)
+      return res.status(400).json({ message: "Le montant total (quantité × prix) est trop élevé pour être enregistré. Vérifiez la quantité et le prix saisis pour cet article." });
+
     const montantPaye  = req.body.montant_paye !== undefined
       ? Math.min(parseFloat(req.body.montant_paye), montantTotal)
       : montantTotal;
@@ -231,7 +242,7 @@ async function create(req, res) {
       `INSERT INTO achats (article_code, libelle, fournisseur_id, fournisseur_nom, prix_achat, quantite, date_achat, mois, annee, user_id, montant_paye)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
-      [article_code, art.rows[0].libelle, fournisseur_id || null, fournisseur_nom || "", parseInt(prix_achat), parseInt(quantite), date, mois, annee, req.user?.id || null, montantPaye]
+      [article_code, art.rows[0].libelle, fournisseur_id || null, fournisseur_nom || "", prixNum, qteNum, date, mois, annee, req.user?.id || null, montantPaye]
     );
 
     // Retourner aussi le stock mis à jour
@@ -244,8 +255,33 @@ async function create(req, res) {
       statut_stock:  stockMaj.rows[0]?.statut,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erreur lors de l'enregistrement de l'achat." });
+    // On journalise le détail Postgres (code + message + detail) pour pouvoir
+    // diagnostiquer précisément côté logs Railway, et on traduit les causes les
+    // plus courantes en message clair pour l'utilisateur (au lieu d'un message
+    // générique qui ne dit pas quoi corriger).
+    console.error("Erreur enregistrement achat :", err.code, err.message, err.detail || "");
+    let message = "Erreur lors de l'enregistrement de l'achat.";
+    switch (err.code) {
+      case "22003": // numeric_value_out_of_range
+        message = "La quantité ou le prix saisi est trop élevé (le total dépasse la limite acceptée). Vérifiez ces deux valeurs pour cet article.";
+        break;
+      case "22001": // string_data_right_truncation
+        message = "Le nom de l'article ou du fournisseur est trop long pour être enregistré tel quel. Raccourcissez-le.";
+        break;
+      case "22P02": // invalid_text_representation
+        message = "La quantité, le prix ou la date saisi est dans un format invalide.";
+        break;
+      case "23502": // not_null_violation
+        message = "Une information obligatoire est manquante (fournisseur, date, quantité ou prix).";
+        break;
+      case "23503": // foreign_key_violation
+        message = "Le fournisseur sélectionné est introuvable en base. Resélectionnez-le dans la liste ou recréez-le.";
+        break;
+      case "23505": // unique_violation
+        message = "Cet approvisionnement semble déjà enregistré (doublon détecté).";
+        break;
+    }
+    res.status(500).json({ message });
   }
 }
 

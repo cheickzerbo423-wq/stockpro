@@ -186,10 +186,14 @@ async function scanFacture(req, res) {
 async function getAll(req, res) {
   try {
     const { fournisseur, article, mois, annee } = req.query;
+    // montant_total est recalculé dynamiquement (prix_achat * quantite) pour ne pas
+    // dépendre de la colonne stockée qui peut être 0 sur d'anciens enregistrements.
     let q = `
-      SELECT *,
-        (montant_total - montant_paye)          AS reste,
-        (montant_paye >= montant_total)          AS statut
+      SELECT id, article_code, libelle, fournisseur_id, fournisseur_nom,
+             prix_achat, quantite, date_achat, user_id, mois, annee, montant_paye,
+             (prix_achat * quantite)                 AS montant_total,
+             (prix_achat * quantite - montant_paye)  AS reste,
+             (montant_paye >= prix_achat * quantite) AS statut
       FROM achats WHERE 1=1`;
     const params = [];
     let idx = 1;
@@ -239,10 +243,14 @@ async function create(req, res) {
       : montantTotal;
 
     const result = await db.query(
-      `INSERT INTO achats (article_code, libelle, fournisseur_id, fournisseur_nom, prix_achat, quantite, date_achat, user_id, montant_paye)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING *`,
-      [article_code, art.rows[0].libelle, fournisseur_id || null, fournisseur_nom || "", prixNum, qteNum, date, req.user?.id || null, montantPaye]
+      `INSERT INTO achats (article_code, libelle, fournisseur_id, fournisseur_nom, prix_achat, quantite, date_achat, user_id, montant_paye, montant_total)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       RETURNING id, article_code, libelle, fournisseur_id, fournisseur_nom,
+                 prix_achat, quantite, date_achat, user_id, mois, annee, montant_paye,
+                 (prix_achat * quantite)                 AS montant_total,
+                 (prix_achat * quantite - montant_paye)  AS reste,
+                 (montant_paye >= prix_achat * quantite) AS statut`,
+      [article_code, art.rows[0].libelle, fournisseur_id || null, fournisseur_nom || "", prixNum, qteNum, date, req.user?.id || null, montantPaye, montantTotal]
     );
 
     // Retourner aussi le stock mis à jour
@@ -301,7 +309,9 @@ async function updatePaiement(req, res) {
     if (montant_paye === undefined || isNaN(parseFloat(montant_paye)))
       return res.status(400).json({ message: "Montant payé invalide." });
 
-    const achat = await db.query(`SELECT montant_total, montant_paye FROM achats WHERE id = $1`, [id]);
+    const achat = await db.query(
+      `SELECT prix_achat * quantite AS montant_total, montant_paye FROM achats WHERE id = $1`, [id]
+    );
     if (!achat.rows[0]) return res.status(404).json({ message: "Achat introuvable." });
     if (parseFloat(montant_paye) > parseFloat(achat.rows[0].montant_total))
       return res.status(400).json({ message: "Le montant payé dépasse le montant total." });
@@ -310,7 +320,11 @@ async function updatePaiement(req, res) {
 
     const result = await db.query(
       `UPDATE achats SET montant_paye = $1 WHERE id = $2
-       RETURNING *, (montant_total - montant_paye) AS reste, (montant_paye >= montant_total) AS statut`,
+       RETURNING id, article_code, libelle, fournisseur_id, fournisseur_nom,
+                 prix_achat, quantite, date_achat, user_id, mois, annee, montant_paye,
+                 (prix_achat * quantite)                 AS montant_total,
+                 (prix_achat * quantite - montant_paye)  AS reste,
+                 (montant_paye >= prix_achat * quantite) AS statut`,
       [parseFloat(montant_paye), id]
     );
     if (!result.rows[0]) return res.status(404).json({ message: "Achat introuvable." });

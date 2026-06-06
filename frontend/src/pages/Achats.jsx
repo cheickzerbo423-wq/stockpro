@@ -403,9 +403,17 @@ export default function Achats() {
                     {parseFloat(a.reste) > 0 ? fmt(a.reste) : "—"}
                   </span>
                 </TD>
-                <TD><Badge color={a.statut ? "emerald" : "orange"}>{a.statut ? "Payé" : "Crédit"}</Badge></TD>
                 <TD>
-                  {!a.statut && parseFloat(a.reste) > 0 && (
+                  {(() => {
+                    const total = parseFloat(a.montant_total);
+                    const paye  = parseFloat(a.montant_paye);
+                    if (paye >= total && total > 0) return <Badge color="emerald">Payé</Badge>;
+                    if (paye === 0)                 return <Badge color="red">Crédit</Badge>;
+                    return <Badge color="amber">Partiel</Badge>;
+                  })()}
+                </TD>
+                <TD>
+                  {parseFloat(a.reste) > 0 && (
                     <Btn sm color="orange" onClick={() => { setPayModal(a); setPayAmount(String(a.reste)); }}>
                       Payer
                     </Btn>
@@ -559,13 +567,21 @@ export default function Achats() {
                 📋 Crédit total
               </button>
             </div>
-            <Input
-              label={`Montant payé (FCFA) — Reste : ${fmt(totalCommande - Math.min(+(montantPaye) || totalCommande, totalCommande))}`}
-              type="number"
-              value={montantPaye}
-              onChange={(e) => setMontantPaye(e.target.value)}
-              placeholder={`${totalCommande} (comptant par défaut)`}
-            />
+            {(() => {
+              const saisi = montantPaye === "" ? totalCommande : (parseFloat(montantPaye) || 0);
+              const reste = Math.max(0, totalCommande - Math.min(saisi, totalCommande));
+              return (
+                <Input
+                  label={`Montant payé (FCFA) — Reste dû : ${fmt(reste)}`}
+                  type="number"
+                  min="0"
+                  max={totalCommande}
+                  value={montantPaye}
+                  onChange={(e) => setMontantPaye(e.target.value)}
+                  placeholder="Laisser vide = paiement comptant intégral"
+                />
+              );
+            })()}
           </div>
 
           <div className="flex justify-end gap-2 mt-5">

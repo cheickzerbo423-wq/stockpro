@@ -1,0 +1,17 @@
+POLICES WARIGEST
+================
+
+Placez ici les fichiers de la police Groote Regular :
+
+  Groote-Regular.woff2   ← obligatoire (format moderne)
+  Groote-Regular.woff    ← fallback (navigateurs anciens)
+  Groote-Medium.woff2    ← optionnel (poids 500-600)
+  Groote-Medium.woff
+  Groote-Bold.woff2      ← optionnel (poids 700-900)
+  Groote-Bold.woff
+
+Sans ces fichiers, l'app affiche Montserrat (police secondaire chargée
+depuis Google Fonts) — l'apparence reste correcte mais sans Groote.
+
+Police secondaire : Montserrat (chargée automatiquement via Google Fonts).
+Couleur principale : #0023FF

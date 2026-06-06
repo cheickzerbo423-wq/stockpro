@@ -1,4 +1,35 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
+/* ── Google Fonts : Montserrat (police secondaire garantie en web) ── */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+
+/*
+ * ── Police principale : Groote Regular ──────────────────────────────
+ * Placez le fichier Groote-Regular.woff2 dans public/fonts/ pour
+ * activer la police. Montserrat prend le relais si le fichier est absent.
+ */
+@font-face {
+  font-family: 'Groote';
+  src: url('/fonts/Groote-Regular.woff2') format('woff2'),
+       url('/fonts/Groote-Regular.woff')  format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Groote';
+  src: url('/fonts/Groote-Medium.woff2') format('woff2'),
+       url('/fonts/Groote-Medium.woff')  format('woff');
+  font-weight: 500 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Groote';
+  src: url('/fonts/Groote-Bold.woff2') format('woff2'),
+       url('/fonts/Groote-Bold.woff')  format('woff');
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
@@ -11,15 +42,28 @@
   --wi-blue-dark:  #0019CC;
   --wi-blue-light: #E6EAFF;
   --wi-blue-mid:   #B3BFFF;
+
+  /* Stack typographique : Groote principale, Montserrat secondaire */
+  --font-primary:   'Groote', 'Montserrat', 'Segoe UI', sans-serif;
+  --font-secondary: 'Montserrat', 'Segoe UI', sans-serif;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: 'Nunito', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-primary);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   background-color: #F5F6FA;
+}
+
+/* Montserrat pour les éléments d'accentuation (badges, labels, nav) */
+.font-secondary,
+.text-xs,
+.text-\[9px\],
+.text-\[10px\] {
+  font-family: var(--font-secondary);
 }
 
 @keyframes fade-in {

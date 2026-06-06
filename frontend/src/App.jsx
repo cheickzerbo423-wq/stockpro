@@ -382,7 +382,7 @@ function Layout({ children }) {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: "#F4F6F9", fontFamily: "'Nunito', 'Segoe UI', system-ui, sans-serif" }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: "#F4F6F9", fontFamily: "'Groote', 'Montserrat', 'Segoe UI', sans-serif" }}>
 
       {/* Sidebar desktop */}
       <Sidebar

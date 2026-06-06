@@ -1,6 +1,9 @@
 // src/controllers/articlesController.js
 const db = require("../config/db");
 
+const MOIS = ["Janvier","Février","Mars","Avril","Mai","Juin",
+              "Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+
 // GET /api/articles
 async function getAll(req, res) {
   try {
@@ -33,8 +36,9 @@ async function getOne(req, res) {
 
 // POST /api/articles
 async function create(req, res) {
+  const client = await db.connect();
   try {
-    const { code, libelle, prix_achat, prix_vente, stock_min } = req.body;
+    const { code, libelle, prix_achat, prix_vente, stock_min, stock_initial } = req.body;
     if (!code || !libelle)
       return res.status(400).json({ message: "Code et libellé obligatoires." });
 
@@ -42,16 +46,46 @@ async function create(req, res) {
     if (exists.rows.length > 0)
       return res.status(409).json({ message: `Le code article "${code}" existe déjà.` });
 
-    const result = await db.query(
+    const qteInitiale = parseInt(stock_initial) || 0;
+    if (qteInitiale < 0)
+      return res.status(400).json({ message: "Le stock de départ ne peut pas être négatif." });
+
+    await client.query("BEGIN");
+
+    const result = await client.query(
       `INSERT INTO articles (code, libelle, prix_achat, prix_vente, stock_min)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
       [code.toUpperCase(), libelle.toUpperCase(), prix_achat || 0, prix_vente || 0, stock_min || 5]
     );
-    res.status(201).json(result.rows[0]);
+    const article = result.rows[0];
+
+    // Stock de départ : enregistré comme une entrée d'approvisionnement initiale
+    // afin d'alimenter naturellement "entree" / "stock_restant" dans vue_stock.
+    if (qteInitiale > 0) {
+      const date  = new Date().toISOString().split("T")[0];
+      const mois  = MOIS[new Date(date).getMonth()];
+      const annee = new Date(date).getFullYear();
+      const prixUnitaire = parseInt(prix_achat) || 0;
+      const montantTotal = prixUnitaire * qteInitiale;
+
+      await client.query(
+        `INSERT INTO achats (article_code, libelle, fournisseur_nom, prix_achat, quantite, date_achat, mois, annee, user_id, montant_paye)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [article.code, article.libelle, "Stock initial (solde d'ouverture)", prixUnitaire, qteInitiale, date, mois, annee, req.user?.id || null, montantTotal]
+      );
+    }
+
+    await client.query("COMMIT");
+
+    const stockMaj = await db.query(`SELECT * FROM vue_stock WHERE code = $1`, [article.code]);
+    res.status(201).json(stockMaj.rows[0] || article);
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error(err);
     res.status(500).json({ message: "Erreur lors de la création de l'article." });
+  } finally {
+    client.release();
   }
 }
 

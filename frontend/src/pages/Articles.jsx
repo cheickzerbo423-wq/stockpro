@@ -13,7 +13,7 @@ export default function Articles() {
   const [editArticle, setEditArticle] = useState(null);
   const [editForm, setEditForm]   = useState({ libelle: "", prix_achat: "", prix_vente: "", stock_min: "" });
   const [toast, setToast]         = useState(null);
-  const [form, setForm]           = useState({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5" });
+  const [form, setForm]           = useState({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5", stock_initial: "" });
   const [formErr, setFormErr]     = useState({});
   const [codeAuto, setCodeAuto]   = useState(true);
   const [loadingCode, setLoadingCode] = useState(false);
@@ -58,7 +58,7 @@ export default function Articles() {
       await createArticle({ ...form });
       notify("Article créé avec succès !");
       setShowAdd(false);
-      setForm({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5" });
+      setForm({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5", stock_initial: "" });
       setCodeAuto(true);
       reload();
     } catch (err) { notify(err.message, "error"); }
@@ -208,6 +208,12 @@ export default function Articles() {
             </div>
             <Input label="Stock Minimum (alerte)" type="number" value={form.stock_min}
               onChange={(e) => setForm({ ...form, stock_min: e.target.value })} />
+            <div>
+              <Input label="Stock de départ" type="number" min="0" value={form.stock_initial}
+                placeholder="0"
+                onChange={(e) => setForm({ ...form, stock_initial: e.target.value })} />
+              <p className="text-[11px] text-gray-400 mt-1">Quantité déjà en stock à enregistrer à la création (optionnel).</p>
+            </div>
             <Input label="Prix d'Achat (FCFA)" type="number" value={form.prix_achat}
               onChange={(e) => setForm({ ...form, prix_achat: e.target.value })} />
             <Input label="Prix de Vente (FCFA)" type="number" value={form.prix_vente}

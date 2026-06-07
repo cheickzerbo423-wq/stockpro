@@ -184,20 +184,6 @@ export const utilisateursService = {
 };
 
 // ══════════════════════════════════════════
-// DEVIS
-// ══════════════════════════════════════════
-export const devisService = {
-  getAll: (filters = {}) =>
-    api.get("/devis", { params: filters }).then((r) => r.data),
-
-  create: (data) =>
-    api.post("/devis", data).then((r) => r.data),
-
-  updateStatut: (id, statut) =>
-    api.put(`/devis/${id}/statut`, { statut }).then((r) => r.data),
-};
-
-// ══════════════════════════════════════════
 // ADMIN
 // ══════════════════════════════════════════
 export const adminService = {

@@ -44,8 +44,13 @@ async function getAll(req, res) {
              OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = cf.nom)
         ), 0) AS nb_achats,
 
+        /* total_achats recalculé dynamiquement (prix_achat * quantite) — la
+           colonne stockée "montant_total" peut être à 0 sur d'anciens
+           enregistrements (cf. commentaire identique dans achatsController.js
+           getAll), ce qui faussait total_achats ET, par ricochet, total_dettes
+           (donnant des dettes négatives du type "payé > total acheté"). */
         COALESCE((
-          SELECT SUM(montant_total)::bigint FROM achats
+          SELECT SUM(prix_achat * quantite)::bigint FROM achats
           WHERE fournisseur_id = cf.id
              OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = cf.nom)
         ), 0) AS total_achats,
@@ -57,7 +62,7 @@ async function getAll(req, res) {
         ), 0) AS total_paye,
 
         COALESCE((
-          SELECT SUM(montant_total - montant_paye)::bigint FROM achats
+          SELECT SUM(prix_achat * quantite - montant_paye)::bigint FROM achats
           WHERE fournisseur_id = cf.id
              OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = cf.nom)
         ), 0) AS total_dettes
@@ -176,22 +181,22 @@ async function getBilan(req, res) {
       const [kpi, transactions, topArticles, evolution] = await Promise.all([
         db.query(`
           SELECT
-            COUNT(id)::int                                             AS nb_achats,
-            COALESCE(SUM(montant_total),               0)::bigint     AS total_achats,
-            COALESCE(SUM(montant_paye),                0)::bigint     AS total_paye,
-            COALESCE(SUM(montant_total - montant_paye),0)::bigint     AS total_dettes,
-            MIN(date_achat)                                            AS premier_achat,
-            MAX(date_achat)                                            AS dernier_achat
+            COUNT(id)::int                                                    AS nb_achats,
+            COALESCE(SUM(prix_achat * quantite),               0)::bigint     AS total_achats,
+            COALESCE(SUM(montant_paye),                        0)::bigint     AS total_paye,
+            COALESCE(SUM(prix_achat * quantite - montant_paye),0)::bigint     AS total_dettes,
+            MIN(date_achat)                                                   AS premier_achat,
+            MAX(date_achat)                                                   AS dernier_achat
           FROM achats
           WHERE fournisseur_id = $1 OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER($2))`,
           [id, cf.nom]),
 
         db.query(`
           SELECT id, article_code, libelle, quantite, prix_achat,
-            montant_total, montant_paye,
-            (montant_total - montant_paye) AS reste,
+            (prix_achat * quantite) AS montant_total, montant_paye,
+            (prix_achat * quantite - montant_paye) AS reste,
             date_achat,
-            CASE WHEN montant_paye >= montant_total THEN TRUE ELSE FALSE END AS statut
+            CASE WHEN montant_paye >= (prix_achat * quantite) THEN TRUE ELSE FALSE END AS statut
           FROM achats
           WHERE fournisseur_id = $1 OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER($2))
           ORDER BY date_achat DESC`,
@@ -199,8 +204,8 @@ async function getBilan(req, res) {
 
         db.query(`
           SELECT article_code, libelle,
-            SUM(quantite)::int         AS qte_totale,
-            SUM(montant_total)::bigint AS total
+            SUM(quantite)::int                AS qte_totale,
+            SUM(prix_achat * quantite)::bigint AS total
           FROM achats
           WHERE fournisseur_id = $1 OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER($2))
           GROUP BY article_code, libelle
@@ -209,8 +214,8 @@ async function getBilan(req, res) {
 
         db.query(`
           SELECT TO_CHAR(date_achat, 'YYYY-MM') AS mois,
-            SUM(montant_total)::bigint AS total,
-            SUM(montant_paye)::bigint  AS paye
+            SUM(prix_achat * quantite)::bigint AS total,
+            SUM(montant_paye)::bigint          AS paye
           FROM achats
           WHERE fournisseur_id = $1 OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER($2))
           GROUP BY TO_CHAR(date_achat, 'YYYY-MM') ORDER BY 1`,

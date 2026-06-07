@@ -62,7 +62,7 @@ export default function Login() {
           <div className="flex items-center gap-4 mb-3">
             <WiLogo size={56} />
             <div>
-              <div className="text-3xl font-black text-white tracking-tight">WariGest</div>
+              <div className="text-3xl font-black text-white tracking-tight" style={{ fontFamily: "'Montserrat', sans-serif" }}>WariGest</div>
               <div className="text-sm text-blue-300/70 font-medium">Gestion & Facturation</div>
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function Login() {
         <div className="lg:hidden flex items-center gap-3 mb-10">
           <WiLogo size={44} />
           <div>
-            <div className="text-2xl font-black text-gray-900">WariGest</div>
+            <div className="text-2xl font-black text-gray-900" style={{ fontFamily: "'Montserrat', sans-serif" }}>WariGest</div>
             <div className="text-xs text-gray-400 font-medium">Gestion & Facturation</div>
           </div>
         </div>

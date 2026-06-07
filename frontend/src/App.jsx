@@ -180,7 +180,7 @@ function Sidebar({ collapsed, setCollapsed, user, onLogout, visibleSections }) {
         <WiLogo size={36} />
         {!collapsed && (
           <div className="leading-tight overflow-hidden">
-            <div className="font-black text-[15px] text-white tracking-tight">WariGest</div>
+            <div className="font-black text-[15px] text-white tracking-tight" style={{ fontFamily: "'Montserrat', sans-serif" }}>WariGest</div>
             <div className="text-[10px] font-medium text-white/40">Gestion & Facturation</div>
           </div>
         )}
@@ -276,7 +276,7 @@ function MobileDrawer({ open, onClose, visibleSections, user, onLogout }) {
           <div className="flex items-center gap-3">
             <WiLogo size={36} />
             <div>
-              <div className="font-black text-[15px] text-white">WariGest</div>
+              <div className="font-black text-[15px] text-white" style={{ fontFamily: "'Montserrat', sans-serif" }}>WariGest</div>
               <div className="text-[10px] font-medium text-white/40">Gestion & Facturation</div>
             </div>
           </div>
@@ -426,7 +426,7 @@ function Layout({ children }) {
           {/* Breadcrumb / titre */}
           <div className="flex-1 flex items-center gap-2 min-w-0">
             <div className="hidden sm:flex items-center gap-1.5">
-              <span className="text-xs text-gray-400 font-medium">WariGest</span>
+              <span className="text-xs text-gray-400 font-medium" style={{ fontFamily: "'Montserrat', sans-serif" }}>WariGest</span>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3 h-3 text-gray-200">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>

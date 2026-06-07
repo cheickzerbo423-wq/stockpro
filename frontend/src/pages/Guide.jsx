@@ -118,7 +118,7 @@ export default function Guide() {
               </svg>
             </div>
             <div>
-              <div className="text-white font-black text-xl tracking-tight">WariGest</div>
+              <div className="text-white font-black text-xl tracking-tight" style={{ fontFamily: "'Montserrat', sans-serif" }}>WariGest</div>
               <div className="text-[#B3BFFF] text-xs font-semibold">Gestion & Facturation</div>
             </div>
           </div>

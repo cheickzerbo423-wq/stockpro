@@ -109,6 +109,7 @@ export default function Guide() {
     { id: "factures",    icon: "🧾", label: "Factures" },
     { id: "rapports",    icon: "📊", label: "Rapports Financiers" },
     { id: "utilisateurs",icon: "🔐", label: "Utilisateurs" },
+    { id: "parametres",  icon: "⚙️", label: "Paramètres" },
   ];
 
   return (
@@ -536,6 +537,54 @@ export default function Guide() {
           <p className="text-xs text-red-700">• Cocher <strong>Gammes</strong> sélectionne automatiquement aussi <strong>Articles &amp; Stock</strong> : la suppression des gammes entraîne celle des articles qui leur sont liés (contrainte de cohérence des données).</p>
           <p className="text-xs text-red-700">• Les comptes utilisateurs ne sont <strong>jamais</strong> affectés par cette réinitialisation.</p>
         </div>
+      </Section>
+
+      {/* ═══════════════════════════════════════
+          MODULE 8 – Paramètres (personnalisation entreprise)
+      ═══════════════════════════════════════ */}
+      <Section id="parametres" icon="⚙️" title="Paramètres"
+        subtitle="Personnaliser les factures, reçus et rapports PDF (Admin uniquement)" accentColor="#6366f1">
+
+        <Tip icon="🔒" color="red">
+          Cet onglet est réservé aux comptes <Badge color="red">Admin</Badge>. Les autres utilisateurs n'y ont pas accès.
+        </Tip>
+
+        <SectionTitle>À quoi ça sert</SectionTitle>
+        <p className="text-xs text-gray-500 leading-relaxed">
+          Cette page permet à <strong>chaque entreprise</strong> qui utilise WariGest d'adapter automatiquement ses
+          <strong> factures</strong>, ses <strong>reçus</strong> et ses <strong>rapports financiers PDF</strong> à sa propre
+          identité — sans aucune intervention technique. Les informations enregistrées ici sont appliquées immédiatement
+          à tous les documents générés par la suite.
+        </p>
+
+        <SectionTitle>Renseigner les informations de l'entreprise</SectionTitle>
+        <div className="space-y-2">
+          <Step n="1">Ouvrez <strong>Paramètres</strong> dans le menu (section Administration).</Step>
+          <Step n="2">Renseignez le <strong>nom</strong>, l'<strong>adresse</strong>, le <strong>téléphone</strong> et l'<strong>email</strong> de l'entreprise — ces coordonnées apparaîtront en en-tête de chaque document.</Step>
+          <Step n="3">Choisissez la <strong>devise</strong> utilisée (FCFA, EUR, USD, XOF, XAF, MAD, GNF, CDF, NGN, GHS…) — elle s'affiche désormais sur tous les montants des PDF.</Step>
+          <Step n="4">Cliquez <strong>Enregistrer les modifications</strong> pour appliquer les changements.</Step>
+        </div>
+
+        <SectionTitle>Logo de l'entreprise</SectionTitle>
+        <div className="space-y-2">
+          <Step n="1">Dans la carte <strong>Logo</strong>, cliquez sur <strong>Importer un logo</strong> et choisissez une image (PNG, JPEG ou WebP).</Step>
+          <Step n="2">L'image est automatiquement redimensionnée et compressée avant l'envoi — idéalement carrée et à fond transparent pour un meilleur rendu.</Step>
+          <Step n="3">Le logo s'affiche désormais en en-tête des factures, des reçus et des rapports PDF. Utilisez <strong>Changer le logo</strong> ou <strong>Retirer</strong> pour le mettre à jour ou le supprimer.</Step>
+        </div>
+
+        <SectionTitle>Couleur d'accent et pied de page</SectionTitle>
+        <div className="space-y-2">
+          <Step n="1">Choisissez une <strong>couleur d'accent</strong> via le sélecteur de couleur ou en saisissant un code hexadécimal (ex : <code className="bg-gray-100 px-1 rounded font-mono text-[11px]">#0023FF</code>) — elle habille les totaux, titres et bandeaux des documents générés.</Step>
+          <Step n="2">Personnalisez le <strong>message de pied de page</strong> affiché en bas des factures et reçus (il remplace le message par défaut).</Step>
+          <Step n="3">Le panneau <strong>Aperçu de l'en-tête PDF</strong>, à droite, prévisualise en direct le rendu du nom, du logo, des coordonnées et de la couleur choisis.</Step>
+        </div>
+
+        <Tip icon="✨" color="green">
+          Aucune modification de code ni redéploiement n'est nécessaire : dès l'enregistrement, les <strong>nouvelles factures, nouveaux reçus et nouveaux rapports PDF</strong> utilisent automatiquement ces réglages.
+        </Tip>
+        <Tip icon="💡" color="blue">
+          Tant qu'aucune information n'est renseignée, WariGest applique des valeurs par défaut neutres — vous pouvez donc personnaliser progressivement, à votre rythme.
+        </Tip>
       </Section>
 
       {/* ── Pied de page ── */}

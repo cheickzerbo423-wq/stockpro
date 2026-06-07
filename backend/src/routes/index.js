@@ -13,6 +13,7 @@ const clientsCtrl  = require("../controllers/clientsController");
 const facturesCtrl = require("../controllers/facturesController");
 const usersCtrl    = require("../controllers/utilisateursController");
 const rapportsCtrl = require("../controllers/rapportsController");
+const entrepriseCtrl = require("../controllers/entrepriseController");
 
 // ============================================================
 // AUTH — Public
@@ -75,6 +76,14 @@ router.put   ("/utilisateurs/:id", authenticate, audit("MODIF_USER",    "utilisa
 router.delete("/utilisateurs/:id", authenticate, audit("SUPPRESSION_USER", "utilisateurs"), usersCtrl.remove);
 
 router.post("/admin/reset", authenticate, usersCtrl.resetData);
+
+// ============================================================
+// ENTREPRISE — Personnalisation factures/reçus/rapports PDF
+// (lecture : tout utilisateur connecté ; modification : admin uniquement,
+// vérifié dans le contrôleur comme pour /utilisateurs)
+// ============================================================
+router.get("/entreprise", authenticate, entrepriseCtrl.getConfig);
+router.put("/entreprise", authenticate, audit("MODIFICATION", "entreprise_config"), entrepriseCtrl.updateConfig);
 
 
 // ============================================================

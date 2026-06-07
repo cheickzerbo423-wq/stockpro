@@ -1,6 +1,7 @@
 // src/controllers/rapportsController.js
 const db     = require("../config/db");
 const PDFDoc = require("pdfkit");
+const { getEntrepriseConfig, logoBuffer } = require("../utils/entrepriseConfig");
 
 /* ─── helpers ─────────────────────────────────────────────────── */
 const sep = (n) => String(parseInt(n) || 0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -144,9 +145,13 @@ async function exportPDF(req, res) {
     const a       = achats.rows[0];
     const f       = factures.rows[0];
     const benefice = parseInt(v.ca_total) - parseInt(a.total_achats);
-    const company  = process.env.COMPANY_NAME  || "WariGest";
-    const compAddr = process.env.COMPANY_ADDRESS || "";
-    const compTel  = process.env.COMPANY_PHONE   || "";
+    const cfg      = await getEntrepriseConfig();
+    const logoBuf  = logoBuffer(cfg.logo);
+    const ACC      = cfg.couleur || "#0023FF";   // couleur d'accent — personnalisable par entreprise
+    const company  = cfg.nom;
+    const compAddr = cfg.adresse;
+    const compTel  = cfg.telephone;
+    const money    = (n) => sep(n) + " " + (cfg.devise || "FCFA");
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="Rapport_${debut}_${fin}.pdf"`);
@@ -156,12 +161,19 @@ async function exportPDF(req, res) {
 
     /* ── En-tête ── */
     doc.rect(0, 0, 595, 90).fill("#0F172A");
+    let txtX = 50, txtW = 245;
+    if (logoBuf) {
+      try {
+        doc.image(logoBuf, 50, 16, { fit: [58, 58] });
+        txtX = 120; txtW = 175;
+      } catch (e) { console.error("Logo PDF (rapport) ignoré :", e.message); }
+    }
     doc.fillColor("#ffffff").fontSize(20).font("Helvetica-Bold")
-       .text(company, 50, 28);
+       .text(company, txtX, 28, { width: txtW });
     doc.fontSize(9).font("Helvetica").fillColor("#94a3b8")
-       .text(compAddr + (compTel ? "  ·  " + compTel : ""), 50, 55);
+       .text(compAddr + (compTel ? "  ·  " + compTel : ""), txtX, 55, { width: txtW });
 
-    doc.fillColor("#0023FF").fontSize(13).font("Helvetica-Bold")
+    doc.fillColor(ACC).fontSize(13).font("Helvetica-Bold")
        .text("RAPPORT FINANCIER", 595 - 220, 30, { width: 170, align: "right" });
     doc.fillColor("#cbd5e1").fontSize(9).font("Helvetica")
        .text(`Période : ${fmtDate(debut)} — ${fmtDate(fin)}`, 595 - 220, 52, { width: 170, align: "right" });
@@ -174,7 +186,7 @@ async function exportPDF(req, res) {
     const section = (title) => {
       doc.moveDown(0.5);
       doc.rect(50, doc.y, 495, 22).fill("#f1f5f9");
-      doc.fillColor("#0023FF").fontSize(10).font("Helvetica-Bold")
+      doc.fillColor(ACC).fontSize(10).font("Helvetica-Bold")
          .text(title, 58, doc.y + 5);
       doc.y += 28;
     };
@@ -191,9 +203,9 @@ async function exportPDF(req, res) {
     /* ── KPIs ── */
     const kpiW = 115, kpiH = 60, kpiY = doc.y;
     const kpis = [
-      { label: "Chiffre d'Affaires", value: fmt(v.ca_total), color: "#0023FF" },
-      { label: "Total Dépenses",     value: fmt(a.total_achats), color: "#ef4444" },
-      { label: "Bénéfice Net",       value: fmt(benefice), color: benefice >= 0 ? "#10b981" : "#ef4444" },
+      { label: "Chiffre d'Affaires", value: money(v.ca_total), color: ACC },
+      { label: "Total Dépenses",     value: money(a.total_achats), color: "#ef4444" },
+      { label: "Bénéfice Net",       value: money(benefice), color: benefice >= 0 ? "#10b981" : "#ef4444" },
       { label: "Factures Émises",    value: fmtN(f.nb_total), color: "#3b82f6" },
     ];
     kpis.forEach((k, i) => {
@@ -208,22 +220,22 @@ async function exportPDF(req, res) {
 
     /* ── Ventes ── */
     section("VENTES");
-    row("Chiffre d'affaires",   fmt(v.ca_total),        "#0023FF");
+    row("Chiffre d'affaires",   money(v.ca_total),      ACC);
     row("Nombre de factures",   fmtN(v.nb_factures));
     row("Quantités vendues",    fmtN(v.qte_totale) + " unités");
 
     /* ── Approvisionnements ── */
     section("APPROVISIONNEMENTS");
     row("Nombre d'achats",      fmtN(a.nb_achats));
-    row("Total dépenses",       fmt(a.total_achats),    "#ef4444");
-    row("Montant payé",         fmt(a.total_paye),      "#10b981");
-    row("Dettes fournisseurs",  fmt(a.total_dettes),    parseInt(a.total_dettes) > 0 ? "#ef4444" : "#64748b");
+    row("Total dépenses",       money(a.total_achats),  "#ef4444");
+    row("Montant payé",         money(a.total_paye),    "#10b981");
+    row("Dettes fournisseurs",  money(a.total_dettes),  parseInt(a.total_dettes) > 0 ? "#ef4444" : "#64748b");
 
     /* ── Factures ── */
     section("RECOUVREMENT FACTURES");
-    row("Total facturé",        fmt(f.montant_total));
-    row("Montant encaissé",     fmt(f.montant_encaisse), "#10b981");
-    row("Créances restantes",   fmt(f.montant_creances), parseInt(f.montant_creances) > 0 ? "#ef4444" : "#64748b");
+    row("Total facturé",        money(f.montant_total));
+    row("Montant encaissé",     money(f.montant_encaisse), "#10b981");
+    row("Créances restantes",   money(f.montant_creances), parseInt(f.montant_creances) > 0 ? "#ef4444" : "#64748b");
     row("Factures réglées",     fmtN(f.nb_reglees),     "#10b981");
     row("Factures impayées",    fmtN(f.nb_impayees),    parseInt(f.nb_impayees) > 0 ? "#ef4444" : "#64748b");
 
@@ -231,7 +243,7 @@ async function exportPDF(req, res) {
     if (topArticles.rows.length > 0) {
       section("TOP 5 ARTICLES VENDUS");
       topArticles.rows.forEach((a, i) => {
-        row(`${i + 1}. ${a.libelle}`, fmt(a.ca) + " · " + fmtN(a.qte) + " u.", "#0023FF");
+        row(`${i + 1}. ${a.libelle}`, money(a.ca) + " · " + fmtN(a.qte) + " u.", ACC);
       });
     }
 
@@ -243,9 +255,9 @@ async function exportPDF(req, res) {
     doc.fillColor("#64748b").fontSize(8).font("Helvetica")
        .text("BÉNÉFICE NET DE LA PÉRIODE", 60, benY + 10);
     doc.fillColor(benefice >= 0 ? "#047857" : "#dc2626").fontSize(22).font("Helvetica-Bold")
-       .text(fmt(benefice), 60, benY + 24, { width: 380 });
+       .text(money(benefice), 60, benY + 24, { width: 380 });
     doc.fillColor("#94a3b8").fontSize(8).font("Helvetica")
-       .text(`CA ${fmt(v.ca_total)}  —  Dépenses ${fmt(a.total_achats)}`, 60, benY + 50);
+       .text(`CA ${money(v.ca_total)}  —  Dépenses ${money(a.total_achats)}`, 60, benY + 50);
 
     /* ── Pied de page ── */
     // IMPORTANT : rester DANS la zone imprimable (au-dessus de doc.page.maxY(), c.-à-d.

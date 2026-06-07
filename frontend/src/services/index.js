@@ -192,6 +192,19 @@ export const adminService = {
 };
 
 // ══════════════════════════════════════════
+// ENTREPRISE — Personnalisation factures/reçus/rapports PDF
+// (nom, coordonnées, devise, logo, couleur d'accent — appliqués
+// automatiquement aux PDF générés par le serveur)
+// ══════════════════════════════════════════
+export const entrepriseService = {
+  getConfig: () =>
+    api.get("/entreprise").then((r) => r.data),
+
+  updateConfig: (data) =>
+    api.put("/entreprise", data).then((r) => r.data),
+};
+
+// ══════════════════════════════════════════
 // RAPPORTS FINANCIERS
 // ══════════════════════════════════════════
 export const rapportsService = {

@@ -2,6 +2,7 @@
 // Équivalent Excel : Facture + Etat facture
 const db     = require("../config/db");
 const PDFDoc = require("pdfkit");
+const { getEntrepriseConfig, logoBuffer } = require("../utils/entrepriseConfig");
 
 // GET /api/factures
 async function getAll(req, res) {
@@ -85,11 +86,13 @@ async function updatePaiement(req, res) {
 }
 
 // Formatte un nombre sans séparateurs problématiques pour PDFKit
-function formatMoney(n) {
-  const devise = process.env.COMPANY_DEVISE || "FCFA";
+// (la devise vient désormais de la configuration "entreprise" de chaque
+// société, avec repli sur la variable d'environnement COMPANY_DEVISE)
+function formatMoney(n, devise) {
+  const dev = devise || process.env.COMPANY_DEVISE || "FCFA";
   const num = Math.round(n || 0);
   const str = num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  return str + " " + devise;
+  return str + " " + dev;
 }
 
 // GET /api/factures/:code/pdf — Générer la facture en PDF
@@ -105,7 +108,9 @@ async function generatePDF(req, res) {
     );
 
     const f       = facture.rows[0];
-    const money   = formatMoney;
+    const cfg     = await getEntrepriseConfig();
+    const logoBuf = logoBuffer(cfg.logo);
+    const money   = (n) => formatMoney(n, cfg.devise);
     const d       = f.date_facture instanceof Date ? f.date_facture : new Date(f.date_facture);
     const MOIS_FR = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
     const dateStr = `${d.getDate().toString().padStart(2,"0")} ${MOIS_FR[d.getMonth()]} ${d.getFullYear()}`;
@@ -118,7 +123,7 @@ async function generatePDF(req, res) {
 
     const PW    = 595;
     const PH    = 842;
-    const ACC   = "#0023FF";   // WariGest blue — accent principal
+    const ACC   = cfg.couleur || "#0023FF";   // couleur d'accent — personnalisable par entreprise
     const INK   = "#111827";   // quasi-noir pour textes
     const SUB   = "#6B7280";   // gris secondaire
     const RULE  = "#E5E7EB";   // gris très clair pour les lignes
@@ -126,22 +131,32 @@ async function generatePDF(req, res) {
     const M     = 55;
     const INN   = PW - M * 2;
 
-    // ── Filet orange fin en haut (seul élément couleur du header) ──
+    // ── Filet fin en haut (couleur d'accent de l'entreprise) ──
     doc.rect(0, 0, PW, 4).fillColor(ACC).fill();
 
     // ── SECTION HAUTE : entreprise à gauche, référence à droite ──
     const topY = 30;
 
+    // Logo de l'entreprise (si configuré) — petit carré à gauche du nom
+    let nameX = M, nameW = 280;
+    if (logoBuf) {
+      try {
+        doc.image(logoBuf, M, topY - 4, { fit: [44, 44] });
+        nameX = M + 54;
+        nameW = 280 - 54;
+      } catch (e) { console.error("Logo PDF (facture) ignoré :", e.message); }
+    }
+
     // Nom entreprise — grand, noir
     doc.fontSize(19).fillColor(INK).font("Helvetica-Bold")
-       .text(process.env.COMPANY_NAME || "NOM ENTREPRISE", M, topY, { width: 280 });
+       .text(cfg.nom, nameX, topY, { width: nameW });
 
     // Infos contact — petits, gris
     let cy = topY + 28;
     doc.fontSize(8.5).fillColor(SUB).font("Helvetica");
-    if (process.env.COMPANY_ADDRESS) { doc.text(process.env.COMPANY_ADDRESS, M, cy, { width: 280 }); cy += 12; }
-    if (process.env.COMPANY_PHONE)   { doc.text("Tel : " + process.env.COMPANY_PHONE, M, cy, { width: 280 }); cy += 12; }
-    if (process.env.COMPANY_EMAIL)   { doc.text(process.env.COMPANY_EMAIL, M, cy, { width: 280 }); }
+    if (cfg.adresse)   { doc.text(cfg.adresse, nameX, cy, { width: nameW }); cy += 12; }
+    if (cfg.telephone) { doc.text("Tel : " + cfg.telephone, nameX, cy, { width: nameW }); cy += 12; }
+    if (cfg.email)     { doc.text(cfg.email, nameX, cy, { width: nameW }); }
 
     // Bloc référence (droite) — sans fond criard
     const rBx = M + 300;
@@ -261,9 +276,10 @@ async function generatePDF(req, res) {
        .text("WariGest", M, footY + 12);
     doc.fontSize(7).fillColor(SUB).font("Helvetica")
        .text("Logiciel de gestion & facturation", M, footY + 23);
-    // Texte pied de page centré : message confiance
+    // Texte pied de page centré : message personnalisable par l'entreprise
+    // (avec repli sur le message de confiance par défaut)
     doc.fontSize(7.5).fillColor(SUB).font("Helvetica-Oblique")
-       .text("Merci pour votre confiance. Ce document tient lieu de facture officielle.", M, footY + 32, { width: INN, align: "center" });
+       .text(cfg.pied_de_page || "Merci pour votre confiance. Ce document tient lieu de facture officielle.", M, footY + 32, { width: INN, align: "center" });
 
     doc.end();
   } catch (err) {
@@ -286,7 +302,9 @@ async function generateRecu(req, res) {
     );
 
     const f      = facture.rows[0];
-    const money  = formatMoney;
+    const cfg    = await getEntrepriseConfig();
+    const logoBuf = logoBuffer(cfg.logo);
+    const money  = (n) => formatMoney(n, cfg.devise);
     const dr     = f.date_facture instanceof Date ? f.date_facture : new Date(f.date_facture);
     const dateStr = `${dr.getDate().toString().padStart(2,"0")}/${(dr.getMonth()+1).toString().padStart(2,"0")}/${dr.getFullYear()}`;
 
@@ -294,13 +312,14 @@ async function generateRecu(req, res) {
     const W      = 226;
     const M      = 12;
     const INNER  = W - M * 2;
-    const BRAND  = "#0023FF";   // WariGest blue
+    const BRAND  = cfg.couleur || "#0023FF";   // couleur d'accent — personnalisable par entreprise
     const DARK   = "#111827";
     const GREY   = "#6B7280";
 
     const LINE_H = 15;
     const extraH = parseFloat(f.reste) > 0 ? 20 : 0;
-    const H      = 305 + lignes.rows.length * LINE_H + extraH;
+    const logoH  = logoBuf ? 46 : 0;
+    const H      = 305 + logoH + lignes.rows.length * LINE_H + extraH;
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename="recu_${f.code}.pdf"`);
@@ -313,22 +332,30 @@ async function generateRecu(req, res) {
 
     let y = 0;
 
-    // ── Filet WariGest fin haut ──
+    // ── Filet fin haut (couleur d'accent de l'entreprise) ──
     doc.rect(0, 0, W, 3).fillColor(BRAND).fill();
     y = 12;
 
+    // ── Logo de l'entreprise (si configuré), centré ──
+    if (logoBuf) {
+      try {
+        doc.image(logoBuf, (W - 40) / 2, y, { fit: [40, 40] });
+        y += 46;
+      } catch (e) { console.error("Logo PDF (reçu) ignoré :", e.message); }
+    }
+
     // ── Nom entreprise ──
     doc.fontSize(13).fillColor(DARK).font("Helvetica-Bold")
-       .text(process.env.COMPANY_NAME || "NOM ENTREPRISE", 0, y, { width: W, align: "center" });
+       .text(cfg.nom, 0, y, { width: W, align: "center" });
     y += 17;
 
     doc.fontSize(7).fillColor(GREY).font("Helvetica");
-    if (process.env.COMPANY_ADDRESS) {
-      doc.text(process.env.COMPANY_ADDRESS, 0, y, { width: W, align: "center" });
+    if (cfg.adresse) {
+      doc.text(cfg.adresse, 0, y, { width: W, align: "center" });
       y += 10;
     }
-    if (process.env.COMPANY_PHONE) {
-      doc.text("Tel : " + process.env.COMPANY_PHONE, 0, y, { width: W, align: "center" });
+    if (cfg.telephone) {
+      doc.text("Tel : " + cfg.telephone, 0, y, { width: W, align: "center" });
       y += 10;
     }
 
@@ -419,15 +446,15 @@ async function generateRecu(req, res) {
     y += 8;
 
     doc.fontSize(7).fillColor(GREY).font("Helvetica-Oblique")
-       .text("Merci pour votre confiance !", 0, y, { width: W, align: "center" });
+       .text(cfg.pied_de_page || "Merci pour votre confiance !", 0, y, { width: W, align: "center" });
     y += 12;
 
-    // ── Marque WariGest ──
+    // ── Marque WariGest (logiciel) ──
     doc.fontSize(6.5).fillColor(BRAND).font("Helvetica-Bold")
        .text("Édité par WariGest", 0, y, { width: W, align: "center" });
     y += 10;
 
-    // ── Filet WariGest fin bas ──
+    // ── Filet fin bas (couleur d'accent de l'entreprise) ──
     doc.rect(0, H - 3, W, 3).fillColor(BRAND).fill();
 
     doc.end();

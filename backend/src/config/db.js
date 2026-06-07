@@ -71,6 +71,35 @@ pool.connect((err, client, release) => {
         .then(() => console.log("✅ Schéma 'achats' vérifié (colonnes mois/annee OK)."))
         .catch((e) => console.error("⚠️  Migration achats (mois/annee) ignorée :", e.message))
         .then(() => {
+          // ── Personnalisation par entreprise (factures/reçus/rapports PDF) ──
+          // Table à une seule ligne (id = 1) : chaque entreprise qui déploie
+          // WariGest peut renseigner ses propres nom, coordonnées, devise,
+          // logo (data-URI base64) et couleur d'accent depuis la page
+          // "Paramètres" (admin) — sans avoir à modifier de variables
+          // d'environnement ni redéployer. CREATE+INSERT idempotents : sûrs
+          // à rejouer à chaque démarrage.
+          return client.query(`
+            CREATE TABLE IF NOT EXISTS entreprise_config (
+              id            INTEGER PRIMARY KEY DEFAULT 1,
+              nom           VARCHAR(150),
+              adresse       VARCHAR(255),
+              telephone     VARCHAR(50),
+              email         VARCHAR(150),
+              devise        VARCHAR(10)  DEFAULT 'FCFA',
+              couleur       VARCHAR(10)  DEFAULT '#0023FF',
+              logo          TEXT,
+              pied_de_page  VARCHAR(255),
+              updated_at    TIMESTAMP DEFAULT NOW(),
+              CONSTRAINT entreprise_config_id_unique CHECK (id = 1)
+            );
+            INSERT INTO entreprise_config (id, devise, couleur)
+            VALUES (1, 'FCFA', '#0023FF')
+            ON CONFLICT (id) DO NOTHING;
+          `);
+        })
+        .then(() => console.log("✅ Table 'entreprise_config' vérifiée (personnalisation PDF par entreprise)."))
+        .catch((e) => console.error("⚠️  Migration entreprise_config ignorée :", e.message))
+        .then(() => {
           // ── Correction définitive de la vue "vue_stock" ──────────────────
           // Bug constaté : les chiffres de stock affichés (Articles & Stock,
           // alertes de rupture, valeur de stock) étaient totalement faux et

@@ -3,33 +3,19 @@
 
 /*
  * ── Police principale : Groote Regular ──────────────────────────────
- * Placez le fichier Groote-Regular.woff2 dans public/fonts/ pour
- * activer la police. Montserrat prend le relais si le fichier est absent.
+ * Les fichiers Groote-*.woff2/.woff n'ont jamais été ajoutés au projet
+ * (voir public/fonts/LIRE_MOI.txt). Référencer des url() absolues vers
+ * des fichiers inexistants fait ÉCHOUER LE BUILD Vercel/CRA ("Module not
+ * found: Can't resolve '/fonts/Groote-Regular.woff2'") — ce n'est pas un
+ * simple 404 au runtime. Les règles @font-face sont donc retirées tant
+ * que ces fichiers ne sont pas fournis ; la pile --font-primary passe
+ * alors naturellement à 'Montserrat' (chargée via Google Fonts ci-dessus),
+ * ce qui est exactement le comportement de repli prévu à l'origine.
+ *
+ * Pour activer Groote plus tard : déposez les fichiers .woff2/.woff dans
+ * frontend/public/fonts/, PUIS réintroduisez ici les blocs @font-face
+ * correspondants (avec les mêmes chemins '/fonts/...').
  */
-@font-face {
-  font-family: 'Groote';
-  src: url('/fonts/Groote-Regular.woff2') format('woff2'),
-       url('/fonts/Groote-Regular.woff')  format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Groote';
-  src: url('/fonts/Groote-Medium.woff2') format('woff2'),
-       url('/fonts/Groote-Medium.woff')  format('woff');
-  font-weight: 500 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Groote';
-  src: url('/fonts/Groote-Bold.woff2') format('woff2'),
-       url('/fonts/Groote-Bold.woff')  format('woff');
-  font-weight: 700 900;
-  font-style: normal;
-  font-display: swap;
-}
 
 @tailwind base;
 @tailwind components;

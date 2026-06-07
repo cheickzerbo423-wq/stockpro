@@ -13,6 +13,7 @@ import Factures     from "./pages/Factures";
 import Utilisateurs from "./pages/Utilisateurs";
 import Rapports     from "./pages/Rapports";
 import Guide        from "./pages/Guide";
+import Devis        from "./pages/Devis";
 
 // ── Logo SVG Wi — tracé vectoriel officiel (fichier .svg fourni) ──
 const WiLogo = ({ size = 36 }) => (
@@ -80,6 +81,14 @@ const ICONS = {
       <circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/>
     </svg>
   ),
+  "/devis": (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-[18px] h-[18px]">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+  ),
 };
 
 // ── Structure des sections de navigation ──────────────────
@@ -97,6 +106,7 @@ const NAV_SECTIONS = [
       { path: "/achats",    label: "Approvisionnements",     module: "appro" },
       { path: "/clients",   label: "Clients & Fournisseurs", module: "clients" },
       { path: "/factures",  label: "Factures",               module: "facturation" },
+      { path: "/devis",     label: "Devis",                  module: "facturation" },
     ],
   },
   {
@@ -500,6 +510,7 @@ export default function App() {
           <Route path="/factures"    element={<PrivateRoute><Layout><Factures     /></Layout></PrivateRoute>} />
           <Route path="/rapports"    element={<PrivateRoute><Layout><Rapports     /></Layout></PrivateRoute>} />
           <Route path="/guide"       element={<PrivateRoute><Layout><Guide        /></Layout></PrivateRoute>} />
+          <Route path="/devis"         element={<PrivateRoute><Layout><Devis         /></Layout></PrivateRoute>} />
           <Route path="/utilisateurs" element={<PrivateRoute adminOnly><Layout><Utilisateurs /></Layout></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

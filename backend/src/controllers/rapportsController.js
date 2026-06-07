@@ -16,6 +16,7 @@ async function getRapport(req, res) {
     const now   = new Date();
     const debut = req.query.debut || `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-01`;
     const fin   = req.query.fin   || now.toISOString().split("T")[0];
+    const entId = req.user.entreprise_id;
 
     const [ventes, achats, factures, graphVentes, graphAchats, topArticles] = await Promise.all([
       db.query(
@@ -25,8 +26,8 @@ async function getRapport(req, res) {
            COUNT(*)                                   AS nb_lignes,
            COALESCE(SUM(quantite), 0)                 AS qte_totale
          FROM lignes_vente
-         WHERE date_vente BETWEEN $1 AND $2`,
-        [debut, fin]
+         WHERE entreprise_id = $3 AND date_vente BETWEEN $1 AND $2`,
+        [debut, fin, entId]
       ),
 
       // total_achats / total_dettes recalculés dynamiquement (prix_achat * quantite)
@@ -40,8 +41,8 @@ async function getRapport(req, res) {
            COALESCE(SUM(montant_paye), 0)                    AS total_paye,
            COALESCE(SUM(prix_achat * quantite - montant_paye), 0) AS total_dettes
          FROM achats
-         WHERE date_achat BETWEEN $1 AND $2`,
-        [debut, fin]
+         WHERE entreprise_id = $3 AND date_achat BETWEEN $1 AND $2`,
+        [debut, fin, entId]
       ),
 
       db.query(
@@ -53,30 +54,30 @@ async function getRapport(req, res) {
            COALESCE(SUM(montant_paye), 0)             AS montant_encaisse,
            COALESCE(SUM(reste), 0)                    AS montant_creances
          FROM factures
-         WHERE date_facture BETWEEN $1 AND $2`,
-        [debut, fin]
+         WHERE entreprise_id = $3 AND date_facture BETWEEN $1 AND $2`,
+        [debut, fin, entId]
       ),
 
       db.query(
         `SELECT date_vente::text AS jour, SUM(montant_total)::bigint AS ca
-         FROM lignes_vente WHERE date_vente BETWEEN $1 AND $2
+         FROM lignes_vente WHERE entreprise_id = $3 AND date_vente BETWEEN $1 AND $2
          GROUP BY date_vente ORDER BY date_vente`,
-        [debut, fin]
+        [debut, fin, entId]
       ),
 
       db.query(
         `SELECT date_achat::text AS jour, SUM(prix_achat * quantite)::bigint AS total
-         FROM achats WHERE date_achat BETWEEN $1 AND $2
+         FROM achats WHERE entreprise_id = $3 AND date_achat BETWEEN $1 AND $2
          GROUP BY date_achat ORDER BY date_achat`,
-        [debut, fin]
+        [debut, fin, entId]
       ),
 
       db.query(
         `SELECT article_code AS code, libelle, SUM(montant_total)::bigint AS ca,
                 SUM(quantite) AS qte
-         FROM lignes_vente WHERE date_vente BETWEEN $1 AND $2
+         FROM lignes_vente WHERE entreprise_id = $3 AND date_vente BETWEEN $1 AND $2
          GROUP BY article_code, libelle ORDER BY ca DESC LIMIT 5`,
-        [debut, fin]
+        [debut, fin, entId]
       ),
     ]);
 
@@ -105,6 +106,7 @@ async function exportPDF(req, res) {
     const { debut, fin } = req.query;
     if (!debut || !fin)
       return res.status(400).json({ message: "Paramètres debut et fin requis." });
+    const entId = req.user.entreprise_id;
 
     // Réutiliser la même logique de données
     const [ventes, achats, factures, topArticles] = await Promise.all([
@@ -112,8 +114,8 @@ async function exportPDF(req, res) {
         `SELECT COALESCE(SUM(montant_total), 0) AS ca_total,
                 COUNT(DISTINCT facture_code) AS nb_factures,
                 COALESCE(SUM(quantite), 0) AS qte_totale
-         FROM lignes_vente WHERE date_vente BETWEEN $1 AND $2`,
-        [debut, fin]
+         FROM lignes_vente WHERE entreprise_id = $3 AND date_vente BETWEEN $1 AND $2`,
+        [debut, fin, entId]
       ),
       // Même correctif que ci-dessus : recalcul dynamique pour éviter de se fier
       // à la colonne stockée "montant_total" qui peut être à 0 sur d'anciens achats.
@@ -121,8 +123,8 @@ async function exportPDF(req, res) {
         `SELECT COUNT(*) AS nb_achats, COALESCE(SUM(prix_achat * quantite), 0) AS total_achats,
                 COALESCE(SUM(montant_paye), 0) AS total_paye,
                 COALESCE(SUM(prix_achat * quantite - montant_paye), 0) AS total_dettes
-         FROM achats WHERE date_achat BETWEEN $1 AND $2`,
-        [debut, fin]
+         FROM achats WHERE entreprise_id = $3 AND date_achat BETWEEN $1 AND $2`,
+        [debut, fin, entId]
       ),
       db.query(
         `SELECT COUNT(*) AS nb_total, COUNT(*) FILTER (WHERE statut = TRUE) AS nb_reglees,
@@ -130,14 +132,14 @@ async function exportPDF(req, res) {
                 COALESCE(SUM(montant), 0) AS montant_total,
                 COALESCE(SUM(montant_paye), 0) AS montant_encaisse,
                 COALESCE(SUM(reste), 0) AS montant_creances
-         FROM factures WHERE date_facture BETWEEN $1 AND $2`,
-        [debut, fin]
+         FROM factures WHERE entreprise_id = $3 AND date_facture BETWEEN $1 AND $2`,
+        [debut, fin, entId]
       ),
       db.query(
         `SELECT libelle, SUM(montant_total)::bigint AS ca, SUM(quantite) AS qte
-         FROM lignes_vente WHERE date_vente BETWEEN $1 AND $2
+         FROM lignes_vente WHERE entreprise_id = $3 AND date_vente BETWEEN $1 AND $2
          GROUP BY libelle ORDER BY ca DESC LIMIT 5`,
-        [debut, fin]
+        [debut, fin, entId]
       ),
     ]);
 
@@ -145,7 +147,7 @@ async function exportPDF(req, res) {
     const a       = achats.rows[0];
     const f       = factures.rows[0];
     const benefice = parseInt(v.ca_total) - parseInt(a.total_achats);
-    const cfg      = await getEntrepriseConfig();
+    const cfg      = await getEntrepriseConfig(entId);
     const logoBuf  = logoBuffer(cfg.logo);
     const ACC      = cfg.couleur || "#0023FF";   // couleur d'accent — personnalisable par entreprise
     const company  = cfg.nom;

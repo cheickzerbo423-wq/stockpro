@@ -1,10 +1,15 @@
 // src/controllers/entrepriseController.js
 // Configuration "entreprise" personnalisable par chaque société qui utilise
 // WariGest : nom, adresse, téléphone, email, devise, logo et couleur d'accent.
-// Une seule ligne en base (id = 1). Lue par tous les utilisateurs connectés
-// (pour afficher le branding dans l'appli) et modifiable par les admins
-// uniquement — ces réglages sont ensuite appliqués automatiquement aux
-// factures, reçus et rapports PDF générés (voir utils/entrepriseConfig.js).
+//
+// MULTI-ENTREPRISES : la table contient désormais UNE LIGNE PAR ENTREPRISE
+// cliente (colonne "entreprise_id", contrainte UNIQUE — voir migration dans
+// db.js). On lit/écrit toujours la ligne de l'entreprise de l'utilisateur
+// connecté (req.user.entreprise_id), jamais la ligne id = 1 globale. Lue par
+// tous les utilisateurs connectés (pour afficher le branding dans l'appli) et
+// modifiable par les admins de leur propre entreprise uniquement — ces
+// réglages sont ensuite appliqués automatiquement aux factures, reçus et
+// rapports PDF générés (voir utils/entrepriseConfig.js).
 const db = require("../config/db");
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
@@ -14,7 +19,7 @@ const MAX_LOGO_LEN = 2_800_000;
 // GET /api/entreprise — accessible à tout utilisateur connecté
 async function getConfig(req, res) {
   try {
-    const r = await db.query("SELECT * FROM entreprise_config WHERE id = 1");
+    const r = await db.query("SELECT * FROM entreprise_config WHERE entreprise_id = $1", [req.user.entreprise_id]);
     res.json(r.rows[0] || {});
   } catch (err) {
     console.error("getConfig entreprise error:", err);
@@ -22,7 +27,7 @@ async function getConfig(req, res) {
   }
 }
 
-// PUT /api/entreprise — réservé aux administrateurs
+// PUT /api/entreprise — réservé aux administrateurs (de leur propre entreprise)
 async function updateConfig(req, res) {
   try {
     if (req.user.categorie !== "Admin")
@@ -39,10 +44,12 @@ async function updateConfig(req, res) {
     if (logo && typeof logo === "string" && !/^data:image\/(png|jpe?g|webp);base64,/i.test(logo.trim()))
       return res.status(400).json({ message: "Format de logo invalide. Utilisez une image PNG, JPEG ou WebP." });
 
+    // ON CONFLICT (entreprise_id) : une ligne de config par entreprise (contrainte
+    // unique "entreprise_config_entreprise_unique" ajoutée par la migration).
     const result = await db.query(
-      `INSERT INTO entreprise_config (id, nom, adresse, telephone, email, devise, couleur, logo, pied_de_page, updated_at)
-       VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, NOW())
-       ON CONFLICT (id) DO UPDATE SET
+      `INSERT INTO entreprise_config (entreprise_id, nom, adresse, telephone, email, devise, couleur, logo, pied_de_page, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+       ON CONFLICT (entreprise_id) DO UPDATE SET
          nom          = EXCLUDED.nom,
          adresse      = EXCLUDED.adresse,
          telephone    = EXCLUDED.telephone,
@@ -54,6 +61,7 @@ async function updateConfig(req, res) {
          updated_at   = NOW()
        RETURNING *`,
       [
+        req.user.entreprise_id,
         (nom || "").trim() || null,
         (adresse || "").trim() || null,
         (telephone || "").trim() || null,

@@ -3,6 +3,11 @@
 const db = require("../config/db");
 
 // Génère un numéro de facture séquentiel : FACT-2026-0001
+// NB : le compteur reste GLOBAL à la plateforme (et non par entreprise) afin
+// de garantir l'unicité de factures.code sans modifier de contrainte en base
+// (décision documentée : aucune clé/contrainte touchée sur la prod). Chaque
+// entreprise peut donc voir des numéros non strictement consécutifs si
+// d'autres entreprises facturent la même année — le code reste unique.
 async function genFactureCode(dbClient, date) {
   const annee = new Date(date).getFullYear();
   const result = await dbClient.query(
@@ -25,9 +30,9 @@ async function getAll(req, res) {
              f.montant_paye, f.reste, f.statut AS facture_statut
       FROM lignes_vente lv
       JOIN factures f ON f.code = lv.facture_code
-      WHERE 1=1`;
-    const params = [];
-    let idx = 1;
+      WHERE lv.entreprise_id = $1`;
+    const params = [req.user.entreprise_id];
+    let idx = 2;
     if (client)  { q += ` AND f.client_nom ILIKE $${idx++}`; params.push(`%${client}%`); }
     if (mois)    { q += ` AND lv.mois = $${idx++}`;          params.push(mois); }
     if (annee)   { q += ` AND lv.annee = $${idx++}`;         params.push(annee); }
@@ -47,6 +52,7 @@ async function create(req, res) {
   const client = await db.connect();
   try {
     const { client_id, client_nom, date_vente, montant_paye, articles } = req.body;
+    const entId = req.user.entreprise_id;
 
     if (!articles || articles.length === 0)
       return res.status(400).json({ message: "Le panier est vide." });
@@ -55,11 +61,11 @@ async function create(req, res) {
 
     await client.query("BEGIN");
 
-    // Vérification des stocks avant toute transaction
+    // Vérification des stocks avant toute transaction (cloisonné par entreprise)
     for (const item of articles) {
       const stock = await client.query(
-        `SELECT stock_restant FROM vue_stock WHERE code = $1`,
-        [item.code]
+        `SELECT stock_restant FROM vue_stock WHERE code = $1 AND entreprise_id = $2`,
+        [item.code, entId]
       );
       if (!stock.rows[0])
         throw new Error(`Article "${item.code}" introuvable.`);
@@ -82,21 +88,21 @@ async function create(req, res) {
     // jamais leur fournir de valeur explicite (Postgres rejette avec
     // "column ... can only be updated to DEFAULT"). On les omet, la base les calcule.
     const factResult = await client.query(
-      `INSERT INTO factures (code, date_facture, montant, montant_paye, monnaie_rendue, client_id, client_nom, user_id)
-       VALUES ($1, $2, $3::numeric, $4::numeric, $5::numeric, $6, $7, $8)
+      `INSERT INTO factures (code, date_facture, montant, montant_paye, monnaie_rendue, client_id, client_nom, user_id, entreprise_id)
+       VALUES ($1, $2, $3::numeric, $4::numeric, $5::numeric, $6, $7, $8, $9)
        RETURNING *`,
-      [factCode, date, parseFloat(total), paye, parseFloat(monnaie), client_id || null, client_nom, req.user?.id || null]
+      [factCode, date, parseFloat(total), paye, parseFloat(monnaie), client_id || null, client_nom, req.user?.id || null, entId]
     );
 
     // Créer les lignes de vente
     const lignes = [];
     for (const item of articles) {
-      const art = await client.query(`SELECT libelle FROM articles WHERE code = $1`, [item.code]);
+      const art = await client.query(`SELECT libelle FROM articles WHERE code = $1 AND entreprise_id = $2`, [item.code, entId]);
       const ligne = await client.query(
-        `INSERT INTO lignes_vente (facture_code, article_code, libelle, prix_vente, quantite, date_vente, client_nom, user_id)
-         VALUES ($1, $2, $3, $4::numeric, $5::integer, $6, $7, $8::integer)
+        `INSERT INTO lignes_vente (facture_code, article_code, libelle, prix_vente, quantite, date_vente, client_nom, user_id, entreprise_id)
+         VALUES ($1, $2, $3, $4::numeric, $5::integer, $6, $7, $8::integer, $9)
          RETURNING *`,
-        [factCode, item.code, art.rows[0]?.libelle || item.code, parseFloat(item.prix_vente), parseInt(item.quantite), date, client_nom, req.user?.id ? parseInt(req.user.id) : null]
+        [factCode, item.code, art.rows[0]?.libelle || item.code, parseFloat(item.prix_vente), parseInt(item.quantite), date, client_nom, req.user?.id ? parseInt(req.user.id) : null, entId]
       );
       lignes.push(ligne.rows[0]);
     }
@@ -123,18 +129,19 @@ async function stats(req, res) {
   try {
     const { annee } = req.query;
     const yr = annee || new Date().getFullYear();
+    const entId = req.user.entreprise_id;
 
-    // CA par mois
+    // CA par mois (cloisonné par entreprise)
     const caMois = await db.query(
       `SELECT mois, annee, SUM(montant_total) AS ca
        FROM lignes_vente
-       WHERE annee = $1
+       WHERE annee = $1 AND entreprise_id = $2
        GROUP BY mois, annee, EXTRACT(MONTH FROM date_vente)
        ORDER BY EXTRACT(MONTH FROM date_vente)`,
-      [yr]
+      [yr, entId]
     );
 
-    // Totaux globaux
+    // Totaux globaux (cloisonnés par entreprise)
     // NB : "depenses_total" est recalculé dynamiquement (prix_achat * quantite)
     // au lieu de SUM(achats.montant_total) — cette colonne stockée peut être à 0
     // sur d'anciens enregistrements (même bug que celui corrigé dans
@@ -143,24 +150,28 @@ async function stats(req, res) {
     // sous-évaluait le total des dépenses d'achat.
     const totaux = await db.query(
       `SELECT
-         SUM(lv.montant_total)                                  AS ca_total,
-         COUNT(DISTINCT lv.facture_code)                        AS nb_factures,
-         (SELECT SUM(prix_achat * quantite) FROM achats)        AS depenses_total,
-         (SELECT SUM(valeur_stock) FROM vue_stock)              AS valeur_stock,
-         (SELECT COUNT(*) FROM factures WHERE statut = FALSE)   AS factures_impayees,
-         (SELECT SUM(reste) FROM factures WHERE statut = FALSE) AS montant_a_recouvrer
-       FROM lignes_vente lv`
+         SUM(lv.montant_total)                                                              AS ca_total,
+         COUNT(DISTINCT lv.facture_code)                                                    AS nb_factures,
+         (SELECT SUM(prix_achat * quantite) FROM achats WHERE entreprise_id = $1)           AS depenses_total,
+         (SELECT SUM(valeur_stock) FROM vue_stock WHERE entreprise_id = $1)                 AS valeur_stock,
+         (SELECT COUNT(*) FROM factures WHERE statut = FALSE AND entreprise_id = $1)        AS factures_impayees,
+         (SELECT SUM(reste) FROM factures WHERE statut = FALSE AND entreprise_id = $1)      AS montant_a_recouvrer
+       FROM lignes_vente lv
+       WHERE lv.entreprise_id = $1`,
+      [entId]
     );
 
-    // Top 5 articles vendus
+    // Top 5 articles vendus (cloisonné par entreprise)
     const topArticles = await db.query(
       `SELECT article_code, libelle,
               SUM(quantite) AS qte_vendue,
               SUM(montant_total) AS ca
        FROM lignes_vente
+       WHERE entreprise_id = $1
        GROUP BY article_code, libelle
        ORDER BY ca DESC
-       LIMIT 5`
+       LIMIT 5`,
+      [entId]
     );
 
     res.json({

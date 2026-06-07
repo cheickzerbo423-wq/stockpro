@@ -12,10 +12,12 @@ async function getAll(req, res) {
     // apparaître ni dans "Articles & Stock", ni dans les catalogues de vente/
     // approvisionnement, ni dans les alertes — sinon ils restent "fantômes"
     // sélectionnables alors qu'ils sont censés avoir disparu.
-    let query = `SELECT * FROM vue_stock WHERE actif = TRUE`;
-    const params = [];
+    // Cloisonnement multi-entreprises : chaque entreprise ne voit que ses
+    // propres articles (entreprise_id désormais exposé par vue_stock).
+    let query = `SELECT * FROM vue_stock WHERE actif = TRUE AND entreprise_id = $1`;
+    const params = [req.user.entreprise_id];
     if (search) {
-      query += ` AND (libelle ILIKE $1 OR code ILIKE $1)`;
+      query += ` AND (libelle ILIKE $2 OR code ILIKE $2)`;
       params.push(`%${search}%`);
     }
     query += ` ORDER BY libelle`;
@@ -30,7 +32,10 @@ async function getAll(req, res) {
 // GET /api/articles/:code
 async function getOne(req, res) {
   try {
-    const result = await db.query(`SELECT * FROM vue_stock WHERE code = $1`, [req.params.code]);
+    const result = await db.query(
+      `SELECT * FROM vue_stock WHERE code = $1 AND entreprise_id = $2`,
+      [req.params.code, req.user.entreprise_id]
+    );
     if (!result.rows[0]) return res.status(404).json({ message: "Article introuvable." });
     res.json(result.rows[0]);
   } catch (err) {
@@ -46,6 +51,11 @@ async function create(req, res) {
     if (!code || !libelle)
       return res.status(400).json({ message: "Code et libellé obligatoires." });
 
+    // Le code article reste unique au niveau global de la plateforme (et non
+    // par entreprise) : aucune contrainte/clé n'a été modifiée en base pour
+    // éviter une opération risquée sur la base de production. La génération
+    // automatique de code (generateCode) scanne déjà tous les articles, donc
+    // les collisions sont rarissimes en pratique.
     const exists = await db.query(`SELECT code FROM articles WHERE code = $1`, [code]);
     if (exists.rows.length > 0)
       return res.status(409).json({ message: `Le code article "${code}" existe déjà.` });
@@ -57,10 +67,10 @@ async function create(req, res) {
     await client.query("BEGIN");
 
     const result = await client.query(
-      `INSERT INTO articles (code, libelle, prix_achat, prix_vente, stock_min)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO articles (code, libelle, prix_achat, prix_vente, stock_min, entreprise_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [code.toUpperCase(), libelle.toUpperCase(), prix_achat || 0, prix_vente || 0, stock_min || 5]
+      [code.toUpperCase(), libelle.toUpperCase(), prix_achat || 0, prix_vente || 0, stock_min || 5, req.user.entreprise_id]
     );
     const article = result.rows[0];
 
@@ -74,15 +84,18 @@ async function create(req, res) {
       const montantTotal = prixUnitaire * qteInitiale;
 
       await client.query(
-        `INSERT INTO achats (article_code, libelle, fournisseur_nom, prix_achat, quantite, date_achat, user_id, montant_paye)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [article.code, article.libelle, "Stock initial (solde d'ouverture)", prixUnitaire, qteInitiale, date, req.user?.id || null, montantTotal]
+        `INSERT INTO achats (article_code, libelle, fournisseur_nom, prix_achat, quantite, date_achat, user_id, montant_paye, entreprise_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [article.code, article.libelle, "Stock initial (solde d'ouverture)", prixUnitaire, qteInitiale, date, req.user?.id || null, montantTotal, req.user.entreprise_id]
       );
     }
 
     await client.query("COMMIT");
 
-    const stockMaj = await db.query(`SELECT * FROM vue_stock WHERE code = $1`, [article.code]);
+    const stockMaj = await db.query(
+      `SELECT * FROM vue_stock WHERE code = $1 AND entreprise_id = $2`,
+      [article.code, req.user.entreprise_id]
+    );
     res.status(201).json(stockMaj.rows[0] || article);
   } catch (err) {
     await client.query("ROLLBACK");
@@ -97,6 +110,8 @@ async function create(req, res) {
 async function update(req, res) {
   try {
     const { libelle, prix_achat, prix_vente, stock_min } = req.body;
+    // AND entreprise_id = $6 : empêche toute modification d'un article d'une
+    // autre entreprise (même en devinant son code).
     const result = await db.query(
       `UPDATE articles
        SET libelle    = COALESCE($1, libelle),
@@ -104,9 +119,9 @@ async function update(req, res) {
            prix_vente = COALESCE($3, prix_vente),
            stock_min  = COALESCE($4, stock_min),
            updated_at = NOW()
-       WHERE code = $5
+       WHERE code = $5 AND entreprise_id = $6
        RETURNING *`,
-      [libelle, prix_achat, prix_vente, stock_min, req.params.code]
+      [libelle, prix_achat, prix_vente, stock_min, req.params.code, req.user.entreprise_id]
     );
     if (!result.rows[0]) return res.status(404).json({ message: "Article introuvable." });
     res.json(result.rows[0]);
@@ -118,16 +133,23 @@ async function update(req, res) {
 // DELETE /api/articles/:code — soft delete
 async function remove(req, res) {
   try {
+    const entId = req.user.entreprise_id;
     const [ventes, achats] = await Promise.all([
-      db.query(`SELECT COUNT(*) FROM lignes_vente WHERE article_code = $1`, [req.params.code]),
-      db.query(`SELECT COUNT(*) FROM achats WHERE article_code = $1`, [req.params.code]),
+      db.query(`SELECT COUNT(*) FROM lignes_vente WHERE article_code = $1 AND entreprise_id = $2`, [req.params.code, entId]),
+      db.query(`SELECT COUNT(*) FROM achats WHERE article_code = $1 AND entreprise_id = $2`, [req.params.code, entId]),
     ]);
     if (parseInt(ventes.rows[0].count) > 0)
       return res.status(409).json({ message: "Impossible de supprimer : cet article a des ventes associées." });
     if (parseInt(achats.rows[0].count) > 0)
       return res.status(409).json({ message: "Impossible de supprimer : cet article a des achats associés." });
 
-    await db.query(`UPDATE articles SET actif = FALSE, updated_at = NOW() WHERE code = $1`, [req.params.code]);
+    // AND entreprise_id = $2 : empêche la suppression d'un article appartenant
+    // à une autre entreprise.
+    const upd = await db.query(
+      `UPDATE articles SET actif = FALSE, updated_at = NOW() WHERE code = $1 AND entreprise_id = $2 RETURNING code`,
+      [req.params.code, entId]
+    );
+    if (!upd.rows[0]) return res.status(404).json({ message: "Article introuvable." });
     res.json({ message: "Article désactivé avec succès." });
   } catch (err) {
     res.status(500).json({ message: "Erreur lors de la suppression." });
@@ -155,7 +177,8 @@ async function generateCode(req, res) {
 async function alertes(req, res) {
   try {
     const result = await db.query(
-      `SELECT * FROM vue_stock WHERE actif = TRUE AND stock_restant <= stock_min ORDER BY stock_restant ASC`
+      `SELECT * FROM vue_stock WHERE actif = TRUE AND entreprise_id = $1 AND stock_restant <= stock_min ORDER BY stock_restant ASC`,
+      [req.user.entreprise_id]
     );
     res.json(result.rows);
   } catch (err) {

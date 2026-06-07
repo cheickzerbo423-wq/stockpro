@@ -10,12 +10,17 @@ async function login(req, res) {
     if (!login || !mdp)
       return res.status(400).json({ message: "Login et mot de passe requis." });
 
-    // Chercher l'utilisateur
+    // Chercher l'utilisateur (entreprise_id : NULL pour le SuperAdmin de
+    // plateforme, sinon identifiant de l'entreprise cliente à laquelle il
+    // appartient — détermine tout le cloisonnement des données).
     const result = await db.query(
-      `SELECT id, login, mdp_hash, categorie,
-              perm_vente, perm_appro, perm_articles,
-              perm_facturation, perm_clients, actif
-       FROM utilisateurs WHERE login = $1`,
+      `SELECT u.id, u.login, u.mdp_hash, u.categorie, u.entreprise_id,
+              u.perm_vente, u.perm_appro, u.perm_articles,
+              u.perm_facturation, u.perm_clients, u.actif,
+              e.nom AS entreprise_nom, e.actif AS entreprise_actif
+       FROM utilisateurs u
+       LEFT JOIN entreprises e ON e.id = u.entreprise_id
+       WHERE u.login = $1`,
       [login]
     );
 
@@ -26,6 +31,11 @@ async function login(req, res) {
     if (!user.actif)
       return res.status(401).json({ message: "Compte désactivé. Contactez l'administrateur." });
 
+    // Si l'entreprise du compte a été suspendue par le SuperAdmin, on bloque
+    // l'accès dès la connexion (le SuperAdmin lui-même n'a pas d'entreprise).
+    if (user.entreprise_id !== null && user.entreprise_actif === false)
+      return res.status(403).json({ message: "Votre espace entreprise est suspendu. Contactez l'administrateur de la plateforme." });
+
     const mdpOk = await bcrypt.compare(mdp, user.mdp_hash);
     if (!mdpOk)
       return res.status(401).json({ message: "Identifiants incorrects." });
@@ -35,6 +45,7 @@ async function login(req, res) {
       id:               user.id,
       login:            user.login,
       categorie:        user.categorie,
+      entreprise_id:    user.entreprise_id,
       perm_vente:       user.perm_vente,
       perm_appro:       user.perm_appro,
       perm_articles:    user.perm_articles,
@@ -48,18 +59,20 @@ async function login(req, res) {
 
     // Log de connexion
     await db.query(
-      `INSERT INTO audit_log (user_id, user_login, action, table_cible, ip_address)
-       VALUES ($1, $2, 'CONNEXION', 'utilisateurs', $3)`,
-      [user.id, user.login, req.ip]
+      `INSERT INTO audit_log (user_id, user_login, action, table_cible, ip_address, entreprise_id)
+       VALUES ($1, $2, 'CONNEXION', 'utilisateurs', $3, $4)`,
+      [user.id, user.login, req.ip, user.entreprise_id]
     );
 
     res.json({
       message: "Connexion réussie.",
       token,
       user: {
-        id:       user.id,
-        login:    user.login,
-        categorie: user.categorie,
+        id:            user.id,
+        login:         user.login,
+        categorie:     user.categorie,
+        entreprise_id: user.entreprise_id,
+        entreprise_nom: user.entreprise_nom || null,
         permissions: {
           vente:       user.perm_vente,
           appro:       user.perm_appro,
@@ -79,7 +92,7 @@ async function login(req, res) {
 async function me(req, res) {
   try {
     const result = await db.query(
-      `SELECT id, login, categorie,
+      `SELECT id, login, categorie, entreprise_id,
               perm_vente, perm_appro, perm_articles,
               perm_facturation, perm_clients
        FROM utilisateurs WHERE id = $1 AND actif = TRUE`,

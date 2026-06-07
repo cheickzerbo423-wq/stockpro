@@ -100,6 +100,61 @@ pool.connect((err, client, release) => {
         .then(() => console.log("✅ Table 'entreprise_config' vérifiée (personnalisation PDF par entreprise)."))
         .catch((e) => console.error("⚠️  Migration entreprise_config ignorée :", e.message))
         .then(() => {
+          // ══════════════════════════════════════════════════════════════
+          // MULTI-ENTREPRISES (multi-tenant) — chaque société cliente de
+          // WariGest dispose désormais de son propre espace cloisonné :
+          // ses articles, ventes, clients, factures, utilisateurs… Un rôle
+          // "SuperAdmin" (entreprise_id = NULL) pilote la plateforme entière
+          // depuis la page Super-admin (créer/suspendre/supprimer des
+          // entreprises, tout voir). Toutes les données déjà présentes sont
+          // rattachées à une entreprise "par défaut" (id = 1) — aucune perte,
+          // l'app continue de fonctionner normalement pour les utilisateurs
+          // déjà en place. CREATE+ALTER+UPDATE idempotents : sûrs à rejouer.
+          //
+          // IMPORTANT — ORDRE DES MIGRATIONS : la table "entreprises" et les
+          // colonnes "entreprise_id" doivent être créées AVANT la (re)création
+          // de la vue "vue_stock" plus bas, qui référence a.entreprise_id.
+          // ══════════════════════════════════════════════════════════════
+          return client.query(`
+            CREATE TABLE IF NOT EXISTS entreprises (
+              id          SERIAL PRIMARY KEY,
+              nom         VARCHAR(150) NOT NULL,
+              slug        VARCHAR(100) UNIQUE,
+              actif       BOOLEAN DEFAULT TRUE,
+              created_at  TIMESTAMP DEFAULT NOW(),
+              updated_at  TIMESTAMP DEFAULT NOW()
+            );
+            INSERT INTO entreprises (id, nom, slug)
+            VALUES (1, 'Entreprise par défaut', 'default')
+            ON CONFLICT (id) DO NOTHING;
+            SELECT setval('entreprises_id_seq', GREATEST((SELECT MAX(id) FROM entreprises), 1));
+          `);
+        })
+        .then(() => console.log("✅ Table 'entreprises' vérifiée (multi-tenant)."))
+        .catch((e) => console.error("⚠️  Migration 'entreprises' ignorée :", e.message))
+        .then(() => {
+          // Rattachement de chaque table cloisonnée à une entreprise.
+          // Colonne ajoutée en NULL d'abord puis renseignée avec l'entreprise
+          // par défaut (id = 1) pour les lignes déjà existantes. Chaque table
+          // est migrée indépendamment (son propre try/catch) : l'absence
+          // éventuelle d'une table ("gammes", non utilisée actuellement) ne
+          // bloque pas la migration des autres.
+          const tables = [
+            "utilisateurs", "articles", "clients_fournisseurs", "achats",
+            "factures", "lignes_vente", "audit_log", "gammes",
+          ];
+          return tables.reduce((p, t) => p.then(() =>
+            client.query(`
+              ALTER TABLE ${t} ADD COLUMN IF NOT EXISTS entreprise_id INTEGER REFERENCES entreprises(id);
+              UPDATE ${t} SET entreprise_id = 1 WHERE entreprise_id IS NULL;
+            `)
+              .then(() => console.log(`   · ${t}.entreprise_id OK`))
+              .catch((e) => console.error(`   · ${t}.entreprise_id ignorée : ${e.message}`))
+          ), Promise.resolve());
+        })
+        .then(() => console.log("✅ Colonnes 'entreprise_id' vérifiées sur les tables cloisonnées."))
+        .catch((e) => console.error("⚠️  Migration entreprise_id ignorée :", e.message))
+        .then(() => {
           // ── Correction définitive de la vue "vue_stock" ──────────────────
           // Bug constaté : les chiffres de stock affichés (Articles & Stock,
           // alertes de rupture, valeur de stock) étaient totalement faux et
@@ -121,7 +176,9 @@ pool.connect((err, client, release) => {
           // Correction : on agrège D'ABORD séparément les quantités achetées
           // et vendues par article (sous-requêtes groupées), PUIS on les
           // joint à la table "articles" — ce qui élimine totalement le
-          // produit cartésien et donne des totaux exacts.
+          // produit cartésien et donne des totaux exacts. La vue expose
+          // désormais aussi "entreprise_id" (colonne ajoutée juste avant)
+          // pour permettre le cloisonnement par entreprise dans les contrôleurs.
           //
           // DROP + CREATE (plutôt que CREATE OR REPLACE) car PostgreSQL
           // refuse de modifier les noms/types de colonnes d'une vue existante
@@ -133,6 +190,7 @@ pool.connect((err, client, release) => {
             CREATE VIEW vue_stock AS
             SELECT
               a.id,
+              a.entreprise_id,
               a.code,
               a.libelle,
               a.prix_achat,
@@ -163,8 +221,67 @@ pool.connect((err, client, release) => {
             ) sor ON sor.article_code = a.code;
           `);
         })
-        .then(() => console.log("✅ Vue 'vue_stock' recréée avec un calcul de stock correct (plus de produit cartésien)."))
+        .then(() => console.log("✅ Vue 'vue_stock' recréée avec un calcul de stock correct (plus de produit cartésien, entreprise_id exposé)."))
         .catch((e) => console.error("⚠️  Recréation de 'vue_stock' ignorée :", e.message))
+        .then(() =>
+          // entreprise_config passe de table "singleton" (1 ligne globale,
+          // id figé à 1) à 1 ligne PAR entreprise : on retire la contrainte
+          // CHECK(id=1), on ajoute entreprise_id (rattaché par défaut à
+          // l'entreprise 1 = les réglages déjà saisis), on le rend unique
+          // (1 config par entreprise), et on bascule "id" sur une séquence
+          // auto-incrémentée (au lieu de DEFAULT 1) pour permettre l'ajout
+          // de nouvelles lignes lors de la création de nouvelles entreprises.
+          client.query(`ALTER TABLE entreprise_config DROP CONSTRAINT IF EXISTS entreprise_config_id_unique;`)
+            .then(() => client.query(`
+              ALTER TABLE entreprise_config ADD COLUMN IF NOT EXISTS entreprise_id INTEGER REFERENCES entreprises(id);
+              UPDATE entreprise_config SET entreprise_id = 1 WHERE entreprise_id IS NULL;
+            `))
+            .then(() => client.query(`
+              DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'entreprise_config_entreprise_unique') THEN
+                  ALTER TABLE entreprise_config ADD CONSTRAINT entreprise_config_entreprise_unique UNIQUE (entreprise_id);
+                END IF;
+              END $$;
+            `))
+            .then(() => client.query(`
+              CREATE SEQUENCE IF NOT EXISTS entreprise_config_id_seq;
+              SELECT setval('entreprise_config_id_seq', (SELECT COALESCE(MAX(id), 0) + 1 FROM entreprise_config), false);
+              ALTER TABLE entreprise_config ALTER COLUMN id SET DEFAULT nextval('entreprise_config_id_seq');
+              ALTER SEQUENCE entreprise_config_id_seq OWNED BY entreprise_config.id;
+            `))
+        )
+        .then(() => console.log("✅ Table 'entreprise_config' restructurée pour le multi-entreprises (1 ligne par entreprise)."))
+        .catch((e) => console.error("⚠️  Restructuration entreprise_config ignorée :", e.message))
+        .then(() => {
+          // Compte SuperAdmin de plateforme (entreprise_id = NULL — détaché de
+          // toute entreprise, voit/gère tout). Créé une seule fois, seulement
+          // s'il n'en existe encore aucun. Identifiants par défaut affichés
+          // dans les logs Railway au premier démarrage — À CHANGER IMMÉDIATEMENT
+          // depuis l'application après la première connexion.
+          const bcrypt = require("bcryptjs");
+          return client.query(`SELECT id FROM utilisateurs WHERE categorie = 'SuperAdmin' LIMIT 1`)
+            .then((r) => {
+              if (r.rows.length > 0) return null;
+              const motDePasse = "SuperWari#" + Math.floor(1000 + Math.random() * 9000);
+              return bcrypt.hash(motDePasse, 10).then((hash) =>
+                client.query(
+                  `INSERT INTO utilisateurs (login, mdp_hash, categorie, entreprise_id, actif,
+                     perm_vente, perm_appro, perm_articles, perm_facturation, perm_clients)
+                   VALUES ('superadmin', $1, 'SuperAdmin', NULL, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE)
+                   ON CONFLICT (login) DO NOTHING`,
+                  [hash]
+                ).then(() => {
+                  console.log("════════════════════════════════════════════════════════════");
+                  console.log("🔑 Compte SUPERADMIN créé — login : superadmin");
+                  console.log(`🔑 Mot de passe temporaire : ${motDePasse}`);
+                  console.log("   ⚠️  Connectez-vous puis changez ce mot de passe immédiatement.");
+                  console.log("════════════════════════════════════════════════════════════");
+                })
+              );
+            });
+        })
+        .then(() => console.log("✅ Compte 'SuperAdmin' vérifié (plateforme multi-entreprises)."))
+        .catch((e) => console.error("⚠️  Création SuperAdmin ignorée :", e.message))
         .finally(() => release());
     });
 });

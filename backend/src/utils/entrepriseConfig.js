@@ -2,11 +2,12 @@
 // Charge la configuration "entreprise" personnalisable (nom, logo, couleur, etc.)
 // utilisée pour générer les factures, reçus et rapports PDF.
 //
-// Chaque entreprise qui utilise WariGest peut désormais renseigner ses propres
-// informations depuis la page Paramètres (admin), enregistrées dans la table
-// "entreprise_config" (une seule ligne, id = 1). On garde les variables
-// d'environnement COMPANY_* comme valeurs de repli pour les déploiements qui
-// n'ont pas encore configuré l'entreprise depuis l'interface.
+// MULTI-ENTREPRISES : la table "entreprise_config" contient désormais UNE LIGNE
+// PAR ENTREPRISE cliente (colonne "entreprise_id", contrainte UNIQUE), et non
+// plus une seule ligne globale (id = 1). Chaque entreprise renseigne ses propres
+// informations depuis la page Paramètres (admin) — on garde les variables
+// d'environnement COMPANY_* comme valeurs de repli pour les entreprises qui
+// n'ont pas encore configuré leurs informations depuis l'interface.
 const db = require("../config/db");
 
 const DEFAULTS = {
@@ -20,9 +21,15 @@ const DEFAULTS = {
   pied_de_page: "",
 };
 
-async function getEntrepriseConfig() {
+// `entrepriseId` : identifiant de l'entreprise cliente (req.user.entreprise_id).
+// Conserve un repli sur l'ancienne ligne singleton (id = 1) si jamais aucune
+// ligne n'existe encore pour cette entreprise — ce qui ne devrait plus arriver
+// après la migration (chaque entreprise existante a été rattachée à id = 1).
+async function getEntrepriseConfig(entrepriseId) {
   try {
-    const r = await db.query("SELECT * FROM entreprise_config WHERE id = 1");
+    const r = entrepriseId
+      ? await db.query("SELECT * FROM entreprise_config WHERE entreprise_id = $1", [entrepriseId])
+      : await db.query("SELECT * FROM entreprise_config WHERE id = 1");
     const c = r.rows[0];
     if (!c) return { ...DEFAULTS };
     return {

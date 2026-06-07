@@ -9,8 +9,8 @@ function audit(action, table) {
       if (res.statusCode < 400 && req.user) {
         try {
           await db.query(
-            `INSERT INTO audit_log (user_id, user_login, action, table_cible, detail, ip_address)
-             VALUES ($1, $2, $3, $4, $5, $6)`,
+            `INSERT INTO audit_log (user_id, user_login, action, table_cible, detail, ip_address, entreprise_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
             [
               req.user.id,
               req.user.login,
@@ -18,6 +18,7 @@ function audit(action, table) {
               table,
               JSON.stringify({ body: req.body, params: req.params }).slice(0, 500),
               req.ip || req.connection?.remoteAddress,
+              req.user.entreprise_id ?? null,
             ]
           );
         } catch (e) {

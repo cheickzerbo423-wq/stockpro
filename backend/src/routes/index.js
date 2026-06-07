@@ -2,7 +2,7 @@
 const express = require("express");
 const router  = express.Router();
 
-const { authenticate, authorize } = require("../middleware/auth");
+const { authenticate, authorize, superAdminOnly } = require("../middleware/auth");
 const audit = require("../middleware/audit");
 
 const authCtrl     = require("../controllers/authController");
@@ -14,6 +14,7 @@ const facturesCtrl = require("../controllers/facturesController");
 const usersCtrl    = require("../controllers/utilisateursController");
 const rapportsCtrl = require("../controllers/rapportsController");
 const entrepriseCtrl = require("../controllers/entrepriseController");
+const superadminCtrl = require("../controllers/superadminController");
 
 // ============================================================
 // AUTH — Public
@@ -85,6 +86,16 @@ router.post("/admin/reset", authenticate, usersCtrl.resetData);
 router.get("/entreprise", authenticate, entrepriseCtrl.getConfig);
 router.put("/entreprise", authenticate, audit("MODIFICATION", "entreprise_config"), entrepriseCtrl.updateConfig);
 
+// ============================================================
+// SUPER-ADMIN — Pilotage de la plateforme (gestion des entreprises clientes)
+// Réservé exclusivement au compte SuperAdmin (entreprise_id = NULL).
+// ============================================================
+router.get   ("/superadmin/entreprises",          authenticate, superAdminOnly, superadminCtrl.getAll);
+router.post  ("/superadmin/entreprises",          authenticate, superAdminOnly, audit("CREATION", "entreprises"), superadminCtrl.create);
+router.put   ("/superadmin/entreprises/:id",      authenticate, superAdminOnly, audit("MODIFICATION", "entreprises"), superadminCtrl.update);
+router.put   ("/superadmin/entreprises/:id/statut", authenticate, superAdminOnly, audit("MODIFICATION", "entreprises"), superadminCtrl.toggleStatut);
+router.delete("/superadmin/entreprises/:id",      authenticate, superAdminOnly, audit("SUPPRESSION", "entreprises"), superadminCtrl.remove);
+
 
 // ============================================================
 // RAPPORTS FINANCIERS
@@ -99,48 +110,50 @@ router.get("/dashboard", authenticate, async (req, res) => {
   try {
     const db = require("../config/db");
     const annee = new Date().getFullYear();
+    // Cloisonnement multi-entreprises : $1 = année, $2 = entreprise courante.
+    const entId = req.user.entreprise_id;
 
     const [totaux, alertes, caAnnee, topClients, recentFactures] = await Promise.all([
       db.query(`
         SELECT
-          (SELECT COALESCE(SUM(montant_total),0) FROM lignes_vente WHERE annee = $1)   AS ca_total,
-          (SELECT COALESCE(SUM(valeur_stock),0)  FROM vue_stock WHERE actif = TRUE)      AS valeur_stock,
+          (SELECT COALESCE(SUM(montant_total),0) FROM lignes_vente WHERE annee = $1 AND entreprise_id = $2)   AS ca_total,
+          (SELECT COALESCE(SUM(valeur_stock),0)  FROM vue_stock WHERE actif = TRUE AND entreprise_id = $2)      AS valeur_stock,
           -- depenses_total / benefice recalculés dynamiquement (prix_achat * quantite)
           -- au lieu de SUM(achats.montant_total) : cette colonne stockée peut être à 0
           -- sur d'anciens enregistrements (cf. correctif identique appliqué dans
           -- clientsController.js, ventesController.js et rapportsController.js).
-          (SELECT COALESCE(SUM(prix_achat * quantite),0) FROM achats WHERE annee = $1)  AS depenses_total,
-          (SELECT COALESCE(SUM(montant_total),0) FROM lignes_vente WHERE annee = $1)
-           - (SELECT COALESCE(SUM(prix_achat * quantite),0) FROM achats WHERE annee = $1) AS benefice,
-          (SELECT COUNT(*) FROM factures WHERE statut = FALSE)                           AS factures_impayees,
-          (SELECT COALESCE(SUM(reste),0)  FROM factures WHERE statut = FALSE)           AS montant_a_recouvrer,
-          (SELECT COALESCE(SUM(montant),0) FROM factures WHERE EXTRACT(YEAR FROM date_facture)=$1) AS ca_facture,
-          (SELECT COALESCE(SUM(montant_paye),0) FROM factures WHERE EXTRACT(YEAR FROM date_facture)=$1) AS encaisse,
-          (SELECT COUNT(*) FROM articles WHERE actif = TRUE)                            AS nb_articles,
-          (SELECT COUNT(*) FROM factures WHERE EXTRACT(YEAR FROM date_facture)=$1)      AS nb_factures,
-          (SELECT COUNT(DISTINCT UPPER(client_nom)) FROM lignes_vente WHERE annee = $1)  AS nb_clients
-      `, [annee]),
+          (SELECT COALESCE(SUM(prix_achat * quantite),0) FROM achats WHERE annee = $1 AND entreprise_id = $2)  AS depenses_total,
+          (SELECT COALESCE(SUM(montant_total),0) FROM lignes_vente WHERE annee = $1 AND entreprise_id = $2)
+           - (SELECT COALESCE(SUM(prix_achat * quantite),0) FROM achats WHERE annee = $1 AND entreprise_id = $2) AS benefice,
+          (SELECT COUNT(*) FROM factures WHERE statut = FALSE AND entreprise_id = $2)                           AS factures_impayees,
+          (SELECT COALESCE(SUM(reste),0)  FROM factures WHERE statut = FALSE AND entreprise_id = $2)           AS montant_a_recouvrer,
+          (SELECT COALESCE(SUM(montant),0) FROM factures WHERE EXTRACT(YEAR FROM date_facture)=$1 AND entreprise_id = $2) AS ca_facture,
+          (SELECT COALESCE(SUM(montant_paye),0) FROM factures WHERE EXTRACT(YEAR FROM date_facture)=$1 AND entreprise_id = $2) AS encaisse,
+          (SELECT COUNT(*) FROM articles WHERE actif = TRUE AND entreprise_id = $2)                            AS nb_articles,
+          (SELECT COUNT(*) FROM factures WHERE EXTRACT(YEAR FROM date_facture)=$1 AND entreprise_id = $2)      AS nb_factures,
+          (SELECT COUNT(DISTINCT UPPER(client_nom)) FROM lignes_vente WHERE annee = $1 AND entreprise_id = $2)  AS nb_clients
+      `, [annee, entId]),
 
       // Alertes stock
-      db.query(`SELECT code, libelle, stock_restant, stock_min, statut FROM vue_stock WHERE actif = TRUE AND stock_restant <= stock_min ORDER BY stock_restant ASC LIMIT 8`),
+      db.query(`SELECT code, libelle, stock_restant, stock_min, statut FROM vue_stock WHERE actif = TRUE AND entreprise_id = $1 AND stock_restant <= stock_min ORDER BY stock_restant ASC LIMIT 8`, [entId]),
 
       db.query(`
         SELECT TO_CHAR(date_vente, 'YYYY-MM') AS mois, SUM(montant_total)::bigint AS ca
-        FROM lignes_vente WHERE annee = $1
+        FROM lignes_vente WHERE annee = $1 AND entreprise_id = $2
         GROUP BY TO_CHAR(date_vente, 'YYYY-MM')
         ORDER BY TO_CHAR(date_vente, 'YYYY-MM')
-      `, [annee]),
+      `, [annee, entId]),
 
       db.query(`
         SELECT UPPER(client_nom) AS client_nom, SUM(montant_total)::bigint AS ca, COUNT(DISTINCT facture_code) AS nb_factures
-        FROM lignes_vente WHERE annee = $1
+        FROM lignes_vente WHERE annee = $1 AND entreprise_id = $2
         GROUP BY UPPER(client_nom) ORDER BY ca DESC LIMIT 5
-      `, [annee]),
+      `, [annee, entId]),
 
       db.query(`
         SELECT code, client_nom, montant, montant_paye, reste, statut, date_facture
-        FROM factures ORDER BY created_at DESC LIMIT 6
-      `),
+        FROM factures WHERE entreprise_id = $1 ORDER BY created_at DESC LIMIT 6
+      `, [entId]),
     ]);
 
     res.json({

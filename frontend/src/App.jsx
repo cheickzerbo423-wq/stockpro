@@ -14,6 +14,7 @@ import Utilisateurs from "./pages/Utilisateurs";
 import Rapports     from "./pages/Rapports";
 import Guide        from "./pages/Guide";
 import Parametres   from "./pages/Parametres";
+import SuperAdmin   from "./pages/SuperAdmin";
 
 // ── Logo SVG Wi — tracé vectoriel officiel (fichier .svg fourni) ──
 const WiLogo = ({ size = 36 }) => (
@@ -87,6 +88,12 @@ const ICONS = {
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
     </svg>
   ),
+  "/superadmin": (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]">
+      <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+  ),
 };
 
 // ── Structure des sections de navigation ──────────────────
@@ -123,6 +130,12 @@ const NAV_SECTIONS = [
     items: [
       { path: "/utilisateurs", label: "Utilisateurs",        module: null, adminOnly: true },
       { path: "/parametres",   label: "Paramètres",          module: null, adminOnly: true },
+    ],
+  },
+  {
+    label: "PLATEFORME",
+    items: [
+      { path: "/superadmin", label: "Super-Admin", module: null, superAdminOnly: true },
     ],
   },
 ];
@@ -341,6 +354,7 @@ function MobileDrawer({ open, onClose, visibleSections, user, onLogout }) {
 // ── Barre mobile bas ──────────────────────────────────────
 function BottomNav({ allItems }) {
   const bottomItems = allItems.filter(i => BOTTOM_NAV_PATHS.includes(i.path));
+  if (bottomItems.length === 0) return null;
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 flex h-16"
       style={{ background: "#0F172A", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
@@ -374,9 +388,14 @@ function Layout({ children }) {
   const handleLogout = () => { logout(); navigate("/login"); };
 
   // Filtrer par permissions
+  // Le SuperAdmin (compte plateforme, sans entreprise rattachée) ne voit QUE
+  // sa propre interface de pilotage — les autres pages sont cloisonnées par
+  // entreprise et n'auraient aucun sens (ni données) pour lui.
   const visibleSections = NAV_SECTIONS.map(section => ({
     ...section,
     items: section.items.filter(i => {
+      if (user?.categorie === "SuperAdmin") return !!i.superAdminOnly;
+      if (i.superAdminOnly) return false;
       if (i.adminOnly && user?.categorie !== "Admin") return false;
       return !i.module || canAccess(i.module);
     }),
@@ -469,7 +488,7 @@ function Layout({ children }) {
 }
 
 // ── Route privée ──────────────────────────────────────────
-function PrivateRoute({ children, adminOnly = false }) {
+function PrivateRoute({ children, adminOnly = false, superAdminOnly = false }) {
   const { user, loading } = useAuth();
   if (loading) return (
     <div className="flex items-center justify-center h-screen" style={{ background: "#F4F6F9" }}>
@@ -481,6 +500,14 @@ function PrivateRoute({ children, adminOnly = false }) {
     </div>
   );
   if (!user) return <Navigate to="/login" replace />;
+  // Le SuperAdmin (compte plateforme, entreprise_id = NULL) n'a accès qu'à
+  // sa propre interface de pilotage : on le redirige systématiquement vers
+  // /superadmin et on lui interdit les pages cloisonnées par entreprise
+  // (qui n'auraient ni sens ni données pour lui).
+  if (user.categorie === "SuperAdmin") {
+    return superAdminOnly ? children : <Navigate to="/superadmin" replace />;
+  }
+  if (superAdminOnly) return <Navigate to="/" replace />;
   if (adminOnly && user.categorie !== "Admin") return <Navigate to="/" replace />;
   return children;
 }
@@ -502,6 +529,7 @@ export default function App() {
           <Route path="/guide"       element={<PrivateRoute><Layout><Guide        /></Layout></PrivateRoute>} />
           <Route path="/utilisateurs" element={<PrivateRoute adminOnly><Layout><Utilisateurs /></Layout></PrivateRoute>} />
           <Route path="/parametres"   element={<PrivateRoute adminOnly><Layout><Parametres   /></Layout></PrivateRoute>} />
+          <Route path="/superadmin"   element={<PrivateRoute superAdminOnly><Layout><SuperAdmin /></Layout></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

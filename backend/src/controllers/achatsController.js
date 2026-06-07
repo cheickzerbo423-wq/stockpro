@@ -194,9 +194,9 @@ async function getAll(req, res) {
              (prix_achat * quantite)                 AS montant_total,
              (prix_achat * quantite - montant_paye)  AS reste,
              (montant_paye >= prix_achat * quantite) AS statut
-      FROM achats WHERE 1=1`;
-    const params = [];
-    let idx = 1;
+      FROM achats WHERE entreprise_id = $1`;
+    const params = [req.user.entreprise_id];
+    let idx = 2;
     if (fournisseur) { q += ` AND fournisseur_nom ILIKE $${idx++}`; params.push(`%${fournisseur}%`); }
     if (article)     { q += ` AND article_code = $${idx++}`;        params.push(article); }
     if (mois)        { q += ` AND mois = $${idx++}`;                params.push(mois); }
@@ -213,12 +213,13 @@ async function getAll(req, res) {
 async function create(req, res) {
   try {
     const { article_code, fournisseur_id, fournisseur_nom, prix_achat, quantite, date_achat } = req.body;
+    const entId = req.user.entreprise_id;
 
     if (!article_code || !quantite || !prix_achat)
       return res.status(400).json({ message: "Article, quantité et prix d'achat sont obligatoires." });
 
-    // Vérifier que l'article existe
-    const art = await db.query(`SELECT libelle FROM articles WHERE code = $1 AND actif = TRUE`, [article_code]);
+    // Vérifier que l'article existe (dans l'entreprise courante)
+    const art = await db.query(`SELECT libelle FROM articles WHERE code = $1 AND actif = TRUE AND entreprise_id = $2`, [article_code, entId]);
     if (!art.rows[0])
       return res.status(404).json({ message: "Article introuvable." });
 
@@ -243,18 +244,18 @@ async function create(req, res) {
       : montantTotal;
 
     const result = await db.query(
-      `INSERT INTO achats (article_code, libelle, fournisseur_id, fournisseur_nom, prix_achat, quantite, date_achat, user_id, montant_paye, montant_total)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO achats (article_code, libelle, fournisseur_id, fournisseur_nom, prix_achat, quantite, date_achat, user_id, montant_paye, montant_total, entreprise_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING id, article_code, libelle, fournisseur_id, fournisseur_nom,
                  prix_achat, quantite, date_achat, user_id, mois, annee, montant_paye,
                  (prix_achat * quantite)                 AS montant_total,
                  (prix_achat * quantite - montant_paye)  AS reste,
                  (montant_paye >= prix_achat * quantite) AS statut`,
-      [article_code, art.rows[0].libelle, fournisseur_id || null, fournisseur_nom || "", prixNum, qteNum, date, req.user?.id || null, montantPaye, montantTotal]
+      [article_code, art.rows[0].libelle, fournisseur_id || null, fournisseur_nom || "", prixNum, qteNum, date, req.user?.id || null, montantPaye, montantTotal, entId]
     );
 
     // Retourner aussi le stock mis à jour
-    const stockMaj = await db.query(`SELECT stock_restant, statut FROM vue_stock WHERE code = $1`, [article_code]);
+    const stockMaj = await db.query(`SELECT stock_restant, statut FROM vue_stock WHERE code = $1 AND entreprise_id = $2`, [article_code, entId]);
 
     res.status(201).json({
       message: "Approvisionnement enregistré. Stock mis à jour.",
@@ -290,8 +291,8 @@ async function create(req, res) {
 async function remove(req, res) {
   try {
     const result = await db.query(
-      `DELETE FROM achats WHERE id = $1 RETURNING id`,
-      [req.params.id]
+      `DELETE FROM achats WHERE id = $1 AND entreprise_id = $2 RETURNING id`,
+      [req.params.id, req.user.entreprise_id]
     );
     if (!result.rows[0])
       return res.status(404).json({ message: "Achat introuvable." });
@@ -306,11 +307,12 @@ async function updatePaiement(req, res) {
   try {
     const { id } = req.params;
     const { montant_paye } = req.body;
+    const entId = req.user.entreprise_id;
     if (montant_paye === undefined || isNaN(parseFloat(montant_paye)))
       return res.status(400).json({ message: "Montant payé invalide." });
 
     const achat = await db.query(
-      `SELECT prix_achat * quantite AS montant_total, montant_paye FROM achats WHERE id = $1`, [id]
+      `SELECT prix_achat * quantite AS montant_total, montant_paye FROM achats WHERE id = $1 AND entreprise_id = $2`, [id, entId]
     );
     if (!achat.rows[0]) return res.status(404).json({ message: "Achat introuvable." });
     if (parseFloat(montant_paye) > parseFloat(achat.rows[0].montant_total))
@@ -319,13 +321,13 @@ async function updatePaiement(req, res) {
       return res.status(400).json({ message: "Le montant payé ne peut pas diminuer." });
 
     const result = await db.query(
-      `UPDATE achats SET montant_paye = $1 WHERE id = $2
+      `UPDATE achats SET montant_paye = $1 WHERE id = $2 AND entreprise_id = $3
        RETURNING id, article_code, libelle, fournisseur_id, fournisseur_nom,
                  prix_achat, quantite, date_achat, user_id, mois, annee, montant_paye,
                  (prix_achat * quantite)                 AS montant_total,
                  (prix_achat * quantite - montant_paye)  AS reste,
                  (montant_paye >= prix_achat * quantite) AS statut`,
-      [parseFloat(montant_paye), id]
+      [parseFloat(montant_paye), id, entId]
     );
     if (!result.rows[0]) return res.status(404).json({ message: "Achat introuvable." });
     res.json(result.rows[0]);

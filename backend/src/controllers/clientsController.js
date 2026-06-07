@@ -4,9 +4,13 @@ const db = require("../config/db");
 async function getAll(req, res) {
   try {
     const { type, search } = req.query;
-    let where = `cf.actif = TRUE`;
-    const params = [];
-    let idx = 1;
+    // Cloisonnement multi-entreprises : $1 = entreprise courante, référencé à
+    // la fois dans le WHERE principal et dans chaque sous-requête corrélée
+    // (les colonnes "entreprise_id" de factures/achats portent la même valeur
+    // que celle du contact, par construction des INSERT scopés par entreprise).
+    let where = `cf.actif = TRUE AND cf.entreprise_id = $1`;
+    const params = [req.user.entreprise_id];
+    let idx = 2;
     if (type)   { where += ` AND cf.type = $${idx++}`;        params.push(type); }
     if (search) { where += ` AND cf.nom ILIKE $${idx++}`;     params.push(`%${search}%`); }
 
@@ -15,33 +19,33 @@ async function getAll(req, res) {
         /* ── Agrégats clients ─────────────────────────── */
         COALESCE((
           SELECT COUNT(code)::bigint FROM factures
-          WHERE client_id = cf.id
-             OR (client_id IS NULL AND UPPER(client_nom) = cf.nom)
+          WHERE entreprise_id = $1 AND (client_id = cf.id
+             OR (client_id IS NULL AND UPPER(client_nom) = cf.nom))
         ), 0) AS nb_transactions,
 
         COALESCE((
           SELECT SUM(montant)::bigint FROM factures
-          WHERE client_id = cf.id
-             OR (client_id IS NULL AND UPPER(client_nom) = cf.nom)
+          WHERE entreprise_id = $1 AND (client_id = cf.id
+             OR (client_id IS NULL AND UPPER(client_nom) = cf.nom))
         ), 0) AS total_ca,
 
         COALESCE((
           SELECT SUM(montant_paye)::bigint FROM factures
-          WHERE client_id = cf.id
-             OR (client_id IS NULL AND UPPER(client_nom) = cf.nom)
+          WHERE entreprise_id = $1 AND (client_id = cf.id
+             OR (client_id IS NULL AND UPPER(client_nom) = cf.nom))
         ), 0) AS total_encaisse,
 
         COALESCE((
           SELECT SUM(reste)::bigint FROM factures
-          WHERE client_id = cf.id
-             OR (client_id IS NULL AND UPPER(client_nom) = cf.nom)
+          WHERE entreprise_id = $1 AND (client_id = cf.id
+             OR (client_id IS NULL AND UPPER(client_nom) = cf.nom))
         ), 0) AS total_creances,
 
         /* ── Agrégats fournisseurs ─────────────────────── */
         COALESCE((
           SELECT COUNT(id)::bigint FROM achats
-          WHERE fournisseur_id = cf.id
-             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = cf.nom)
+          WHERE entreprise_id = $1 AND (fournisseur_id = cf.id
+             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = cf.nom))
         ), 0) AS nb_achats,
 
         /* total_achats recalculé dynamiquement (prix_achat * quantite) — la
@@ -51,20 +55,20 @@ async function getAll(req, res) {
            (donnant des dettes négatives du type "payé > total acheté"). */
         COALESCE((
           SELECT SUM(prix_achat * quantite)::bigint FROM achats
-          WHERE fournisseur_id = cf.id
-             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = cf.nom)
+          WHERE entreprise_id = $1 AND (fournisseur_id = cf.id
+             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = cf.nom))
         ), 0) AS total_achats,
 
         COALESCE((
           SELECT SUM(montant_paye)::bigint FROM achats
-          WHERE fournisseur_id = cf.id
-             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = cf.nom)
+          WHERE entreprise_id = $1 AND (fournisseur_id = cf.id
+             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = cf.nom))
         ), 0) AS total_paye,
 
         COALESCE((
           SELECT SUM(prix_achat * quantite - montant_paye)::bigint FROM achats
-          WHERE fournisseur_id = cf.id
-             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = cf.nom)
+          WHERE entreprise_id = $1 AND (fournisseur_id = cf.id
+             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = cf.nom))
         ), 0) AS total_dettes
 
       FROM clients_fournisseurs cf
@@ -85,9 +89,9 @@ async function create(req, res) {
     if (!nom || !type)
       return res.status(400).json({ message: "Nom et type sont obligatoires." });
     const result = await db.query(
-      `INSERT INTO clients_fournisseurs (nom, type, contact, email, ville, adresse)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [nom.toUpperCase(), type, contact || "", email || "", ville || "", adresse || ""]
+      `INSERT INTO clients_fournisseurs (nom, type, contact, email, ville, adresse, entreprise_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [nom.toUpperCase(), type, contact || "", email || "", ville || "", adresse || "", req.user.entreprise_id]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -103,8 +107,8 @@ async function update(req, res) {
        SET nom = COALESCE($1, nom), contact = COALESCE($2, contact),
            email = COALESCE($3, email), ville = COALESCE($4, ville),
            adresse = COALESCE($5, adresse)
-       WHERE id = $6 RETURNING *`,
-      [nom ? nom.toUpperCase() : null, contact, email, ville, adresse, req.params.id]
+       WHERE id = $6 AND entreprise_id = $7 RETURNING *`,
+      [nom ? nom.toUpperCase() : null, contact, email, ville, adresse, req.params.id, req.user.entreprise_id]
     );
     if (!result.rows[0]) return res.status(404).json({ message: "Introuvable." });
     res.json(result.rows[0]);
@@ -115,7 +119,10 @@ async function update(req, res) {
 
 async function remove(req, res) {
   try {
-    await db.query(`UPDATE clients_fournisseurs SET actif = FALSE WHERE id = $1`, [req.params.id]);
+    await db.query(
+      `UPDATE clients_fournisseurs SET actif = FALSE WHERE id = $1 AND entreprise_id = $2`,
+      [req.params.id, req.user.entreprise_id]
+    );
     res.json({ message: "Contact supprimé." });
   } catch (err) {
     res.status(500).json({ message: "Erreur serveur." });
@@ -125,8 +132,9 @@ async function remove(req, res) {
 async function getBilan(req, res) {
   try {
     const { id } = req.params;
+    const entId = req.user.entreprise_id;
     const contact = await db.query(
-      `SELECT * FROM clients_fournisseurs WHERE id = $1 AND actif = TRUE`, [id]
+      `SELECT * FROM clients_fournisseurs WHERE id = $1 AND actif = TRUE AND entreprise_id = $2`, [id, entId]
     );
     if (contact.rows.length === 0)
       return res.status(404).json({ message: "Contact introuvable." });
@@ -145,15 +153,15 @@ async function getBilan(req, res) {
             MIN(date_facture)                                         AS premiere_facture,
             MAX(date_facture)                                         AS derniere_facture
           FROM factures
-          WHERE client_id = $1 OR (client_id IS NULL AND UPPER(client_nom) = UPPER($2))`,
-          [id, cf.nom]),
+          WHERE entreprise_id = $3 AND (client_id = $1 OR (client_id IS NULL AND UPPER(client_nom) = UPPER($2)))`,
+          [id, cf.nom, entId]),
 
         db.query(`
           SELECT code, date_facture, montant, montant_paye, reste, statut
           FROM factures
-          WHERE client_id = $1 OR (client_id IS NULL AND UPPER(client_nom) = UPPER($2))
+          WHERE entreprise_id = $3 AND (client_id = $1 OR (client_id IS NULL AND UPPER(client_nom) = UPPER($2)))
           ORDER BY date_facture DESC`,
-          [id, cf.nom]),
+          [id, cf.nom, entId]),
 
         db.query(`
           SELECT lv.article_code, lv.libelle,
@@ -161,19 +169,19 @@ async function getBilan(req, res) {
             SUM(lv.montant_total)::bigint AS ca
           FROM lignes_vente lv
           JOIN factures f ON lv.facture_code = f.code
-          WHERE f.client_id = $1 OR (f.client_id IS NULL AND UPPER(f.client_nom) = UPPER($2))
+          WHERE f.entreprise_id = $3 AND (f.client_id = $1 OR (f.client_id IS NULL AND UPPER(f.client_nom) = UPPER($2)))
           GROUP BY lv.article_code, lv.libelle
           ORDER BY ca DESC LIMIT 5`,
-          [id, cf.nom]),
+          [id, cf.nom, entId]),
 
         db.query(`
           SELECT TO_CHAR(date_facture, 'YYYY-MM') AS mois,
             SUM(montant)::bigint      AS ca,
             SUM(montant_paye)::bigint AS encaisse
           FROM factures
-          WHERE client_id = $1 OR (client_id IS NULL AND UPPER(client_nom) = UPPER($2))
+          WHERE entreprise_id = $3 AND (client_id = $1 OR (client_id IS NULL AND UPPER(client_nom) = UPPER($2)))
           GROUP BY TO_CHAR(date_facture, 'YYYY-MM') ORDER BY 1`,
-          [id, cf.nom]),
+          [id, cf.nom, entId]),
       ]);
       res.json({ ...cf, kpi: kpi.rows[0], transactions: transactions.rows, top_articles: topArticles.rows, evolution: evolution.rows });
 
@@ -188,8 +196,8 @@ async function getBilan(req, res) {
             MIN(date_achat)                                                   AS premier_achat,
             MAX(date_achat)                                                   AS dernier_achat
           FROM achats
-          WHERE fournisseur_id = $1 OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER($2))`,
-          [id, cf.nom]),
+          WHERE entreprise_id = $3 AND (fournisseur_id = $1 OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER($2)))`,
+          [id, cf.nom, entId]),
 
         db.query(`
           SELECT id, article_code, libelle, quantite, prix_achat,
@@ -198,28 +206,28 @@ async function getBilan(req, res) {
             date_achat,
             CASE WHEN montant_paye >= (prix_achat * quantite) THEN TRUE ELSE FALSE END AS statut
           FROM achats
-          WHERE fournisseur_id = $1 OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER($2))
+          WHERE entreprise_id = $3 AND (fournisseur_id = $1 OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER($2)))
           ORDER BY date_achat DESC`,
-          [id, cf.nom]),
+          [id, cf.nom, entId]),
 
         db.query(`
           SELECT article_code, libelle,
             SUM(quantite)::int                AS qte_totale,
             SUM(prix_achat * quantite)::bigint AS total
           FROM achats
-          WHERE fournisseur_id = $1 OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER($2))
+          WHERE entreprise_id = $3 AND (fournisseur_id = $1 OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER($2)))
           GROUP BY article_code, libelle
           ORDER BY total DESC LIMIT 5`,
-          [id, cf.nom]),
+          [id, cf.nom, entId]),
 
         db.query(`
           SELECT TO_CHAR(date_achat, 'YYYY-MM') AS mois,
             SUM(prix_achat * quantite)::bigint AS total,
             SUM(montant_paye)::bigint          AS paye
           FROM achats
-          WHERE fournisseur_id = $1 OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER($2))
+          WHERE entreprise_id = $3 AND (fournisseur_id = $1 OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER($2)))
           GROUP BY TO_CHAR(date_achat, 'YYYY-MM') ORDER BY 1`,
-          [id, cf.nom]),
+          [id, cf.nom, entId]),
       ]);
       res.json({ ...cf, kpi: kpi.rows[0], transactions: transactions.rows, top_articles: topArticles.rows, evolution: evolution.rows });
     }

@@ -110,6 +110,7 @@ export default function Guide() {
     { id: "rapports",    icon: "📊", label: "Rapports Financiers" },
     { id: "utilisateurs",icon: "🔐", label: "Utilisateurs" },
     { id: "parametres",  icon: "⚙️", label: "Paramètres" },
+    { id: "superadmin",  icon: "🌐", label: "Super-Admin" },
   ];
 
   return (
@@ -584,6 +585,70 @@ export default function Guide() {
         </Tip>
         <Tip icon="💡" color="blue">
           Tant qu'aucune information n'est renseignée, WariGest applique des valeurs par défaut neutres — vous pouvez donc personnaliser progressivement, à votre rythme.
+        </Tip>
+      </Section>
+
+      {/* ═══════════════════════════════════════
+          MODULE 9 – Super-Admin (pilotage de la plateforme)
+      ═══════════════════════════════════════ */}
+      <Section id="superadmin" icon="🌐" title="Super-Admin"
+        subtitle="Pilotage de toute la plateforme multi-entreprises (compte plateforme uniquement)" accentColor="#0F172A">
+
+        <Tip icon="🔒" color="red">
+          Cet onglet est réservé à l'unique compte <Badge color="red">SuperAdmin</Badge> de la plateforme — un compte
+          spécial qui n'appartient à aucune entreprise. Aucun Admin d'entreprise n'y a accès.
+        </Tip>
+
+        <SectionTitle>À quoi ça sert</SectionTitle>
+        <p className="text-xs text-gray-500 leading-relaxed">
+          WariGest héberge <strong>plusieurs entreprises clientes</strong> sur une seule et même application : chacune
+          dispose de son propre espace totalement <strong>cloisonné</strong> — ses utilisateurs, ses articles, ses ventes,
+          ses clients et ses factures ne sont jamais visibles par les autres. La page <strong>Super-Admin</strong> est le
+          poste de pilotage qui permet de créer, surveiller, suspendre ou supprimer ces espaces, et donc d'avoir un
+          contrôle complet sur l'ensemble de l'application.
+        </p>
+
+        <SectionTitle>Vue d'ensemble des entreprises</SectionTitle>
+        <p className="text-xs text-gray-500 leading-relaxed mb-2">
+          Chaque carte affiche en un coup d'œil la situation d'une entreprise cliente :
+        </p>
+        <div className="space-y-2">
+          <Step n="1">Son <strong>statut</strong> — <Badge color="green">Active</Badge> ou <Badge color="red">Suspendue</Badge> — et son identifiant technique (slug).</Step>
+          <Step n="2">Ses <strong>statistiques d'activité</strong> : nombre d'utilisateurs, d'articles, de contacts, de factures, chiffre d'affaires total et créances en cours.</Step>
+          <Step n="3">Sa <strong>date de création</strong> et sa <strong>dernière connexion</strong> enregistrée, pour repérer les espaces actifs ou inactifs.</Step>
+        </div>
+
+        <SectionTitle>Créer une nouvelle entreprise cliente</SectionTitle>
+        <div className="space-y-2">
+          <Step n="1">Cliquez sur <strong>+ Nouvelle entreprise</strong> (ou la carte en pointillés en bas de la liste).</Step>
+          <Step n="2">Renseignez le <strong>nom de l'entreprise</strong>, ainsi que le <strong>login</strong> et le <strong>mot de passe</strong> de son tout premier compte <Badge color="red">Admin</Badge>.</Step>
+          <Step n="3">Validez : un espace entièrement nouveau et cloisonné est créé instantanément, prêt à être utilisé — l'Admin créé pourra ensuite ajouter ses propres utilisateurs, articles, etc.</Step>
+        </div>
+
+        <SectionTitle>Renommer, suspendre ou réactiver</SectionTitle>
+        <div className="space-y-2">
+          <Step n="1">L'icône <strong>crayon</strong> sur une carte permet de renommer l'entreprise (son identifiant technique reste inchangé).</Step>
+          <Step n="2">Le bouton <strong>Suspendre</strong> coupe immédiatement l'accès de tous les utilisateurs de cette entreprise — pratique en cas d'impayé ou de litige — sans supprimer la moindre donnée.</Step>
+          <Step n="3">Le bouton <strong>Réactiver</strong> restaure l'accès instantanément, dans l'état exact où l'entreprise se trouvait.</Step>
+        </div>
+
+        <SectionTitle>Supprimer une entreprise</SectionTitle>
+        <div className="space-y-2">
+          <Step n="1">L'icône <strong>corbeille</strong> ouvre une fenêtre de confirmation renforcée : il faut <strong>retaper le nom exact</strong> de l'entreprise pour valider.</Step>
+          <Step n="2">La suppression efface <strong>définitivement</strong> l'entreprise et toutes ses données (utilisateurs, articles, ventes, achats, clients, factures…).</Step>
+        </div>
+
+        <Tip icon="⚠️" color="red">
+          La suppression d'une entreprise est <strong>irréversible</strong> — les données effacées ne peuvent pas être récupérées.
+          Préférez la <strong>suspension</strong> si un doute subsiste : elle bloque l'accès sans rien détruire.
+        </Tip>
+        <Tip icon="🛡️" color="blue">
+          L'<strong>entreprise par défaut</strong> (la toute première créée sur la plateforme) ne peut être ni suspendue
+          ni supprimée — c'est une protection permanente contre toute fausse manœuvre.
+        </Tip>
+        <Tip icon="🔐" color="green">
+          Chaque entreprise reste <strong>totalement étanche</strong> aux autres : un utilisateur d'une société cliente
+          ne peut jamais voir, modifier ou réinitialiser les données d'une autre — quelles que soient ses permissions.
         </Tip>
       </Section>
 

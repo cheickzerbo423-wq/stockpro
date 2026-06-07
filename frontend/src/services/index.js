@@ -205,6 +205,27 @@ export const entrepriseService = {
 };
 
 // ══════════════════════════════════════════
+// SUPER-ADMIN — Pilotage de la plateforme multi-entreprises
+// (créer/renommer/suspendre/supprimer des entreprises clientes)
+// ══════════════════════════════════════════
+export const superadminService = {
+  getAll: () =>
+    api.get("/superadmin/entreprises").then((r) => r.data),
+
+  create: (data) =>
+    api.post("/superadmin/entreprises", data).then((r) => r.data),
+
+  update: (id, data) =>
+    api.put(`/superadmin/entreprises/${id}`, data).then((r) => r.data),
+
+  toggleStatut: (id, actif) =>
+    api.put(`/superadmin/entreprises/${id}/statut`, { actif }).then((r) => r.data),
+
+  delete: (id) =>
+    api.delete(`/superadmin/entreprises/${id}`).then((r) => r.data),
+};
+
+// ══════════════════════════════════════════
 // RAPPORTS FINANCIERS
 // ══════════════════════════════════════════
 export const rapportsService = {

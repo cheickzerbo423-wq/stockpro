@@ -12,9 +12,9 @@ async function getAll(req, res) {
       SELECT f.*, COUNT(lv.id) AS nb_articles
       FROM factures f
       LEFT JOIN lignes_vente lv ON lv.facture_code = f.code
-      WHERE 1=1`;
-    const params = [];
-    let idx = 1;
+      WHERE f.entreprise_id = $1`;
+    const params = [req.user.entreprise_id];
+    let idx = 2;
     if (client) { q += ` AND f.client_nom ILIKE $${idx++}`; params.push(`%${client}%`); }
     if (statut !== undefined) {
       q += ` AND f.statut = $${idx++}`;
@@ -34,12 +34,15 @@ async function getAll(req, res) {
 async function getOne(req, res) {
   try {
     const code = req.params[0] || req.params.code;
-    const facture = await db.query(`SELECT * FROM factures WHERE code = $1`, [code]);
+    const facture = await db.query(
+      `SELECT * FROM factures WHERE code = $1 AND entreprise_id = $2`,
+      [code, req.user.entreprise_id]
+    );
     if (!facture.rows[0]) return res.status(404).json({ message: "Facture introuvable." });
 
     const lignes = await db.query(
-      `SELECT * FROM lignes_vente WHERE facture_code = $1 ORDER BY id`,
-      [code]
+      `SELECT * FROM lignes_vente WHERE facture_code = $1 AND entreprise_id = $2 ORDER BY id`,
+      [code, req.user.entreprise_id]
     );
     res.json({ ...facture.rows[0], lignes: lignes.rows });
   } catch (err) {
@@ -56,7 +59,11 @@ async function updatePaiement(req, res) {
     if (montant_paye === undefined || isNaN(parseFloat(montant_paye)))
       return res.status(400).json({ message: "Montant payé invalide." });
 
-    const facture = await db.query(`SELECT montant, montant_paye FROM factures WHERE code = $1`, [code]);
+    const entId = req.user.entreprise_id;
+    const facture = await db.query(
+      `SELECT montant, montant_paye FROM factures WHERE code = $1 AND entreprise_id = $2`,
+      [code, entId]
+    );
     if (!facture.rows[0]) return res.status(404).json({ message: "Facture introuvable." });
     if (parseFloat(montant_paye) > parseFloat(facture.rows[0].montant))
       return res.status(400).json({ message: "Le montant payé dépasse le montant de la facture." });
@@ -73,9 +80,9 @@ async function updatePaiement(req, res) {
     const result = await db.query(
       `UPDATE factures
        SET montant_paye = $1::numeric
-       WHERE code = $2
+       WHERE code = $2 AND entreprise_id = $3
        RETURNING *`,
-      [paye, code]
+      [paye, code, entId]
     );
     if (!result.rows[0]) return res.status(404).json({ message: "Facture introuvable." });
     res.json(result.rows[0]);
@@ -99,16 +106,20 @@ function formatMoney(n, devise) {
 async function generatePDF(req, res) {
   try {
     const code = req.params[0] || req.params.code;
-    const facture = await db.query(`SELECT * FROM factures WHERE code = $1`, [code]);
+    const entId = req.user.entreprise_id;
+    const facture = await db.query(
+      `SELECT * FROM factures WHERE code = $1 AND entreprise_id = $2`,
+      [code, entId]
+    );
     if (!facture.rows[0]) return res.status(404).json({ message: "Facture introuvable." });
 
     const lignes = await db.query(
-      `SELECT * FROM lignes_vente WHERE facture_code = $1 ORDER BY id`,
-      [code]
+      `SELECT * FROM lignes_vente WHERE facture_code = $1 AND entreprise_id = $2 ORDER BY id`,
+      [code, entId]
     );
 
     const f       = facture.rows[0];
-    const cfg     = await getEntrepriseConfig();
+    const cfg     = await getEntrepriseConfig(entId);
     const logoBuf = logoBuffer(cfg.logo);
     const money   = (n) => formatMoney(n, cfg.devise);
     const d       = f.date_facture instanceof Date ? f.date_facture : new Date(f.date_facture);
@@ -293,16 +304,20 @@ async function generatePDF(req, res) {
 async function generateRecu(req, res) {
   try {
     const code    = req.params[0] || req.params.code;
-    const facture = await db.query(`SELECT * FROM factures WHERE code = $1`, [code]);
+    const entId   = req.user.entreprise_id;
+    const facture = await db.query(
+      `SELECT * FROM factures WHERE code = $1 AND entreprise_id = $2`,
+      [code, entId]
+    );
     if (!facture.rows[0]) return res.status(404).json({ message: "Facture introuvable." });
 
     const lignes  = await db.query(
-      `SELECT * FROM lignes_vente WHERE facture_code = $1 ORDER BY id`,
-      [code]
+      `SELECT * FROM lignes_vente WHERE facture_code = $1 AND entreprise_id = $2 ORDER BY id`,
+      [code, entId]
     );
 
     const f      = facture.rows[0];
-    const cfg    = await getEntrepriseConfig();
+    const cfg    = await getEntrepriseConfig(entId);
     const logoBuf = logoBuffer(cfg.logo);
     const money  = (n) => formatMoney(n, cfg.devise);
     const dr     = f.date_facture instanceof Date ? f.date_facture : new Date(f.date_facture);

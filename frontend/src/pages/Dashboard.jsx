@@ -350,7 +350,7 @@ export default function Dashboard() {
             style={{ color: beneficeColor + "99" }}>
             Bénéfice net — {annee}
           </div>
-          <div className="text-3xl font-black" style={{ color: beneficeColor }}>
+          <div className="text-2xl font-black" style={{ color: beneficeColor }}>
             {fmt(kpis.benefice)}
           </div>
           <div className="text-xs mt-1.5" style={{ color: beneficeColor + "80" }}>

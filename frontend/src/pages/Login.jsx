@@ -43,7 +43,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ fontFamily: "'Groote', 'Montserrat', 'Segoe UI', sans-serif" }}>
+    <div className="min-h-screen flex">
 
       {/* ── Panneau gauche — Brand ── */}
       <div className="hidden lg:flex flex-col justify-between w-[45%] relative overflow-hidden px-12 py-10"
@@ -70,7 +70,7 @@ export default function Login() {
 
         {/* Accroche centrale */}
         <div className="relative z-10 flex-1 flex flex-col justify-center">
-          <h2 className="text-4xl font-black text-white leading-tight mb-4">
+          <h2 className="text-3xl font-black text-white leading-tight mb-4">
             Gérez votre<br />
             <span style={{ color: "#FFF900" }}>entreprise</span><br />
             intelligemment.

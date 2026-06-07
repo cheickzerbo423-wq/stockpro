@@ -160,7 +160,7 @@ export function Select({ label, children, ...props }) {
 }
 
 // ── Bouton ────────────────────────────────────────────────
-export function Btn({ children, onClick, color = "blue", sm, loading, type = "button", icon }) {
+export function Btn({ children, onClick, color = "blue", sm, loading, type = "button", icon, className = "" }) {
   const variants = {
     green:  { bg: "#10B981", hover: "#059669", shadow: "rgba(16,185,129,0.25)", text: "white" },
     blue:   { bg: "#0023FF", hover: "#0019CC", shadow: "rgba(0,35,255,0.25)",   text: "white" },
@@ -189,6 +189,7 @@ export function Btn({ children, onClick, color = "blue", sm, loading, type = "bu
         inline-flex items-center justify-center gap-1.5 font-bold rounded-xl
         transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed
         ${sm ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm"}
+        ${className}
       `}
     >
       {loading
@@ -266,12 +267,12 @@ export function SearchBox({ value, onChange, onSelect, suggestions = [], placeho
 // ── En-tête de page ───────────────────────────────────────
 export function PageHeader({ title, sub, action }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4 mb-5 md:mb-6">
+    <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start sm:justify-between gap-3 sm:gap-4 mb-5 md:mb-6">
       <div className="min-w-0">
         <h2 className="text-xl font-black text-gray-900 leading-tight">{title}</h2>
-        {sub && <p className="text-xs text-gray-400 mt-1 font-medium">{sub}</p>}
+        {sub && <p className="text-xs text-gray-400 mt-1 font-medium break-words">{sub}</p>}
       </div>
-      {action && <div className="flex-shrink-0">{action}</div>}
+      {action && <div className="flex-shrink-0 w-full sm:w-auto">{action}</div>}
     </div>
   );
 }
@@ -281,8 +282,9 @@ export function DataTable({ headers, children, empty = "Aucune donnée", sort, o
   const hasRows = children && (Array.isArray(children) ? children.filter(Boolean).length > 0 : true);
   const hasWidths = headers.some((h) => typeof h === "object" && h.w);
   return (
-    <div className="overflow-x-auto rounded-2xl border border-gray-100"
-      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+    <div className="relative">
+      <div className="overflow-x-auto rounded-2xl border border-gray-100"
+        style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
       <table className={`text-sm min-w-[640px] ${hasWidths ? "md:table-fixed md:w-full md:min-w-full" : "w-full"}`}>
         {hasWidths && (
           <colgroup>
@@ -337,6 +339,17 @@ export function DataTable({ headers, children, empty = "Aucune donnée", sort, o
           )}
         </tbody>
       </table>
+      </div>
+      {/* Indice de défilement horizontal — visible uniquement sur petits écrans */}
+      {hasRows && (
+        <>
+          <div className="md:hidden pointer-events-none absolute top-0 right-0 bottom-0 w-10 rounded-r-2xl"
+            style={{ background: "linear-gradient(to left, rgba(244,246,249,0.95), transparent)" }} />
+          <p className="md:hidden mt-2 text-center text-[10px] text-gray-400 font-medium">
+            ↔ Faites glisser le tableau pour voir toutes les colonnes
+          </p>
+        </>
+      )}
     </div>
   );
 }

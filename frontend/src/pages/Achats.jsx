@@ -343,11 +343,14 @@ export default function Achats() {
         title="Approvisionnements"
         sub={`Total dépensé : ${fmt(totalDepenses)}${totalDettes > 0 ? ` · Dettes : ${fmt(totalDettes)}` : ""}`}
         action={
-          <div className="flex gap-2">
-            <Btn color="orange-light" icon="📷" loading={scanning} onClick={() => fileInputRef.current?.click()}>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Btn color="orange-light" icon="📷" loading={scanning} onClick={() => fileInputRef.current?.click()}
+              className="w-full sm:w-auto">
               {scanning ? "Analyse en cours…" : "Scanner une facture"}
             </Btn>
-            <Btn onClick={() => { resetModal(); setShowAdd(true); }}>+ Nouvel Approvisionnement</Btn>
+            <Btn onClick={() => { resetModal(); setShowAdd(true); }} className="w-full sm:w-auto">
+              + Nouvel Approvisionnement
+            </Btn>
           </div>
         }
       />

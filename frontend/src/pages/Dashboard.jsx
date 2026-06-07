@@ -36,12 +36,12 @@ function KpiCard({ icon, label, value, sub, color, trend }) {
   };
   const c = palette[color] || palette.blue;
   return (
-    <div className="group bg-white rounded-2xl p-5 border border-gray-100 cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+    <div className="group bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
       style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-      <div className="flex items-start justify-between mb-4">
-        <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-105"
+      <div className="flex items-start justify-between mb-3 sm:mb-4">
+        <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-105"
           style={{ backgroundColor: c.bg, border: `1.5px solid ${c.ring}` }}>
-          <span className="text-xl">{icon}</span>
+          <span className="text-lg sm:text-xl">{icon}</span>
         </div>
         {trend !== undefined && (
           <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg ${
@@ -52,10 +52,10 @@ function KpiCard({ icon, label, value, sub, color, trend }) {
           </span>
         )}
       </div>
-      <div className="text-[22px] font-black text-gray-900 leading-tight tracking-tight">{value}</div>
+      <div className="text-lg sm:text-[22px] font-black text-gray-900 leading-tight tracking-tight break-words">{value}</div>
       <div className="text-xs font-semibold text-gray-400 mt-1 leading-tight">{label}</div>
       {sub && (
-        <div className="mt-3 pt-3 border-t border-gray-50 text-[10px] text-gray-400 font-medium">{sub}</div>
+        <div className="mt-3 pt-3 border-t border-gray-50 text-[10px] text-gray-400 font-medium break-words">{sub}</div>
       )}
     </div>
   );
@@ -116,7 +116,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── KPIs ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard
           icon="📈"
           label={`Chiffre d'Affaires ${annee}`}

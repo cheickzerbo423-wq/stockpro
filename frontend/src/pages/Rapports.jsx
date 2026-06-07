@@ -190,13 +190,13 @@ export default function Rapports() {
             : "Chargement en cours…"
         }
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             {data && (
-              <Btn color="gray" onClick={handleExport} loading={exportLoading}>
+              <Btn color="gray" onClick={handleExport} loading={exportLoading} className="w-full sm:w-auto">
                 ⬇ Exporter PDF
               </Btn>
             )}
-            <Btn onClick={() => charger()} loading={loading}>🔄 Actualiser</Btn>
+            <Btn onClick={() => charger()} loading={loading} className="w-full sm:w-auto">🔄 Actualiser</Btn>
           </div>
         }
       />

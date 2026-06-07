@@ -95,7 +95,7 @@ router.get("/dashboard", authenticate, async (req, res) => {
       db.query(`
         SELECT
           (SELECT COALESCE(SUM(montant_total),0) FROM lignes_vente WHERE annee = $1)   AS ca_total,
-          (SELECT COALESCE(SUM(valeur_stock),0)  FROM vue_stock)                        AS valeur_stock,
+          (SELECT COALESCE(SUM(valeur_stock),0)  FROM vue_stock WHERE actif = TRUE)      AS valeur_stock,
           -- depenses_total / benefice recalculés dynamiquement (prix_achat * quantite)
           -- au lieu de SUM(achats.montant_total) : cette colonne stockée peut être à 0
           -- sur d'anciens enregistrements (cf. correctif identique appliqué dans
@@ -113,7 +113,7 @@ router.get("/dashboard", authenticate, async (req, res) => {
       `, [annee]),
 
       // Alertes stock
-      db.query(`SELECT code, libelle, stock_restant, stock_min, statut FROM vue_stock WHERE stock_restant <= stock_min ORDER BY stock_restant ASC LIMIT 8`),
+      db.query(`SELECT code, libelle, stock_restant, stock_min, statut FROM vue_stock WHERE actif = TRUE AND stock_restant <= stock_min ORDER BY stock_restant ASC LIMIT 8`),
 
       db.query(`
         SELECT TO_CHAR(date_vente, 'YYYY-MM') AS mois, SUM(montant_total)::bigint AS ca

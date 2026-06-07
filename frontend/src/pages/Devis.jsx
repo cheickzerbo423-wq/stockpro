@@ -166,7 +166,7 @@ export default function Devis() {
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-gray-50 rounded-xl p-3">
                 <p className="text-xs text-gray-400 font-bold mb-1">DATE D'ÉMISSION</p>
-                <p className="font-semibold text-sm">{selectefmtDate(d.date_emission)}</p>
+                <p className="font-semibold text-sm">{fmtDate(selected.date_emission)}</p>
               </div>
               <div className="bg-[#E6EAFF] rounded-xl p-3 border border-[#B3BFFF]">
                 <p className="text-xs text-[#0023FF] font-bold mb-1">MONTANT</p>

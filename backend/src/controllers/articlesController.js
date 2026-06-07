@@ -8,10 +8,14 @@ const MOIS = ["Janvier","Février","Mars","Avril","Mai","Juin",
 async function getAll(req, res) {
   try {
     const { search } = req.query;
-    let query = `SELECT * FROM vue_stock`;
+    // Ne jamais lister les articles désactivés (soft-delete) : ils ne doivent
+    // apparaître ni dans "Articles & Stock", ni dans les catalogues de vente/
+    // approvisionnement, ni dans les alertes — sinon ils restent "fantômes"
+    // sélectionnables alors qu'ils sont censés avoir disparu.
+    let query = `SELECT * FROM vue_stock WHERE actif = TRUE`;
     const params = [];
     if (search) {
-      query += ` WHERE libelle ILIKE $1 OR code ILIKE $1`;
+      query += ` AND (libelle ILIKE $1 OR code ILIKE $1)`;
       params.push(`%${search}%`);
     }
     query += ` ORDER BY libelle`;
@@ -151,7 +155,7 @@ async function generateCode(req, res) {
 async function alertes(req, res) {
   try {
     const result = await db.query(
-      `SELECT * FROM vue_stock WHERE stock_restant <= stock_min ORDER BY stock_restant ASC`
+      `SELECT * FROM vue_stock WHERE actif = TRUE AND stock_restant <= stock_min ORDER BY stock_restant ASC`
     );
     res.json(result.rows);
   } catch (err) {

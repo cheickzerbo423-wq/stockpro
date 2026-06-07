@@ -3,6 +3,20 @@ import { useState } from "react";
 
 const BRAND = "#0023FF";
 
+/* ── Logo officiel WariGest (identique à celui de la barre latérale) ── */
+function WiLogo({ size = 36 }) {
+  return (
+    <svg viewBox="555 550 1372 1380" width={size} height={size}
+      style={{ flexShrink: 0, fillRule: "evenodd", clipRule: "evenodd" }}>
+      <path d="M1921.296,898.435l0,683.444c0,189.808 -154.1,343.908 -343.908,343.908l-674.461,0c-189.808,0 -343.908,-154.1 -343.908,-343.908l0,-683.444c0,-189.808 154.1,-343.908 343.908,-343.908l674.461,0c189.808,0 343.908,154.1 343.908,343.908Z" fill="#0023ff"/>
+      <ellipse cx="1569.466" cy="974.341" rx="113.239" ry="117.957" fill="#fff900"/>
+      <path d="M1121.277,1160.585l0,164.319c-0.337,-2.607 -0.511,-5.264 -0.511,-7.962l0,-156.512l0.511,0.155Z" fill="#fff"/>
+      <path d="M1121.277,905.88l0,419.025c-0.337,-2.607 -0.511,-5.264 -0.511,-7.962l0,-403.1c0,-2.698 0.174,-5.356 0.511,-7.962Z" fill="#fff"/>
+      <path d="M1448.414,1149.957c10.344,-14.463 27.279,-23.898 46.4,-23.898l129.693,0c31.464,0 57.009,25.545 57.009,57.009l0,111.803c0,10.837 -3.03,20.972 -8.29,29.603c5.406,19.518 8.29,40.031 8.29,61.191c0,130.211 -109.178,235.926 -243.655,235.926c-79.644,0 -150.414,-37.081 -194.886,-94.37c-44.471,57.289 -115.242,94.37 -194.886,94.37c-134.477,0 -243.655,-105.715 -243.655,-235.926c-0,-15.783 1.604,-31.206 4.663,-46.124c-2.768,-6.997 -4.29,-14.622 -4.29,-22.599l0,-403.1c0,-33.956 27.568,-61.525 61.525,-61.525l120.66,0c33.956,0 61.525,27.568 61.525,61.525l0,446.257c0,10.138 8.23,18.368 18.368,18.368l36.023,0c10.138,0 18.368,-8.23 18.368,-18.368l0,-454.219c3.91,-30.201 29.755,-53.562 61.013,-53.562l120.66,0c33.956,0 61.525,27.568 61.525,61.525l0,246.804l0.572,-0.174l0,199.627c0,10.138 8.23,18.368 18.368,18.368l36.023,0c10.138,0 18.368,-8.23 18.368,-18.368l-0,-177.031c0,-12.343 3.931,-23.775 10.608,-33.111Z" fill="#fff"/>
+    </svg>
+  );
+}
+
 /* ── Petits composants ─────────────────────────── */
 function Step({ n, children }) {
   return (
@@ -107,16 +121,7 @@ export default function Guide() {
         style={{ background: "linear-gradient(135deg, #0F172A 0%, #0F172A 55%, #0023FF55 100%)" }}>
         <div className="px-6 py-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-2xl overflow-hidden">
-              <svg viewBox="0 0 52 52" width="48" height="48" fill="none">
-                <rect width="52" height="52" fill="#0023FF"/>
-                <rect x="4" y="4" width="44" height="44" rx="8" fill="white"/>
-                <path d="M9,13 L9,29 C9,40 27,40 27,29 L27,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <path d="M25,13 L25,29 C25,40 43,40 43,29 L43,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <line x1="47" y1="22" x2="47" y2="40" stroke="#0023FF" strokeWidth="5" strokeLinecap="round"/>
-                <circle cx="47" cy="14" r="4" fill="#FFF900"/>
-              </svg>
-            </div>
+            <WiLogo size={48} />
             <div>
               <div className="text-white font-black text-xl tracking-tight">WariGest</div>
               <div className="text-[#B3BFFF] text-xs font-semibold">Gestion & Facturation</div>
@@ -553,14 +558,7 @@ export default function Guide() {
       <div className="mt-4 mb-8 text-center text-xs text-gray-400 print:mt-2">
         <div className="inline-flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-4 py-2 shadow-sm">
           <div className="w-5 h-5 rounded-md overflow-hidden">
-            <svg viewBox="0 0 52 52" width="20" height="20" fill="none">
-              <rect width="52" height="52" fill="#0023FF"/>
-              <rect x="4" y="4" width="44" height="44" rx="8" fill="white"/>
-              <path d="M9,13 L9,29 C9,40 27,40 27,29 L27,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              <path d="M25,13 L25,29 C25,40 43,40 43,29 L43,13" stroke="#0023FF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              <line x1="47" y1="22" x2="47" y2="40" stroke="#0023FF" strokeWidth="5" strokeLinecap="round"/>
-              <circle cx="47" cy="14" r="4" fill="#FFF900"/>
-            </svg>
+            <WiLogo size={20} />
           </div>
           <span><strong className="text-gray-600">WariGest</strong> — Guide Utilisateur · Toutes les fonctionnalités</span>
         </div>

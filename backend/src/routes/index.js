@@ -96,9 +96,13 @@ router.get("/dashboard", authenticate, async (req, res) => {
         SELECT
           (SELECT COALESCE(SUM(montant_total),0) FROM lignes_vente WHERE annee = $1)   AS ca_total,
           (SELECT COALESCE(SUM(valeur_stock),0)  FROM vue_stock)                        AS valeur_stock,
-          (SELECT COALESCE(SUM(montant_total),0) FROM achats WHERE annee = $1)          AS depenses_total,
+          -- depenses_total / benefice recalculés dynamiquement (prix_achat * quantite)
+          -- au lieu de SUM(achats.montant_total) : cette colonne stockée peut être à 0
+          -- sur d'anciens enregistrements (cf. correctif identique appliqué dans
+          -- clientsController.js, ventesController.js et rapportsController.js).
+          (SELECT COALESCE(SUM(prix_achat * quantite),0) FROM achats WHERE annee = $1)  AS depenses_total,
           (SELECT COALESCE(SUM(montant_total),0) FROM lignes_vente WHERE annee = $1)
-           - (SELECT COALESCE(SUM(montant_total),0) FROM achats WHERE annee = $1)       AS benefice,
+           - (SELECT COALESCE(SUM(prix_achat * quantite),0) FROM achats WHERE annee = $1) AS benefice,
           (SELECT COUNT(*) FROM factures WHERE statut = FALSE)                           AS factures_impayees,
           (SELECT COALESCE(SUM(reste),0)  FROM factures WHERE statut = FALSE)           AS montant_a_recouvrer,
           (SELECT COALESCE(SUM(montant),0) FROM factures WHERE EXTRACT(YEAR FROM date_facture)=$1) AS ca_facture,

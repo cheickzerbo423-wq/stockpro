@@ -28,12 +28,16 @@ async function getRapport(req, res) {
         [debut, fin]
       ),
 
+      // total_achats / total_dettes recalculés dynamiquement (prix_achat * quantite)
+      // au lieu de SUM(achats.montant_total) — cette colonne stockée peut être à 0
+      // sur d'anciens enregistrements (cf. commentaire dans achatsController.js
+      // getAll, et le même correctif déjà appliqué dans clientsController.js).
       db.query(
         `SELECT
-           COUNT(*)                                   AS nb_achats,
-           COALESCE(SUM(montant_total), 0)            AS total_achats,
-           COALESCE(SUM(montant_paye), 0)             AS total_paye,
-           COALESCE(SUM(montant_total - montant_paye), 0) AS total_dettes
+           COUNT(*)                                          AS nb_achats,
+           COALESCE(SUM(prix_achat * quantite), 0)           AS total_achats,
+           COALESCE(SUM(montant_paye), 0)                    AS total_paye,
+           COALESCE(SUM(prix_achat * quantite - montant_paye), 0) AS total_dettes
          FROM achats
          WHERE date_achat BETWEEN $1 AND $2`,
         [debut, fin]
@@ -60,7 +64,7 @@ async function getRapport(req, res) {
       ),
 
       db.query(
-        `SELECT date_achat::text AS jour, SUM(montant_total)::bigint AS total
+        `SELECT date_achat::text AS jour, SUM(prix_achat * quantite)::bigint AS total
          FROM achats WHERE date_achat BETWEEN $1 AND $2
          GROUP BY date_achat ORDER BY date_achat`,
         [debut, fin]
@@ -110,10 +114,12 @@ async function exportPDF(req, res) {
          FROM lignes_vente WHERE date_vente BETWEEN $1 AND $2`,
         [debut, fin]
       ),
+      // Même correctif que ci-dessus : recalcul dynamique pour éviter de se fier
+      // à la colonne stockée "montant_total" qui peut être à 0 sur d'anciens achats.
       db.query(
-        `SELECT COUNT(*) AS nb_achats, COALESCE(SUM(montant_total), 0) AS total_achats,
+        `SELECT COUNT(*) AS nb_achats, COALESCE(SUM(prix_achat * quantite), 0) AS total_achats,
                 COALESCE(SUM(montant_paye), 0) AS total_paye,
-                COALESCE(SUM(montant_total - montant_paye), 0) AS total_dettes
+                COALESCE(SUM(prix_achat * quantite - montant_paye), 0) AS total_dettes
          FROM achats WHERE date_achat BETWEEN $1 AND $2`,
         [debut, fin]
       ),

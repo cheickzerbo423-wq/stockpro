@@ -135,11 +135,17 @@ async function stats(req, res) {
     );
 
     // Totaux globaux
+    // NB : "depenses_total" est recalculé dynamiquement (prix_achat * quantite)
+    // au lieu de SUM(achats.montant_total) — cette colonne stockée peut être à 0
+    // sur d'anciens enregistrements (même bug que celui corrigé dans
+    // clientsController.js pour les fournisseurs : cf. commentaire dans
+    // achatsController.js getAll). Sans ce correctif, le tableau de bord
+    // sous-évaluait le total des dépenses d'achat.
     const totaux = await db.query(
       `SELECT
          SUM(lv.montant_total)                                  AS ca_total,
          COUNT(DISTINCT lv.facture_code)                        AS nb_factures,
-         (SELECT SUM(montant_total) FROM achats)                AS depenses_total,
+         (SELECT SUM(prix_achat * quantite) FROM achats)        AS depenses_total,
          (SELECT SUM(valeur_stock) FROM vue_stock)              AS valeur_stock,
          (SELECT COUNT(*) FROM factures WHERE statut = FALSE)   AS factures_impayees,
          (SELECT SUM(reste) FROM factures WHERE statut = FALSE) AS montant_a_recouvrer

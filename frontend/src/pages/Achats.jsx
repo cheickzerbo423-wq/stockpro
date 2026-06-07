@@ -175,6 +175,8 @@ export default function Achats() {
   const totalCommande = lignes.reduce((s, l) => s + (+l.prix_achat || 0) * (+l.quantite || 0), 0);
   const totalDepenses = achats.reduce((s, a) => s + parseFloat(a.montant_total || 0), 0);
   const totalDettes   = achats.reduce((s, a) => s + parseFloat(a.reste || 0), 0);
+  const nbAchats      = achats.length;
+  const nbFournisseursActifs = new Set(achats.map((a) => a.fournisseur_nom).filter(Boolean)).size;
 
   const resetModal = () => {
     setLignes([emptyLigne()]);
@@ -341,7 +343,7 @@ export default function Achats() {
     <div>
       <PageHeader
         title="Approvisionnements"
-        sub={`Total dépensé : ${fmt(totalDepenses)}${totalDettes > 0 ? ` · Dettes : ${fmt(totalDettes)}` : ""}`}
+        sub={`${nbAchats} ligne(s) · Total dépensé : ${fmt(totalDepenses)}`}
         action={
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Btn color="orange-light" icon="📷" loading={scanning} onClick={() => fileInputRef.current?.click()}
@@ -364,6 +366,21 @@ export default function Achats() {
         onChange={handleScanFile}
       />
 
+      {/* KPIs */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+        {[
+          { label: "Total dépensé",        value: fmt(totalDepenses),        color: "text-[#0023FF]",   bg: "bg-[#E6EAFF] border-[#B3BFFF]" },
+          { label: "Dettes en cours",      value: totalDettes > 0 ? fmt(totalDettes) : "—", color: totalDettes > 0 ? "text-red-600" : "text-gray-400", bg: totalDettes > 0 ? "bg-red-50 border-red-100" : "bg-gray-50 border-gray-100" },
+          { label: "Approvisionnements",   value: fmtN(nbAchats),            color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-100" },
+          { label: "Fournisseurs actifs",  value: fmtN(nbFournisseursActifs),color: "text-amber-600",   bg: "bg-amber-50 border-amber-100" },
+        ].map((k) => (
+          <div key={k.label} className={`rounded-2xl border p-3 md:p-4 ${k.bg}`}>
+            <div className={`text-base md:text-xl font-black ${k.color} truncate`}>{k.value}</div>
+            <div className="text-xs font-semibold text-gray-500 mt-1 leading-tight">{k.label}</div>
+          </div>
+        ))}
+      </div>
+
       {/* Barre de recherche sur le tableau */}
       <div className="mb-4 max-w-sm">
         <SearchBox
@@ -383,13 +400,13 @@ export default function Achats() {
           <DataTable
             headers={[
               { label: "Date",        sortKey: "date_achat",      w: "9%" },
-              { label: "Article",     sortKey: "libelle",         w: "18%" },
-              { label: "Fournisseur", sortKey: "fournisseur_nom", w: "11%" },
-              { label: "Qté",   sortKey: "quantite",      right: true, w: "6%" },
-              { label: "P.U.",  sortKey: "prix_achat",    right: true, w: "9%" },
-              { label: "Total", sortKey: "montant_total", right: true, w: "12%" },
-              { label: "Payé",  sortKey: "montant_paye",  right: true, w: "12%" },
-              { label: "Reste", sortKey: "reste",         right: true, w: "12%" },
+              { label: "Article",     sortKey: "libelle",         w: "16%" },
+              { label: "Fournisseur", sortKey: "fournisseur_nom", w: "12%" },
+              { label: "Qté",   sortKey: "quantite",      right: true, w: "8%" },
+              { label: "P.U.",  sortKey: "prix_achat",    right: true, w: "8%" },
+              { label: "Total", sortKey: "montant_total", right: true, w: "13%" },
+              { label: "Payé",  sortKey: "montant_paye",  right: true, w: "13%" },
+              { label: "Reste", sortKey: "reste",         right: true, w: "10%" },
               { label: "Statut", sortKey: "statut",       w: "7%" },
               { label: "", w: "4%" },
             ]}

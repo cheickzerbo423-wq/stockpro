@@ -206,7 +206,7 @@ export default function Guide() {
         </div>
 
         <Tip icon="🔔" color="amber">
-          Cliquez sur <strong>Actualiser</strong> (haut de page) pour forcer le rechargement de tous les blocs. En cas de rupture, allez dans <strong>Approvisionnements</strong> et utilisez <strong>🗂 Gamme rapide</strong> pour ravitailler toute une famille en une seule ligne.
+          En cas de rupture ou de stock bas, cliquez sur <strong>Approvisionnements</strong> dans le menu pour créer un réapprovisionnement directement.
         </Tip>
       </Section>
 
@@ -221,8 +221,7 @@ export default function Guide() {
           <Step n="1">Cliquez sur <strong>+ Nouvel Article</strong> en haut à droite.</Step>
           <Step n="2">Saisissez le <strong>libellé</strong> (nom du produit) — le code est généré automatiquement.</Step>
           <Step n="3">Renseignez le prix d'achat, le prix de vente et le stock minimum d'alerte.</Step>
-          <Step n="4">Si l'article fait partie d'une gamme, sélectionnez-la et renseignez le multiplicateur (voir ci-dessous).</Step>
-          <Step n="5">Cliquez <strong>Enregistrer</strong>.</Step>
+          <Step n="4">Cliquez <strong>Enregistrer</strong>.</Step>
         </div>
 
         <Tip icon="✨" color="amber">
@@ -232,63 +231,14 @@ export default function Guide() {
         <SectionTitle>Modifier un article</SectionTitle>
         <div className="space-y-2">
           <Step n="1">Cliquez sur le bouton ✏ en fin de ligne pour ouvrir le formulaire de modification.</Step>
-          <Step n="2">Modifiez le libellé, les prix, le seuil d'alerte ou la gamme assignée.</Step>
+          <Step n="2">Modifiez le libellé, les prix ou le seuil d'alerte minimum.</Step>
           <Step n="3">Cliquez <strong>Enregistrer</strong> — les changements s'appliquent immédiatement.</Step>
-        </div>
-
-        <SectionTitle>🗂 Gammes — stock partagé entre variantes</SectionTitle>
-        <div className="space-y-2">
-          <Step n="1">Cliquez sur le bouton <strong>🗂 Gammes</strong> pour ouvrir le panneau de gestion.</Step>
-          <Step n="2">Créez une gamme : tapez le nom (ex : <code className="bg-purple-100 text-purple-700 px-1 rounded text-xs font-mono">RONDELLE</code>) — le code se génère automatiquement, modifiable si besoin.</Step>
-          <Step n="3">Assignez chaque variante à la gamme via le bouton ✏ de l'article, en précisant le multiplicateur :</Step>
-        </div>
-
-        <div className="my-3 overflow-hidden rounded-xl border border-purple-100">
-          <table className="w-full text-xs">
-            <thead><tr className="bg-purple-600 text-white">
-              <th className="text-left px-3 py-2 font-semibold">Article</th>
-              <th className="text-center px-3 py-2 font-semibold">Multiplicateur</th>
-              <th className="text-left px-3 py-2 font-semibold">Signification</th>
-            </tr></thead>
-            <tbody>
-              <tr className="border-t border-purple-50 bg-white">
-                <td className="px-3 py-2 font-semibold text-purple-700">Rondelle 15 L</td>
-                <td className="px-3 py-2 text-center font-black text-purple-600">1</td>
-                <td className="px-3 py-2 text-gray-500">Unité de base (référence)</td>
-              </tr>
-              <tr className="border-t border-purple-50 bg-purple-50/30">
-                <td className="px-3 py-2 font-semibold text-purple-700">Rondelle 5 L</td>
-                <td className="px-3 py-2 text-center font-black text-purple-600">3</td>
-                <td className="px-3 py-2 text-gray-500">1 bidon 15L = 3 bidons 5L</td>
-              </tr>
-              <tr className="border-t border-purple-50 bg-white">
-                <td className="px-3 py-2 font-semibold text-purple-700">Rondelle 2,5 L</td>
-                <td className="px-3 py-2 text-center font-black text-purple-600">6</td>
-                <td className="px-3 py-2 text-gray-500">1 bidon 15L = 6 bidons 2,5L</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div className="space-y-2">
-          <Step n="4">Après configuration, approvisionnez via <strong>Approvisionnements</strong> — le stock de toutes les variantes se calcule automatiquement.</Step>
-          <Step n="5">Lors des ventes, sélectionnez la variante vendue (5L, 2,5L…) — le stock commun est débité proportionnellement.</Step>
-        </div>
-
-        <Tip icon="🔄" color="blue">
-          Exemple : vous approvisionnez 20 bidons 15L. Le système affiche automatiquement <strong>20 × 15L = 60 × 5L = 120 × 2,5L</strong>. Vendre 3 bidons 5L débite l'équivalent d'1 bidon 15L du stock commun.
-        </Tip>
-
-        <SectionTitle>Renommer ou recréer une gamme</SectionTitle>
-        <div className="space-y-2">
-          <Step n="1">Dans le panneau <strong>🗂 Gammes</strong>, cliquez sur <strong>✎</strong> à droite d'une gamme pour la renommer sans la supprimer.</Step>
-          <Step n="2">Si vous supprimez une gamme puis voulez la recréer avec le même code, entrez le même code et nom — la gamme est <strong>réactivée automatiquement</strong> sans erreur.</Step>
         </div>
 
         <SectionTitle>Gérer le stock</SectionTitle>
         <div className="space-y-2">
           <Step n="1">Chaque approvisionnement met à jour le stock automatiquement.</Step>
-          <Step n="2">Cliquez sur n'importe quel <strong>en-tête de colonne</strong> pour trier (▲/▼). Les variantes d'une même gamme sont regroupées avec un badge coloré.</Step>
+          <Step n="2">Cliquez sur n'importe quel <strong>en-tête de colonne</strong> pour trier (▲/▼) : code, libellé, prix, stock, valeur.</Step>
           <Step n="3">Utilisez la barre de recherche pour filtrer rapidement par code ou libellé.</Step>
         </div>
 
@@ -354,10 +304,10 @@ export default function Guide() {
           <Step n="1">Cliquez sur <strong>+ Nouvel Approvisionnement</strong>.</Step>
           <Step n="2">Dans le champ <strong>Fournisseur</strong>, tapez pour filtrer et cliquez sur un nom pour le sélectionner.</Step>
           <Step n="3">Si le fournisseur n'existe pas encore, ouvrez la liste et cliquez sur <strong>+ Nouveau fournisseur</strong> — il sera créé et sélectionné immédiatement.</Step>
-          <Step n="4">Dans chaque ligne, tapez le nom ou code de l'article. La liste s'ouvre et <strong>groupe automatiquement les articles par gamme</strong> avec des en-têtes colorés. Cliquez sur un bouton de filtre (pastille colorée) pour n'afficher qu'une gamme spécifique.</Step>
-          <Step n="5">Saisissez la quantité et le prix unitaire d'achat. Dès qu'un article de gamme est sélectionné, une <strong>banderole violette</strong> s'affiche sous le champ pour rappeler la gamme et le stock partagé actuel.</Step>
+          <Step n="4">Dans chaque ligne, tapez le nom ou code de l'article et sélectionnez-le dans la liste déroulante.</Step>
+          <Step n="5">Saisissez la quantité et le prix unitaire d'achat.</Step>
           <Step n="6">Cliquez <strong>+ Ajouter un produit</strong> pour ajouter autant de lignes que nécessaire.</Step>
-          <Step n="7">Définissez le mode de paiement et enregistrez.</Step>
+          <Step n="7">Définissez le mode de paiement et cliquez <strong>Enregistrer</strong>.</Step>
         </div>
 
         <Tip icon="⚡" color="green">
@@ -365,41 +315,6 @@ export default function Guide() {
         </Tip>
         <Tip icon="📋" color="amber">
           En mode <strong>Crédit total</strong>, la dette fournisseur est enregistrée et visible dans le tableau. Vous pouvez la solder plus tard via le bouton <strong>Payer</strong>.
-        </Tip>
-
-        <SectionTitle>🗂 Gamme rapide — ravitailler toute une famille en 1 ligne</SectionTitle>
-        <p className="text-xs text-gray-500 leading-relaxed">
-          Au lieu d'ajouter une ligne par variante, <strong>Gamme rapide</strong> crée une seule entrée de stock qui se propage automatiquement à toutes les variantes de la gamme.
-        </p>
-        <div className="space-y-2 mt-2">
-          <Step n="1">Dans le modal d'approvisionnement, cliquez sur <strong>🗂 Gamme rapide</strong> (à droite de "+ Ajouter un produit").</Step>
-          <Step n="2">Sélectionnez la gamme à ravitailler dans la liste — le nombre de variantes est indiqué pour chacune.</Step>
-          <Step n="3">Saisissez la <strong>quantité en unité de base</strong> reçue (ex : nombre de bidons 15 L) et le <strong>prix unitaire de base</strong>.</Step>
-          <Step n="4">Cliquez <strong>Ajouter cette gamme</strong> — une seule ligne est créée pour l'article de référence. Le stock de toutes les variantes se recalcule automatiquement.</Step>
-        </div>
-
-        <div className="p-3 bg-purple-50 rounded-xl border border-purple-100 space-y-2 mt-1">
-          <p className="text-xs font-black text-purple-800">Exemple — Gamme RONDELLE (15L · 5L · 2,5L)</p>
-          <p className="text-xs text-purple-700">Sélectionnez RONDELLE → saisissez <strong>20</strong> (bidons 15L reçus) et le prix d'un bidon 15L → cliquez <em>Ajouter cette gamme</em>.</p>
-          <div className="grid grid-cols-3 gap-2 mt-1">
-            <div className="text-center p-2 bg-white rounded-lg border border-purple-100">
-              <div className="text-xs font-black text-purple-700">15 L</div>
-              <div className="text-[11px] text-purple-500">+20 unités</div>
-            </div>
-            <div className="text-center p-2 bg-white rounded-lg border border-purple-100">
-              <div className="text-xs font-black text-purple-700">5 L</div>
-              <div className="text-[11px] text-purple-500">+60 équivalents</div>
-            </div>
-            <div className="text-center p-2 bg-white rounded-lg border border-purple-100">
-              <div className="text-xs font-black text-purple-700">2,5 L</div>
-              <div className="text-[11px] text-purple-500">+120 équivalents</div>
-            </div>
-          </div>
-          <p className="text-[11px] text-purple-500 mt-1">Une seule ligne dans la commande, mais le stock de toutes les tailles est mis à jour.</p>
-        </div>
-
-        <Tip icon="💡" color="blue">
-          Vous pouvez combiner les deux méthodes : utiliser <strong>🗂 Gamme rapide</strong> pour une famille, puis ajouter d'autres produits individuels sur la même commande via <strong>+ Ajouter un produit</strong>.
         </Tip>
 
         <SectionTitle>Payer une dette fournisseur</SectionTitle>
@@ -497,8 +412,8 @@ export default function Guide() {
         <div className="space-y-2">
           <Step n="1">Les factures impayées affichent un bouton <strong>Payer</strong> en fin de ligne.</Step>
           <Step n="2">Cliquez dessus, saisissez le <strong>montant encaissé maintenant</strong> (versement partiel ou total).</Step>
-          <Step n="3">Cliquez sur <em>Solder entièrement</em> pour encaisser le reste en une seule fois.</Step>
-          <Step n="4">Ou ouvrez le détail de la facture et cliquez <strong>Enregistrer un paiement</strong>.</Step>
+          <Step n="3">Cliquez sur le lien <em>Solder la dette</em> pour pré-remplir automatiquement le montant restant dû.</Step>
+          <Step n="4">Ou ouvrez le détail de la facture et cliquez <strong>Enregistrer paiement</strong>.</Step>
         </div>
 
         <Tip icon="📊" color="green">

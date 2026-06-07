@@ -422,7 +422,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
 /* ─── Page principale ──────────────────────────────────── */
 export default function Ventes() {
   const { data: ventes  = [], loading, error, reload } = useVentes();
-  const { data: articles = [] } = useArticles();
+  const { data: articles = [], reload: reloadArticles } = useArticles();
   const { data: clients  = [], reload: reloadClients } = useClients("Clients");
   const { mutate: createVente, loading: saving } = useMutation(ventesService.create);
 
@@ -491,7 +491,11 @@ export default function Ventes() {
         articles:     panier.map((p) => ({ code: p.code, quantite: p.quantite, prix_vente: p.prix_vente })),
       });
       setShowAdd(false);
+      // Recharge à la fois l'historique des ventes ET la liste des articles :
+      // le stock affiché (catalogue de vente, page Articles) doit refléter
+      // immédiatement la sortie de stock qui vient d'être enregistrée.
       reload();
+      reloadArticles();
       // Ouverture automatique du ticket de caisse
       try {
         await facturesService.openRecu(result.facture.code);

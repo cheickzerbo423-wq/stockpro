@@ -486,7 +486,7 @@ export default function Rapports() {
               <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
                 Bénéfice net de la période
               </div>
-              <div className={`text-2xl font-black ${data.benefice >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+              <div className={`text-3xl font-black ${data.benefice >= 0 ? "text-emerald-700" : "text-red-700"}`}>
                 {fmt(data.benefice)}
               </div>
               <div className="text-xs text-gray-500 mt-1.5">

@@ -137,7 +137,7 @@ function LigneCommande({ ligne, articles, onUpdate, onRemove }) {
 /* ─── Page principale ───────────────────────────────── */
 export default function Achats() {
   const { data: achats = [], loading, error, reload } = useAchats();
-  const { data: articles = [] }     = useArticles();
+  const { data: articles = [], reload: reloadArticles } = useArticles();
   const { data: fournisseurs = [], reload: reloadFournisseurs } = useClients("Fournisseurs");
   const { mutate: createAchat, loading: saving } = useMutation(achatsService.create);
   const { mutate: payAchat }        = useMutation(achatsService.updatePaiement);
@@ -300,7 +300,11 @@ export default function Achats() {
     }
     setShowAdd(false);
     resetModal();
+    // Recharge à la fois la liste des achats ET celle des articles : le stock
+    // affiché (catalogue, suggestions, page Articles si elle est rouverte)
+    // doit refléter immédiatement l'approvisionnement qui vient d'être enregistré.
     reload();
+    reloadArticles();
   };
 
   const handlePay = async () => {

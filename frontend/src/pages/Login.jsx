@@ -43,7 +43,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex" style={{ fontFamily: "'Groote', 'Montserrat', 'Segoe UI', sans-serif" }}>
 
       {/* ── Panneau gauche — Brand ── */}
       <div className="hidden lg:flex flex-col justify-between w-[45%] relative overflow-hidden px-12 py-10"
@@ -62,7 +62,7 @@ export default function Login() {
           <div className="flex items-center gap-4 mb-3">
             <WiLogo size={56} />
             <div>
-              <div className="text-3xl font-black text-white tracking-tight" style={{ fontFamily: "'Groote', sans-serif" }}>WariGest</div>
+              <div className="text-3xl font-black text-white tracking-tight">WariGest</div>
               <div className="text-sm text-blue-300/70 font-medium">Gestion & Facturation</div>
             </div>
           </div>
@@ -70,7 +70,7 @@ export default function Login() {
 
         {/* Accroche centrale */}
         <div className="relative z-10 flex-1 flex flex-col justify-center">
-          <h2 className="text-3xl font-black text-white leading-tight mb-4">
+          <h2 className="text-4xl font-black text-white leading-tight mb-4">
             Gérez votre<br />
             <span style={{ color: "#FFF900" }}>entreprise</span><br />
             intelligemment.
@@ -120,7 +120,7 @@ export default function Login() {
         <div className="lg:hidden flex items-center gap-3 mb-10">
           <WiLogo size={44} />
           <div>
-            <div className="text-2xl font-black text-gray-900" style={{ fontFamily: "'Groote', sans-serif" }}>WariGest</div>
+            <div className="text-2xl font-black text-gray-900">WariGest</div>
             <div className="text-xs text-gray-400 font-medium">Gestion & Facturation</div>
           </div>
         </div>

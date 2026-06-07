@@ -1,0 +1,8 @@
+origin	https://github.com/cheickzerbo423-wq/stockpro.git (fetch)
+origin	https://github.com/cheickzerbo423-wq/stockpro.git (push)
+--- 
+* master 56f4a6f7 [origin/master] >
+--- 
+56f4a6f7 >
+121dca93 Fix: mois/annee GENERATED ALWAYS + URL fallback + typographie Groote/Montserrat #0023FF
+5e74bc73 Fix: mois/annee GENERATED ALWAYS + URL fallback + typographie Groote/Montserrat #0023FF

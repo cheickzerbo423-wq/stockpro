@@ -1,0 +1,2 @@
+To https://github.com/cheickzerbo423-wq/stockpro.git
+   60c59366..2f2dae6d  master -> master

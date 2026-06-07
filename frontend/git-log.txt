@@ -1,0 +1,8 @@
+56f4a6f7 >
+121dca93 Fix: mois/annee GENERATED ALWAYS + URL fallback + typographie Groote/Montserrat #0023FF
+5e74bc73 Fix: mois/annee GENERATED ALWAYS + URL fallback + typographie Groote/Montserrat #0023FF
+b2449ebd Fix: retirer mois/annee (GENERATED ALWAYS) du INSERT achats + fix URL localhost services
+417ec223 Mise a jour WariGest
+41c77e4d Mise a jour WariGest
+232ab290 Mise a jour WariGest
+209c5986 Fix serveur - proxy Vercel vers Railway - CORS - JWT validation - rebranding complet

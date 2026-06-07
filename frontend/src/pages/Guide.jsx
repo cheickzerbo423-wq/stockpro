@@ -162,10 +162,10 @@ export default function Guide() {
         <SectionTitle>Indicateurs principaux</SectionTitle>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: "CA du jour",        desc: "Montant total des ventes de la journée en cours",    color: "orange" },
-            { label: "Ventes du jour",    desc: "Nombre de lignes de vente enregistrées aujourd'hui", color: "blue" },
-            { label: "Factures impayées", desc: "Nombre de factures clients non encore soldées",       color: "red" },
-            { label: "CA de l'année",     desc: "Cumul des ventes depuis le 1er janvier",             color: "green" },
+            { label: "Chiffre d'Affaires", desc: "Cumul des ventes de l'année en cours, avec le total des dépenses en sous-titre", color: "blue" },
+            { label: "Bénéfice Net",       desc: "CA moins les dépenses, avec le taux de marge en pourcentage",                  color: "green" },
+            { label: "Valeur du Stock",    desc: "Valeur totale du stock actuel et nombre d'articles actifs",                    color: "orange" },
+            { label: "Factures Émises",    desc: "Nombre total de factures, dont impayées et montant restant à recouvrer",       color: "red" },
           ].map(i => (
             <div key={i.label} className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
               <div className="text-xs font-bold text-gray-800">{i.label}</div>
@@ -174,24 +174,29 @@ export default function Guide() {
           ))}
         </div>
 
-        <SectionTitle>Alertes de stock</SectionTitle>
+        <SectionTitle>Taux de recouvrement</SectionTitle>
         <p className="text-xs text-gray-500 leading-relaxed">
-          Le tableau de bord affiche automatiquement les produits dont le stock est inférieur ou égal au seuil d'alerte défini.
-          Deux types d'alertes sont distingués :
+          Une barre de progression indique la part du chiffre d'affaires facturé qui a déjà été encaissée, avec le détail
+          <strong> Encaissé</strong> et <strong>Créances</strong>. La couleur passe au vert à partir de 80 %, à l'ambre dès 50 %, et au rouge en dessous.
         </p>
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          <div className="p-3 bg-purple-50 rounded-xl border border-purple-100">
-            <div className="text-xs font-bold text-purple-800 mb-1">🗂 Alertes Gammes</div>
-            <p className="text-xs text-purple-600">Regroupées par gamme — indique le nombre de variantes en rupture et en stock faible pour toute la famille de produits.</p>
-          </div>
-          <div className="p-3 bg-red-50 rounded-xl border border-red-100">
-            <div className="text-xs font-bold text-red-800 mb-1">📦 Alertes Articles</div>
-            <p className="text-xs text-red-600">Articles autonomes (sans gamme) en rupture ou stock bas — affichés individuellement avec le stock restant.</p>
-          </div>
+
+        <SectionTitle>Graphiques et analyses</SectionTitle>
+        <div className="space-y-2">
+          <Step n="1">Le graphique <strong>Évolution du CA</strong> retrace le chiffre d'affaires mois par mois sur l'année en cours.</Step>
+          <Step n="2">Le bloc <strong>Top Clients</strong> classe les meilleurs clients de l'année par chiffre d'affaires, avec une barre de progression pour chacun.</Step>
+          <Step n="3">Le graphique en barres <strong>CA par Client</strong> visualise la répartition du chiffre d'affaires entre les meilleurs clients.</Step>
+          <Step n="4">La carte <strong>Résumé bénéfice</strong> reprend en un coup d'œil le bénéfice net de l'année, le CA et les dépenses.</Step>
         </div>
 
+        <SectionTitle>Alertes de stock & dernières factures</SectionTitle>
+        <p className="text-xs text-gray-500 leading-relaxed">
+          Le tableau de bord affiche automatiquement la liste des <strong>articles dont le stock est inférieur ou égal au seuil d'alerte</strong> défini —
+          en rouge pour une rupture (stock à 0 ou moins), en ambre pour un stock faible, avec le stock restant et le seuil minimal pour chacun.
+          Un encart <strong>Dernières Factures</strong> liste les opérations récentes avec leur statut (Réglée / Impayée).
+        </p>
+
         <Tip icon="🔔" color="amber">
-          Les alertes se mettent à jour à chaque rechargement du tableau de bord. En cas d'alerte gamme, allez dans <strong>Approvisionnements</strong> et utilisez <strong>🗂 Gamme rapide</strong> pour ravitailler toute la famille en quelques secondes.
+          Quand la liste <strong>Stocks en ordre</strong> s'affiche en vert, aucune rupture n'est détectée. Sinon, rendez-vous dans <strong>Approvisionnements</strong> pour réapprovisionner les articles concernés.
         </Tip>
       </Section>
 
@@ -206,74 +211,25 @@ export default function Guide() {
           <Step n="1">Cliquez sur <strong>+ Nouvel Article</strong> en haut à droite.</Step>
           <Step n="2">Saisissez le <strong>libellé</strong> (nom du produit) — le code est généré automatiquement.</Step>
           <Step n="3">Renseignez le prix d'achat, le prix de vente et le stock minimum d'alerte.</Step>
-          <Step n="4">Si l'article fait partie d'une gamme, sélectionnez-la et renseignez le multiplicateur (voir ci-dessous).</Step>
+          <Step n="4">Indiquez éventuellement un <strong>stock de départ</strong> si l'article est déjà en stock au moment de la création.</Step>
           <Step n="5">Cliquez <strong>Enregistrer</strong>.</Step>
         </div>
 
         <Tip icon="✨" color="amber">
-          Le code article est auto-généré depuis le nom : ex. <strong>BISCUIT → BIS001</strong>. Vous pouvez le modifier ou le régénérer avec le bouton ↺.
+          Le code article est auto-généré depuis le libellé : ex. <strong>BISCUIT → BIS001</strong>. Vous pouvez basculer en saisie manuelle ou le régénérer avec le bouton ↺.
         </Tip>
 
         <SectionTitle>Modifier un article</SectionTitle>
         <div className="space-y-2">
           <Step n="1">Cliquez sur le bouton ✏ en fin de ligne pour ouvrir le formulaire de modification.</Step>
-          <Step n="2">Modifiez le libellé, les prix, le seuil d'alerte ou la gamme assignée.</Step>
+          <Step n="2">Modifiez le libellé, les prix d'achat et de vente, ou le seuil d'alerte. Le code reste fixe et n'est pas modifiable depuis ce formulaire.</Step>
           <Step n="3">Cliquez <strong>Enregistrer</strong> — les changements s'appliquent immédiatement.</Step>
-        </div>
-
-        <SectionTitle>🗂 Gammes — stock partagé entre variantes</SectionTitle>
-        <div className="space-y-2">
-          <Step n="1">Cliquez sur le bouton <strong>🗂 Gammes</strong> pour ouvrir le panneau de gestion.</Step>
-          <Step n="2">Créez une gamme : tapez le nom (ex : <code className="bg-purple-100 text-purple-700 px-1 rounded text-xs font-mono">RONDELLE</code>) — le code se génère automatiquement, modifiable si besoin.</Step>
-          <Step n="3">Assignez chaque variante à la gamme via le bouton ✏ de l'article, en précisant le multiplicateur :</Step>
-        </div>
-
-        <div className="my-3 overflow-hidden rounded-xl border border-purple-100">
-          <table className="w-full text-xs">
-            <thead><tr className="bg-purple-600 text-white">
-              <th className="text-left px-3 py-2 font-semibold">Article</th>
-              <th className="text-center px-3 py-2 font-semibold">Multiplicateur</th>
-              <th className="text-left px-3 py-2 font-semibold">Signification</th>
-            </tr></thead>
-            <tbody>
-              <tr className="border-t border-purple-50 bg-white">
-                <td className="px-3 py-2 font-semibold text-purple-700">Rondelle 15 L</td>
-                <td className="px-3 py-2 text-center font-black text-purple-600">1</td>
-                <td className="px-3 py-2 text-gray-500">Unité de base (référence)</td>
-              </tr>
-              <tr className="border-t border-purple-50 bg-purple-50/30">
-                <td className="px-3 py-2 font-semibold text-purple-700">Rondelle 5 L</td>
-                <td className="px-3 py-2 text-center font-black text-purple-600">3</td>
-                <td className="px-3 py-2 text-gray-500">1 bidon 15L = 3 bidons 5L</td>
-              </tr>
-              <tr className="border-t border-purple-50 bg-white">
-                <td className="px-3 py-2 font-semibold text-purple-700">Rondelle 2,5 L</td>
-                <td className="px-3 py-2 text-center font-black text-purple-600">6</td>
-                <td className="px-3 py-2 text-gray-500">1 bidon 15L = 6 bidons 2,5L</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div className="space-y-2">
-          <Step n="4">Après configuration, approvisionnez via <strong>Approvisionnements</strong> — le stock de toutes les variantes se calcule automatiquement.</Step>
-          <Step n="5">Lors des ventes, sélectionnez la variante vendue (5L, 2,5L…) — le stock commun est débité proportionnellement.</Step>
-        </div>
-
-        <Tip icon="🔄" color="blue">
-          Exemple : vous approvisionnez 20 bidons 15L. Le système affiche automatiquement <strong>20 × 15L = 60 × 5L = 120 × 2,5L</strong>. Vendre 3 bidons 5L débite l'équivalent d'1 bidon 15L du stock commun.
-        </Tip>
-
-        <SectionTitle>Renommer ou recréer une gamme</SectionTitle>
-        <div className="space-y-2">
-          <Step n="1">Dans le panneau <strong>🗂 Gammes</strong>, cliquez sur <strong>✎</strong> à droite d'une gamme pour la renommer sans la supprimer.</Step>
-          <Step n="2">Si vous supprimez une gamme puis voulez la recréer avec le même code, entrez le même code et nom — la gamme est <strong>réactivée automatiquement</strong> sans erreur.</Step>
         </div>
 
         <SectionTitle>Gérer le stock</SectionTitle>
         <div className="space-y-2">
-          <Step n="1">Chaque approvisionnement met à jour le stock automatiquement.</Step>
-          <Step n="2">Cliquez sur n'importe quel <strong>en-tête de colonne</strong> pour trier (▲/▼). Les variantes d'une même gamme sont regroupées avec un badge coloré.</Step>
+          <Step n="1">Chaque vente et chaque approvisionnement met à jour le stock automatiquement (sorties et entrées visibles dans le tableau).</Step>
+          <Step n="2">Cliquez sur n'importe quel <strong>en-tête de colonne</strong> pour trier (▲/▼) — le tri reste actif après chaque opération.</Step>
           <Step n="3">Utilisez la barre de recherche pour filtrer rapidement par code ou libellé.</Step>
         </div>
 
@@ -339,52 +295,35 @@ export default function Guide() {
           <Step n="1">Cliquez sur <strong>+ Nouvel Approvisionnement</strong>.</Step>
           <Step n="2">Dans le champ <strong>Fournisseur</strong>, tapez pour filtrer et cliquez sur un nom pour le sélectionner.</Step>
           <Step n="3">Si le fournisseur n'existe pas encore, ouvrez la liste et cliquez sur <strong>+ Nouveau fournisseur</strong> — il sera créé et sélectionné immédiatement.</Step>
-          <Step n="4">Dans chaque ligne, tapez le nom ou code de l'article. La liste s'ouvre et <strong>groupe automatiquement les articles par gamme</strong> avec des en-têtes colorés. Cliquez sur un bouton de filtre (pastille colorée) pour n'afficher qu'une gamme spécifique.</Step>
-          <Step n="5">Saisissez la quantité et le prix unitaire d'achat. Dès qu'un article de gamme est sélectionné, une <strong>banderole violette</strong> s'affiche sous le champ pour rappeler la gamme et le stock partagé actuel.</Step>
+          <Step n="4">Dans chaque ligne, tapez le nom ou code de l'article — une liste de suggestions s'ouvre avec le stock actuel de chaque produit.</Step>
+          <Step n="5">Saisissez la quantité reçue et le prix unitaire d'achat.</Step>
           <Step n="6">Cliquez <strong>+ Ajouter un produit</strong> pour ajouter autant de lignes que nécessaire.</Step>
           <Step n="7">Définissez le mode de paiement et enregistrez.</Step>
         </div>
 
         <Tip icon="⚡" color="green">
-          Le bouton <strong>Comptant</strong> remplit automatiquement le montant payé au total de la commande.
+          Le bouton <strong>Comptant</strong> remplit automatiquement le montant payé au total de la commande ; <strong>Crédit total</strong> laisse le montant payé à zéro.
+          Lors d'un règlement partiel, le montant versé est réparti <strong>proportionnellement</strong> entre les lignes de la commande.
         </Tip>
         <Tip icon="📋" color="amber">
-          En mode <strong>Crédit total</strong>, la dette fournisseur est enregistrée et visible dans le tableau. Vous pouvez la solder plus tard via le bouton <strong>Payer</strong>.
+          En mode <strong>Crédit</strong>, la dette fournisseur est enregistrée et visible dans le tableau. Vous pouvez la solder plus tard via le bouton <strong>Payer</strong>.
         </Tip>
 
-        <SectionTitle>🗂 Gamme rapide — ravitailler toute une famille en 1 ligne</SectionTitle>
+        <SectionTitle>📷 Scanner une facture — pré-remplissage automatique</SectionTitle>
         <p className="text-xs text-gray-500 leading-relaxed">
-          Au lieu d'ajouter une ligne par variante, <strong>Gamme rapide</strong> crée une seule entrée de stock qui se propage automatiquement à toutes les variantes de la gamme.
+          Plutôt que de ressaisir une facture papier ligne par ligne, vous pouvez la <strong>photographier</strong> : le système la lit
+          automatiquement (reconnaissance de texte) et pré-remplit le formulaire d'approvisionnement pour vous.
         </p>
         <div className="space-y-2 mt-2">
-          <Step n="1">Dans le modal d'approvisionnement, cliquez sur <strong>🗂 Gamme rapide</strong> (à droite de "+ Ajouter un produit").</Step>
-          <Step n="2">Sélectionnez la gamme à ravitailler dans la liste — le nombre de variantes est indiqué pour chacune.</Step>
-          <Step n="3">Saisissez la <strong>quantité en unité de base</strong> reçue (ex : nombre de bidons 15 L) et le <strong>prix unitaire de base</strong>.</Step>
-          <Step n="4">Cliquez <strong>Ajouter cette gamme</strong> — une seule ligne est créée pour l'article de référence. Le stock de toutes les variantes se recalcule automatiquement.</Step>
+          <Step n="1">Dans le modal d'approvisionnement, cliquez sur <strong>📷 Scanner une facture</strong>.</Step>
+          <Step n="2">Prenez une photo ou sélectionnez une image de la facture papier.</Step>
+          <Step n="3">L'image est automatiquement compressée puis analysée par le serveur (reconnaissance optique de caractères).</Step>
+          <Step n="4">Le fournisseur, la date et les lignes (libellé, quantité, prix d'achat) détectés viennent <strong>pré-remplir</strong> le formulaire.</Step>
+          <Step n="5">Relisez et corrigez chaque champ si nécessaire, puis cliquez <strong>Enregistrer</strong> comme pour une saisie manuelle.</Step>
         </div>
 
-        <div className="p-3 bg-purple-50 rounded-xl border border-purple-100 space-y-2 mt-1">
-          <p className="text-xs font-black text-purple-800">Exemple — Gamme RONDELLE (15L · 5L · 2,5L)</p>
-          <p className="text-xs text-purple-700">Sélectionnez RONDELLE → saisissez <strong>20</strong> (bidons 15L reçus) et le prix d'un bidon 15L → cliquez <em>Ajouter cette gamme</em>.</p>
-          <div className="grid grid-cols-3 gap-2 mt-1">
-            <div className="text-center p-2 bg-white rounded-lg border border-purple-100">
-              <div className="text-xs font-black text-purple-700">15 L</div>
-              <div className="text-[11px] text-purple-500">+20 unités</div>
-            </div>
-            <div className="text-center p-2 bg-white rounded-lg border border-purple-100">
-              <div className="text-xs font-black text-purple-700">5 L</div>
-              <div className="text-[11px] text-purple-500">+60 équivalents</div>
-            </div>
-            <div className="text-center p-2 bg-white rounded-lg border border-purple-100">
-              <div className="text-xs font-black text-purple-700">2,5 L</div>
-              <div className="text-[11px] text-purple-500">+120 équivalents</div>
-            </div>
-          </div>
-          <p className="text-[11px] text-purple-500 mt-1">Une seule ligne dans la commande, mais le stock de toutes les tailles est mis à jour.</p>
-        </div>
-
-        <Tip icon="💡" color="blue">
-          Vous pouvez combiner les deux méthodes : utiliser <strong>🗂 Gamme rapide</strong> pour une famille, puis ajouter d'autres produits individuels sur la même commande via <strong>+ Ajouter un produit</strong>.
+        <Tip icon="🛡️" color="green">
+          La lecture automatique est une <strong>aide à la saisie</strong> : rien n'est jamais enregistré sans validation. Vous gardez toujours la main pour vérifier et corriger avant d'enregistrer.
         </Tip>
 
         <SectionTitle>Payer une dette fournisseur</SectionTitle>
@@ -456,9 +395,14 @@ export default function Guide() {
 
         <SectionTitle>Consulter une facture</SectionTitle>
         <div className="space-y-2">
-          <Step n="1">Cliquez sur le <strong>numéro de facture</strong> dans le tableau pour voir le détail.</Step>
-          <Step n="2">Le détail affiche le client, la date, les articles, les montants et le statut de paiement.</Step>
+          <Step n="1">Utilisez les filtres <Badge color="gray">Toutes</Badge> / <Badge color="green">Réglées</Badge> / <Badge color="red">Impayées</Badge> ou la recherche pour retrouver une facture.</Step>
+          <Step n="2">Cliquez sur le <strong>numéro de facture</strong> dans le tableau pour voir le détail.</Step>
+          <Step n="3">Le détail affiche le client, la date, les articles, les montants, le statut de paiement et un bouton <strong>⬇ Télécharger</strong>.</Step>
         </div>
+
+        <Tip icon="✓" color="green">
+          Le bouton <strong>✓</strong> en fin de ligne marque directement une facture comme réglée, sans passer par le détail — pratique pour les régularisations rapides.
+        </Tip>
 
         <SectionTitle>Générer les documents</SectionTitle>
         <div className="grid grid-cols-2 gap-3">
@@ -539,25 +483,30 @@ export default function Guide() {
         <SectionTitle>Rôles disponibles</SectionTitle>
         <div className="space-y-2">
           {[
-            { role: "Admin",         desc: "Accès total à tous les modules et à la gestion des utilisateurs." },
-            { role: "Vendeur",       desc: "Peut créer des ventes et consulter les factures." },
-            { role: "Gestionnaire",  desc: "Accède aux articles, approvisionnements et rapports." },
-            { role: "Comptable",     desc: "Consulte et gère les factures et les paiements." },
+            { role: "Admin",        icon: "👑", desc: "Accès total à tous les modules, y compris la gestion des utilisateurs et la réinitialisation des données." },
+            { role: "Gestionnaire", icon: "🛡️", desc: "Rôle intermédiaire — son accès aux modules dépend des permissions cochées sur son compte." },
+            { role: "Vendeur",      icon: "👤", desc: "Rôle courant pour les opérations du quotidien — son accès aux modules dépend lui aussi des permissions cochées." },
           ].map(r => (
             <div key={r.role} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-              <Badge color={r.role === "Admin" ? "red" : r.role === "Vendeur" ? "green" : r.role === "Gestionnaire" ? "blue" : "gray"}>
-                {r.role}
+              <Badge color={r.role === "Admin" ? "red" : r.role === "Gestionnaire" ? "blue" : "green"}>
+                {r.icon} {r.role}
               </Badge>
               <p className="text-xs text-gray-600 flex-1">{r.desc}</p>
             </div>
           ))}
         </div>
 
-        <SectionTitle>Créer un utilisateur</SectionTitle>
+        <Tip icon="🔑" color="blue">
+          Le <strong>rôle</strong> sert avant tout d'étiquette visuelle (badge et icône). L'accès réel aux modules est défini, pour
+          chaque utilisateur, par les <strong>permissions individuelles</strong> décrites ci-dessous — un Admin a cependant toujours accès à tout.
+        </Tip>
+
+        <SectionTitle>Créer un utilisateur et gérer ses permissions</SectionTitle>
         <div className="space-y-2">
           <Step n="1">Cliquez sur <strong>+ Nouvel Utilisateur</strong>.</Step>
-          <Step n="2">Saisissez le login, le mot de passe et choisissez la catégorie (rôle).</Step>
-          <Step n="3">Sélectionnez les modules accessibles selon le rôle.</Step>
+          <Step n="2">Saisissez le login, le mot de passe et choisissez le rôle (<Badge color="red">Admin</Badge>, <Badge color="blue">Gestionnaire</Badge> ou <Badge color="green">Vendeur</Badge>).</Step>
+          <Step n="3">Cochez, parmi les <strong>5 modules</strong> proposés, ceux auxquels l'utilisateur doit pouvoir accéder : <em>Ventes, Approvisionnements, Articles, Facturation, Clients</em>.</Step>
+          <Step n="4">Chaque carte utilisateur affiche ensuite un badge de rôle, la liste des permissions actives/inactives et une barre de progression des modules activés.</Step>
         </div>
 
         <SectionTitle>Supprimer un utilisateur</SectionTitle>
@@ -595,7 +544,7 @@ export default function Guide() {
           <p className="text-xs text-red-700">• L'action est <strong>irréversible</strong> — les données ne peuvent pas être récupérées.</p>
           <p className="text-xs text-red-700">• Effacer les <strong>Articles</strong> supprime aussi automatiquement les ventes et achats liés.</p>
           <p className="text-xs text-red-700">• Effacer les <strong>Factures</strong> supprime aussi les lignes de vente associées.</p>
-          <p className="text-xs text-red-700">• Effacer les <strong>Gammes</strong> sans effacer les articles détache ces derniers de leur gamme (sans les supprimer).</p>
+          <p className="text-xs text-red-700">• Cocher <strong>Gammes</strong> sélectionne automatiquement aussi <strong>Articles &amp; Stock</strong> : la suppression des gammes entraîne celle des articles qui leur sont liés (contrainte de cohérence des données).</p>
           <p className="text-xs text-red-700">• Les comptes utilisateurs ne sont <strong>jamais</strong> affectés par cette réinitialisation.</p>
         </div>
       </Section>

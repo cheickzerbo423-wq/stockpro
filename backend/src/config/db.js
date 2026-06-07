@@ -70,6 +70,72 @@ pool.connect((err, client, release) => {
       )
         .then(() => console.log("✅ Schéma 'achats' vérifié (colonnes mois/annee OK)."))
         .catch((e) => console.error("⚠️  Migration achats (mois/annee) ignorée :", e.message))
+        .then(() => {
+          // ── Correction définitive de la vue "vue_stock" ──────────────────
+          // Bug constaté : les chiffres de stock affichés (Articles & Stock,
+          // alertes de rupture, valeur de stock) étaient totalement faux et
+          // ne correspondaient ni aux quantités achetées ni aux quantités
+          // vendues (ex. ARACHIDE affichait un stock de 50 468 au lieu de
+          // ~10 084, et les colonnes Entrées/Sorties affichaient 0 partout).
+          //
+          // Cause racine : l'ancienne définition de la vue joignait
+          // directement la table "achats" et la table "lignes_vente" sur
+          // articles.code. Un JOIN direct entre deux tables liées à une même
+          // ligne d'article produit un produit cartésien : chaque ligne
+          // d'achat est associée à CHAQUE ligne de vente (et vice-versa),
+          // donc SUM(achats.quantite) et SUM(lignes_vente.quantite) comptent
+          // les quantités en double, triple, etc. — proportionnellement au
+          // nombre de lignes de l'autre table. C'est exactement ce qui
+          // donnait 50 468 (= 10 100 × 5 ventes − 16 × 2 achats) au lieu de
+          // 10 084 (= 10 100 − 16).
+          //
+          // Correction : on agrège D'ABORD séparément les quantités achetées
+          // et vendues par article (sous-requêtes groupées), PUIS on les
+          // joint à la table "articles" — ce qui élimine totalement le
+          // produit cartésien et donne des totaux exacts.
+          //
+          // DROP + CREATE (plutôt que CREATE OR REPLACE) car PostgreSQL
+          // refuse de modifier les noms/types de colonnes d'une vue existante
+          // avec REPLACE ; la recréation est idempotente et sûre à rejouer à
+          // chaque démarrage du serveur.
+          return client.query(`
+            DROP VIEW IF EXISTS vue_stock;
+
+            CREATE VIEW vue_stock AS
+            SELECT
+              a.id,
+              a.code,
+              a.libelle,
+              a.prix_achat,
+              a.prix_vente,
+              a.stock_min,
+              a.actif,
+              COALESCE(ent.total, 0)::integer                                     AS entree,
+              COALESCE(sor.total, 0)::integer                                     AS sortie,
+              (COALESCE(ent.total, 0) - COALESCE(sor.total, 0))::integer          AS stock_restant,
+              CASE
+                WHEN (COALESCE(ent.total, 0) - COALESCE(sor.total, 0)) <= 0
+                  THEN 'Rupture stock'
+                WHEN (COALESCE(ent.total, 0) - COALESCE(sor.total, 0)) <= a.stock_min
+                  THEN 'Stock faible'
+                ELSE 'En stock'
+              END                                                                  AS statut,
+              ((COALESCE(ent.total, 0) - COALESCE(sor.total, 0)) * a.prix_achat)::numeric AS valeur_stock
+            FROM articles a
+            LEFT JOIN (
+              SELECT article_code, SUM(quantite) AS total
+              FROM achats
+              GROUP BY article_code
+            ) ent ON ent.article_code = a.code
+            LEFT JOIN (
+              SELECT article_code, SUM(quantite) AS total
+              FROM lignes_vente
+              GROUP BY article_code
+            ) sor ON sor.article_code = a.code;
+          `);
+        })
+        .then(() => console.log("✅ Vue 'vue_stock' recréée avec un calcul de stock correct (plus de produit cartésien)."))
+        .catch((e) => console.error("⚠️  Recréation de 'vue_stock' ignorée :", e.message))
         .finally(() => release());
     });
 });

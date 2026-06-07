@@ -43,7 +43,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ fontFamily: "'Groote', 'Montserrat', 'Segoe UI', sans-serif" }}>
+    <div className="min-h-screen flex" style={{ fontFamily: "'Montserrat', 'Segoe UI', sans-serif" }}>
 
       {/* ── Panneau gauche — Brand ── */}
       <div className="hidden lg:flex flex-col justify-between w-[45%] relative overflow-hidden px-12 py-10"

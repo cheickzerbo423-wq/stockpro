@@ -2,19 +2,35 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
 
 /*
- * ── Police principale : Groote Regular ──────────────────────────────
- * Les fichiers Groote-*.woff2/.woff n'ont jamais été ajoutés au projet
- * (voir public/fonts/LIRE_MOI.txt). Référencer des url() absolues vers
- * des fichiers inexistants fait ÉCHOUER LE BUILD Vercel/CRA ("Module not
- * found: Can't resolve '/fonts/Groote-Regular.woff2'") — ce n'est pas un
- * simple 404 au runtime. Les règles @font-face sont donc retirées tant
- * que ces fichiers ne sont pas fournis ; la pile --font-primary passe
- * alors naturellement à 'Montserrat' (chargée via Google Fonts ci-dessus),
- * ce qui est exactement le comportement de repli prévu à l'origine.
+ * ── Police « Groote » : pourquoi elle a été retirée partout ──────────
+ * Les fichiers Groote-*.woff2/.woff n'ont JAMAIS été ajoutés au projet
+ * (voir public/fonts/LIRE_MOI.txt — juste un fichier explicatif).
  *
- * Pour activer Groote plus tard : déposez les fichiers .woff2/.woff dans
- * frontend/public/fonts/, PUIS réintroduisez ici les blocs @font-face
- * correspondants (avec les mêmes chemins '/fonts/...').
+ * Deux problèmes en cascade venaient de là :
+ *  1) Des règles @font-face avec des url() absolues vers ces fichiers
+ *     inexistants faisaient ÉCHOUER LE BUILD Vercel/CRA dès la compilation
+ *     ("Module not found: Can't resolve '/fonts/Groote-Regular.woff2'").
+ *  2) Même après avoir retiré ces @font-face, le nom 'Groote' restait
+ *     présent dans les piles font-family (--font-primary, App.jsx,
+ *     Login.jsx). Sans @font-face pour « réserver » ce nom, CHAQUE
+ *     navigateur se met alors à chercher une police INSTALLÉE LOCALEMENT
+ *     qui s'appelle « Groote » sur la machine de la personne qui consulte
+ *     le site. Si une telle police existe sur un poste (comme semble-t-il
+ *     sur celui de l'admin), le navigateur l'utilise — avec des largeurs
+ *     de caractères complètement différentes de Montserrat — d'où les
+ *     textes qui se chevauchent dans les tableaux (Approvisionnements,
+ *     Ventes, etc.). Sur un autre poste sans cette police, l'app
+ *     s'affichait normalement en Montserrat. Résultat : un rendu
+ *     imprévisible et incohérent d'une machine à l'autre.
+ *
+ * Solution retenue : Montserrat est désormais la SEULE police déclarée,
+ * partout (logo WariGest compris). C'est déterministe — tout le monde
+ * voit exactement le même rendu, plus de chevauchement.
+ *
+ * Pour avoir un jour un vrai rendu « Groote » sur le logo WariGest, il
+ * faudra fournir les fichiers .woff2/.woff réels dans
+ * frontend/public/fonts/ ET déclarer un @font-face qui pointe dessus
+ * (jamais juste le nom seul) — alors seulement le nom sera fiable.
  */
 
 @tailwind base;
@@ -29,8 +45,11 @@
   --wi-blue-light: #E6EAFF;
   --wi-blue-mid:   #B3BFFF;
 
-  /* Stack typographique : Groote principale, Montserrat secondaire */
-  --font-primary:   'Groote', 'Montserrat', 'Segoe UI', sans-serif;
+  /* Stack typographique unifiée : Montserrat partout (cf. note ci-dessus —
+     référencer 'Groote' sans fichier réel force chaque navigateur à chercher
+     une police locale du même nom, ce qui rend le rendu imprévisible d'une
+     machine à l'autre). */
+  --font-primary:   'Montserrat', 'Segoe UI', sans-serif;
   --font-secondary: 'Montserrat', 'Segoe UI', sans-serif;
 }
 

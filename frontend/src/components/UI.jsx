@@ -368,8 +368,9 @@ export function TR({ children, onClick }) {
 
 export function TD({ children, right, bold, muted, truncate, mono }) {
   return (
-    <td className={`px-4 py-3.5 whitespace-nowrap
-      ${truncate ? "overflow-hidden text-ellipsis max-w-0" : ""}
+    <td title={typeof children === "string" || typeof children === "number" ? String(children) : undefined}
+      className={`px-4 py-3.5 whitespace-nowrap overflow-hidden text-ellipsis
+      ${truncate ? "max-w-0" : ""}
       ${right ? "text-right" : ""}
       ${bold  ? "font-bold text-gray-800" : ""}
       ${muted ? "text-gray-400 text-xs" : "text-gray-600 text-sm"}

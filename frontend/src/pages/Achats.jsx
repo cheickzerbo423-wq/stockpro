@@ -383,13 +383,13 @@ export default function Achats() {
           <DataTable
             headers={[
               { label: "Date",        sortKey: "date_achat",      w: "9%" },
-              { label: "Article",     sortKey: "libelle",         w: "22%" },
-              { label: "Fournisseur", sortKey: "fournisseur_nom", w: "13%" },
+              { label: "Article",     sortKey: "libelle",         w: "18%" },
+              { label: "Fournisseur", sortKey: "fournisseur_nom", w: "11%" },
               { label: "Qté",   sortKey: "quantite",      right: true, w: "6%" },
               { label: "P.U.",  sortKey: "prix_achat",    right: true, w: "9%" },
-              { label: "Total", sortKey: "montant_total", right: true, w: "10%" },
-              { label: "Payé",  sortKey: "montant_paye",  right: true, w: "10%" },
-              { label: "Reste", sortKey: "reste",         right: true, w: "10%" },
+              { label: "Total", sortKey: "montant_total", right: true, w: "12%" },
+              { label: "Payé",  sortKey: "montant_paye",  right: true, w: "12%" },
+              { label: "Reste", sortKey: "reste",         right: true, w: "12%" },
               { label: "Statut", sortKey: "statut",       w: "7%" },
               { label: "", w: "4%" },
             ]}

@@ -89,14 +89,14 @@ export default function Guide() {
   const handlePrint = () => window.print();
 
   const modules = [
-    { id: "dashboard",   icon: "🏠", label: "Tableau de Bord" },
-    { id: "articles",    icon: "📦", label: "Articles & Stock" },
-    { id: "ventes",      icon: "🛍️",  label: "Ventes" },
-    { id: "appro",       icon: "🚚", label: "Approvisionnements" },
-    { id: "clients",     icon: "👥", label: "Clients & Fournisseurs" },
-    { id: "factures",    icon: "🧾", label: "Factures" },
-    { id: "rapports",    icon: "📊", label: "Rapports Financiers" },
-    { id: "utilisateurs",icon: "🔐", label: "Utilisateurs" },
+    { id: "dashboard",    icon: "🏠", label: "Tableau de Bord" },
+    { id: "articles",     icon: "📦", label: "Articles & Stock" },
+    { id: "ventes",       icon: "🛍️",  label: "Ventes" },
+    { id: "appro",        icon: "🚚", label: "Approvisionnements" },
+    { id: "clients",      icon: "👥", label: "Clients & Fournisseurs" },
+    { id: "factures",     icon: "🧾", label: "Factures" },
+    { id: "rapports",     icon: "📊", label: "Rapports Financiers" },
+    { id: "utilisateurs", icon: "🔐", label: "Utilisateurs" },
   ];
 
   return (
@@ -159,13 +159,13 @@ export default function Guide() {
       <Section id="dashboard" icon="🏠" title="Tableau de Bord"
         subtitle="Vue globale de l'activité et alertes de stock en temps réel" accentColor="#6366f1">
 
-        <SectionTitle>Indicateurs principaux</SectionTitle>
+        <SectionTitle>4 indicateurs clés (KPIs)</SectionTitle>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: "CA du jour",        desc: "Montant total des ventes de la journée en cours",    color: "orange" },
-            { label: "Ventes du jour",    desc: "Nombre de lignes de vente enregistrées aujourd'hui", color: "blue" },
-            { label: "Factures impayées", desc: "Nombre de factures clients non encore soldées",       color: "red" },
-            { label: "CA de l'année",     desc: "Cumul des ventes depuis le 1er janvier",             color: "green" },
+            { label: "CA de l'année",    desc: "Chiffre d'affaires cumulé depuis le 1er janvier",             color: "orange" },
+            { label: "Bénéfice Net",     desc: "CA total moins les dépenses fournisseurs de l'année",         color: "green" },
+            { label: "Valeur du Stock",  desc: "Valeur totale du stock actif au prix d'achat",                color: "blue" },
+            { label: "Factures Émises",  desc: "Nombre total de factures, avec le nombre d'impayées en sous-titre", color: "red" },
           ].map(i => (
             <div key={i.label} className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
               <div className="text-xs font-bold text-gray-800">{i.label}</div>
@@ -174,24 +174,39 @@ export default function Guide() {
           ))}
         </div>
 
+        <SectionTitle>Autres blocs du tableau de bord</SectionTitle>
+        <div className="space-y-2">
+          <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+            <div className="text-xs font-bold text-gray-800">📈 Taux de recouvrement</div>
+            <div className="text-xs text-gray-400 mt-0.5">Barre de progression montrant la part encaissée vs. le total facturé. Vert ≥ 80 %, ambre ≥ 50 %, rouge en dessous.</div>
+          </div>
+          <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+            <div className="text-xs font-bold text-gray-800">📊 Évolution du CA — graphique annuel</div>
+            <div className="text-xs text-gray-400 mt-0.5">Courbe mois par mois du chiffre d'affaires pour l'année en cours.</div>
+          </div>
+          <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+            <div className="text-xs font-bold text-gray-800">👥 Top Clients · 🧾 Dernières Factures · ⚠️ Alertes Stock</div>
+            <div className="text-xs text-gray-400 mt-0.5">Trois panneaux côte à côte : meilleurs clients par CA, factures récentes avec statut, et articles en rupture ou stock bas.</div>
+          </div>
+        </div>
+
         <SectionTitle>Alertes de stock</SectionTitle>
         <p className="text-xs text-gray-500 leading-relaxed">
-          Le tableau de bord affiche automatiquement les produits dont le stock est inférieur ou égal au seuil d'alerte défini.
-          Deux types d'alertes sont distingués :
+          Les articles dont le stock est inférieur au seuil minimum configuré apparaissent automatiquement dans le panneau <strong>Alertes Stock</strong>.
         </p>
         <div className="grid grid-cols-2 gap-2 mt-2">
-          <div className="p-3 bg-purple-50 rounded-xl border border-purple-100">
-            <div className="text-xs font-bold text-purple-800 mb-1">🗂 Alertes Gammes</div>
-            <p className="text-xs text-purple-600">Regroupées par gamme — indique le nombre de variantes en rupture et en stock faible pour toute la famille de produits.</p>
+          <div className="p-3 bg-amber-50 rounded-xl border border-amber-100">
+            <div className="text-xs font-bold text-amber-800 mb-1">⚠️ Stock bas</div>
+            <p className="text-xs text-amber-600">Le stock restant est positif mais inférieur ou égal au stock minimum — l'article affiche la quantité restante.</p>
           </div>
           <div className="p-3 bg-red-50 rounded-xl border border-red-100">
-            <div className="text-xs font-bold text-red-800 mb-1">📦 Alertes Articles</div>
-            <p className="text-xs text-red-600">Articles autonomes (sans gamme) en rupture ou stock bas — affichés individuellement avec le stock restant.</p>
+            <div className="text-xs font-bold text-red-800 mb-1">🔴 Rupture</div>
+            <p className="text-xs text-red-600">Le stock est à zéro — l'article affiche <strong>Rupture</strong> en rouge.</p>
           </div>
         </div>
 
         <Tip icon="🔔" color="amber">
-          Les alertes se mettent à jour à chaque rechargement du tableau de bord. En cas d'alerte gamme, allez dans <strong>Approvisionnements</strong> et utilisez <strong>🗂 Gamme rapide</strong> pour ravitailler toute la famille en quelques secondes.
+          Cliquez sur <strong>Actualiser</strong> (haut de page) pour forcer le rechargement de tous les blocs. En cas de rupture, allez dans <strong>Approvisionnements</strong> et utilisez <strong>🗂 Gamme rapide</strong> pour ravitailler toute une famille en une seule ligne.
         </Tip>
       </Section>
 
@@ -487,7 +502,7 @@ export default function Guide() {
         </div>
 
         <Tip icon="📊" color="green">
-          Les indicateurs en haut de page (<em>CA total, Réglées, Impayées, Taux de recouvrement</em>) se mettent à jour en temps réel après chaque paiement.
+          Les indicateurs en haut de page (<em>CA Total, Factures réglées, Factures impayées, Reste à recouvrer</em>) se mettent à jour en temps réel après chaque paiement enregistré.
         </Tip>
       </Section>
 
@@ -536,19 +551,41 @@ export default function Guide() {
           Cet onglet est réservé aux comptes <Badge color="red">Admin</Badge>. Les autres utilisateurs n'y ont pas accès.
         </Tip>
 
-        <SectionTitle>Rôles disponibles</SectionTitle>
+        <SectionTitle>3 rôles disponibles</SectionTitle>
         <div className="space-y-2">
           {[
-            { role: "Admin",         desc: "Accès total à tous les modules et à la gestion des utilisateurs." },
-            { role: "Vendeur",       desc: "Peut créer des ventes et consulter les factures." },
-            { role: "Gestionnaire",  desc: "Accède aux articles, approvisionnements et rapports." },
-            { role: "Comptable",     desc: "Consulte et gère les factures et les paiements." },
+            { role: "Admin",        icon: "👑", desc: "Accès total à tous les modules, à la gestion des utilisateurs et à la réinitialisation des données." },
+            { role: "Gestionnaire", icon: "🛡️", desc: "Profil polyvalent : articles, approvisionnements, clients, factures et rapports selon les permissions accordées." },
+            { role: "Vendeur",      icon: "👤", desc: "Profil orienté vente : accès aux ventes, à la facturation et aux clients selon les permissions accordées." },
           ].map(r => (
             <div key={r.role} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-              <Badge color={r.role === "Admin" ? "red" : r.role === "Vendeur" ? "green" : r.role === "Gestionnaire" ? "blue" : "gray"}>
-                {r.role}
-              </Badge>
-              <p className="text-xs text-gray-600 flex-1">{r.desc}</p>
+              <span className="text-base flex-shrink-0 mt-0.5">{r.icon}</span>
+              <div>
+                <Badge color={r.role === "Admin" ? "red" : r.role === "Gestionnaire" ? "blue" : "green"}>{r.role}</Badge>
+                <p className="text-xs text-gray-600 mt-1">{r.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <SectionTitle>Permissions par module</SectionTitle>
+        <p className="text-xs text-gray-500 leading-relaxed mb-2">
+          Quel que soit le rôle, vous pouvez activer ou désactiver chaque module indépendamment :
+        </p>
+        <div className="grid grid-cols-2 gap-1.5">
+          {[
+            { perm: "Ventes",       desc: "Créer et consulter les ventes" },
+            { perm: "Appro.",       desc: "Gérer les approvisionnements" },
+            { perm: "Articles",     desc: "Gérer le catalogue et le stock" },
+            { perm: "Facturation",  desc: "Consulter et encaisser les factures" },
+            { perm: "Clients",      desc: "Gérer les clients et fournisseurs" },
+          ].map(p => (
+            <div key={p.perm} className="flex items-start gap-2 p-2 bg-[#E6EAFF] border border-[#B3BFFF] rounded-xl">
+              <span className="text-[#0023FF] font-black text-xs flex-shrink-0 mt-0.5">✓</span>
+              <div>
+                <div className="text-xs font-bold text-[#0023FF]">{p.perm}</div>
+                <div className="text-[10px] text-[#0023FF]/60">{p.desc}</div>
+              </div>
             </div>
           ))}
         </div>
@@ -556,21 +593,22 @@ export default function Guide() {
         <SectionTitle>Créer un utilisateur</SectionTitle>
         <div className="space-y-2">
           <Step n="1">Cliquez sur <strong>+ Nouvel Utilisateur</strong>.</Step>
-          <Step n="2">Saisissez le login, le mot de passe et choisissez la catégorie (rôle).</Step>
-          <Step n="3">Sélectionnez les modules accessibles selon le rôle.</Step>
+          <Step n="2">Saisissez le <strong>login</strong> et le <strong>mot de passe</strong>, puis choisissez le rôle (Admin / Gestionnaire / Vendeur).</Step>
+          <Step n="3">Cochez les permissions souhaitées dans la grille <em>Permissions modules</em>.</Step>
+          <Step n="4">Cliquez <strong>Créer</strong> — le compte apparaît immédiatement sous forme de carte.</Step>
         </div>
 
         <SectionTitle>Supprimer un utilisateur</SectionTitle>
         <div className="space-y-2">
-          <Step n="1">Cliquez sur le bouton <strong>✕</strong> en fin de ligne d'un utilisateur.</Step>
-          <Step n="2">Confirmez la suppression. L'opération est <strong>définitive</strong>.</Step>
-          <Step n="3">Si l'utilisateur est actuellement connecté, il sera <strong>déconnecté automatiquement</strong> dès sa prochaine action dans l'application.</Step>
+          <Step n="1">Repérez la <strong>carte</strong> de l'utilisateur dans la grille.</Step>
+          <Step n="2">Cliquez sur le bouton <strong>✕</strong> dans le coin supérieur droit de la carte.</Step>
+          <Step n="3">Confirmez dans la boîte de dialogue. L'opération est <strong>définitive</strong>.</Step>
         </div>
 
         <div className="grid grid-cols-2 gap-2 mt-1">
           <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
             <div className="text-xs font-bold text-emerald-800 mb-1">✅ Autorisé</div>
-            <p className="text-xs text-emerald-600">Un Admin peut supprimer n'importe quel utilisateur, y compris un autre Admin.</p>
+            <p className="text-xs text-emerald-600">Un Admin peut supprimer n'importe quel autre utilisateur, y compris un autre Admin.</p>
           </div>
           <div className="p-3 bg-red-50 rounded-xl border border-red-100">
             <div className="text-xs font-bold text-red-800 mb-1">🚫 Interdit</div>

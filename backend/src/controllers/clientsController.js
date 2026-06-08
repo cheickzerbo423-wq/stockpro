@@ -168,7 +168,7 @@ async function getBilan(req, res) {
             SUM(lv.quantite)::int        AS qte_totale,
             SUM(lv.montant_total)::bigint AS ca
           FROM lignes_vente lv
-          JOIN factures f ON lv.facture_code = f.code
+          JOIN factures f ON lv.facture_code = f.code AND lv.entreprise_id = f.entreprise_id
           WHERE f.entreprise_id = $3 AND (f.client_id = $1 OR (f.client_id IS NULL AND UPPER(f.client_nom) = UPPER($2)))
           GROUP BY lv.article_code, lv.libelle
           ORDER BY ca DESC LIMIT 5`,

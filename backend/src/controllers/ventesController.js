@@ -2,17 +2,13 @@
 // Équivalent Excel : VenteMultiple + Donnees_vente
 const db = require("../config/db");
 
-// Génère un numéro de facture séquentiel : FACT-2026-0001
-// NB : le compteur reste GLOBAL à la plateforme (et non par entreprise) afin
-// de garantir l'unicité de factures.code sans modifier de contrainte en base
-// (décision documentée : aucune clé/contrainte touchée sur la prod). Chaque
-// entreprise peut donc voir des numéros non strictement consécutifs si
-// d'autres entreprises facturent la même année — le code reste unique.
-async function genFactureCode(dbClient, date) {
+// Génère un numéro de facture séquentiel PAR ENTREPRISE : FACT-2026-0001
+// Unicité garantie par entreprise grâce à la PK composite (code, entreprise_id).
+async function genFactureCode(dbClient, date, entId) {
   const annee = new Date(date).getFullYear();
   const result = await dbClient.query(
-    `SELECT COUNT(*) AS nb FROM factures WHERE EXTRACT(YEAR FROM date_facture) = $1`,
-    [annee]
+    `SELECT COUNT(*) AS nb FROM factures WHERE EXTRACT(YEAR FROM date_facture) = $1 AND entreprise_id = $2`,
+    [annee, entId]
   );
   const next = parseInt(result.rows[0].nb) + 1;
   return `FACT-${annee}-${String(next).padStart(4, "0")}`;
@@ -78,7 +74,7 @@ async function create(req, res) {
     const paye    = (montant_paye !== undefined && montant_paye !== null) ? parseFloat(montant_paye) : total;
     const monnaie = Math.max(0, paye - total);
     const date    = date_vente || new Date().toISOString().split("T")[0];
-    const factCode = await genFactureCode(client, date);
+    const factCode = await genFactureCode(client, date, entId);
     const mois = MOIS[new Date(date).getMonth()];
     const annee = new Date(date).getFullYear();
 

@@ -298,6 +298,90 @@ pool.connect((err, client, release) => {
         )
         .then(() => console.log("✅ Table 'entreprise_config' restructurée pour le multi-entreprises (1 ligne par entreprise)."))
         .catch((e) => console.error("⚠️  Restructuration entreprise_config ignorée :", e.message))
+        // ── Migration : PKs composites (code, entreprise_id) sur articles et
+        //    factures, FKs composites sur lignes_vente et achats.
+        //    Objectif : rendre les codes article et numéros de facture uniques
+        //    PAR entreprise (et non plus globalement sur toute la plateforme).
+        .then(() =>
+          client.query(`
+            DO $mk_composite$
+            DECLARE r RECORD;
+            BEGIN
+              -- 1. Backfill NULL entreprise_id (sécurité, ne devrait pas arriver)
+              UPDATE articles     SET entreprise_id = 1 WHERE entreprise_id IS NULL;
+              UPDATE factures     SET entreprise_id = 1 WHERE entreprise_id IS NULL;
+              UPDATE lignes_vente SET entreprise_id = 1 WHERE entreprise_id IS NULL;
+              UPDATE achats       SET entreprise_id = 1 WHERE entreprise_id IS NULL;
+
+              -- 2. Contraintes NOT NULL
+              BEGIN ALTER TABLE articles     ALTER COLUMN entreprise_id SET NOT NULL; EXCEPTION WHEN others THEN NULL; END;
+              BEGIN ALTER TABLE factures     ALTER COLUMN entreprise_id SET NOT NULL; EXCEPTION WHEN others THEN NULL; END;
+              BEGIN ALTER TABLE lignes_vente ALTER COLUMN entreprise_id SET NOT NULL; EXCEPTION WHEN others THEN NULL; END;
+              BEGIN ALTER TABLE achats       ALTER COLUMN entreprise_id SET NOT NULL; EXCEPTION WHEN others THEN NULL; END;
+
+              -- 3. Supprimer toutes les FKs qui pointent vers articles(code)
+              FOR r IN
+                SELECT c.conname, t.relname AS tbl
+                FROM pg_constraint c
+                JOIN pg_class t ON t.oid = c.conrelid
+                WHERE c.confrelid = 'articles'::regclass AND c.contype = 'f'
+              LOOP
+                EXECUTE format('ALTER TABLE %I DROP CONSTRAINT IF EXISTS %I', r.tbl, r.conname);
+              END LOOP;
+
+              -- 4. Supprimer toutes les FKs qui pointent vers factures(code)
+              FOR r IN
+                SELECT c.conname, t.relname AS tbl
+                FROM pg_constraint c
+                JOIN pg_class t ON t.oid = c.conrelid
+                WHERE c.confrelid = 'factures'::regclass AND c.contype = 'f'
+              LOOP
+                EXECUTE format('ALTER TABLE %I DROP CONSTRAINT IF EXISTS %I', r.tbl, r.conname);
+              END LOOP;
+
+              -- 5. PK composite sur articles (code, entreprise_id)
+              IF NOT EXISTS (
+                SELECT 1 FROM pg_constraint
+                WHERE conrelid = 'articles'::regclass
+                  AND contype = 'p'
+                  AND array_length(conkey, 1) > 1
+              ) THEN
+                ALTER TABLE articles DROP CONSTRAINT IF EXISTS articles_pkey;
+                ALTER TABLE articles ADD PRIMARY KEY (code, entreprise_id);
+              END IF;
+
+              -- 6. PK composite sur factures (code, entreprise_id)
+              IF NOT EXISTS (
+                SELECT 1 FROM pg_constraint
+                WHERE conrelid = 'factures'::regclass
+                  AND contype = 'p'
+                  AND array_length(conkey, 1) > 1
+              ) THEN
+                ALTER TABLE factures DROP CONSTRAINT IF EXISTS factures_pkey;
+                ALTER TABLE factures ADD PRIMARY KEY (code, entreprise_id);
+              END IF;
+
+              -- 7. FKs composites sur lignes_vente
+              IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'lignes_vente_article_fkey') THEN
+                ALTER TABLE lignes_vente ADD CONSTRAINT lignes_vente_article_fkey
+                  FOREIGN KEY (article_code, entreprise_id) REFERENCES articles(code, entreprise_id);
+              END IF;
+              IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'lignes_vente_facture_fkey') THEN
+                ALTER TABLE lignes_vente ADD CONSTRAINT lignes_vente_facture_fkey
+                  FOREIGN KEY (facture_code, entreprise_id) REFERENCES factures(code, entreprise_id) ON DELETE CASCADE;
+              END IF;
+
+              -- 8. FK composite sur achats
+              IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'achats_article_fkey') THEN
+                ALTER TABLE achats ADD CONSTRAINT achats_article_fkey
+                  FOREIGN KEY (article_code, entreprise_id) REFERENCES articles(code, entreprise_id);
+              END IF;
+            END;
+            $mk_composite$;
+          `)
+        )
+        .then(() => console.log("✅ PKs composites (code, entreprise_id) sur articles/factures + FKs composites."))
+        .catch((e) => console.error("⚠️  Migration PKs composites ignorée :", e.message))
         .then(() => {
           // Compte SuperAdmin de plateforme (entreprise_id = NULL — détaché de
           // toute entreprise, voit/gère tout). Identifiants fixes connus du

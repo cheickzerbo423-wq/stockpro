@@ -51,12 +51,11 @@ async function create(req, res) {
     if (!code || !libelle)
       return res.status(400).json({ message: "Code et libellé obligatoires." });
 
-    // Le code article reste unique au niveau global de la plateforme (et non
-    // par entreprise) : aucune contrainte/clé n'a été modifiée en base pour
-    // éviter une opération risquée sur la base de production. La génération
-    // automatique de code (generateCode) scanne déjà tous les articles, donc
-    // les collisions sont rarissimes en pratique.
-    const exists = await db.query(`SELECT code FROM articles WHERE code = $1`, [code]);
+    // Unicité du code article PAR entreprise (PK composite depuis migration).
+    const exists = await db.query(
+      `SELECT code FROM articles WHERE code = $1 AND entreprise_id = $2`,
+      [code, req.user.entreprise_id]
+    );
     if (exists.rows.length > 0)
       return res.status(409).json({ message: `Le code article "${code}" existe déjà.` });
 
@@ -84,9 +83,9 @@ async function create(req, res) {
       const montantTotal = prixUnitaire * qteInitiale;
 
       await client.query(
-        `INSERT INTO achats (article_code, libelle, fournisseur_nom, prix_achat, quantite, date_achat, user_id, montant_paye, entreprise_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-        [article.code, article.libelle, "Stock initial (solde d'ouverture)", prixUnitaire, qteInitiale, date, req.user?.id || null, montantTotal, req.user.entreprise_id]
+        `INSERT INTO achats (article_code, libelle, fournisseur_nom, prix_achat, quantite, date_achat, mois, user_id, montant_paye, entreprise_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [article.code, article.libelle, "Stock initial (solde d'ouverture)", prixUnitaire, qteInitiale, date, mois, req.user?.id || null, montantTotal, req.user.entreprise_id]
       );
     }
 
@@ -162,8 +161,8 @@ async function generateCode(req, res) {
     const { libelle = "" } = req.query;
     const letters = libelle.replace(/[^a-zA-ZÀ-ÿ]/g, "").toUpperCase().slice(0, 3).padEnd(3, "X");
     const result  = await db.query(
-      `SELECT code FROM articles WHERE code ~ $1 ORDER BY code DESC LIMIT 1`,
-      [`^${letters}[0-9]{3}$`]
+      `SELECT code FROM articles WHERE code ~ $1 AND entreprise_id = $2 ORDER BY code DESC LIMIT 1`,
+      [`^${letters}[0-9]{3}$`, req.user.entreprise_id]
     );
     let nextNum = 1;
     if (result.rows.length > 0) nextNum = parseInt(result.rows[0].code.slice(3)) + 1;

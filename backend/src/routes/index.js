@@ -94,8 +94,9 @@ router.put("/entreprise", authenticate, audit("MODIFICATION", "entreprise_config
 router.get   ("/superadmin/entreprises",          authenticate, superAdminOnly, superadminCtrl.getAll);
 router.post  ("/superadmin/entreprises",          authenticate, superAdminOnly, audit("CREATION", "entreprises"), superadminCtrl.create);
 router.put   ("/superadmin/entreprises/:id",      authenticate, superAdminOnly, audit("MODIFICATION", "entreprises"), superadminCtrl.update);
-router.put   ("/superadmin/entreprises/:id/statut", authenticate, superAdminOnly, audit("MODIFICATION", "entreprises"), superadminCtrl.toggleStatut);
-router.delete("/superadmin/entreprises/:id",      authenticate, superAdminOnly, audit("SUPPRESSION", "entreprises"), superadminCtrl.remove);
+router.put   ("/superadmin/entreprises/:id/statut",      authenticate, superAdminOnly, audit("MODIFICATION", "entreprises"), superadminCtrl.toggleStatut);
+router.put   ("/superadmin/entreprises/:id/abonnement", authenticate, superAdminOnly, audit("MODIFICATION", "entreprises"), superadminCtrl.updateAbonnement);
+router.delete("/superadmin/entreprises/:id",            authenticate, superAdminOnly, audit("SUPPRESSION", "entreprises"), superadminCtrl.remove);
 
 
 // ============================================================

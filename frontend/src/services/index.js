@@ -226,6 +226,9 @@ export const superadminService = {
   toggleStatut: (id, actif) =>
     api.put(`/superadmin/entreprises/${id}/statut`, { actif }).then((r) => r.data),
 
+  updateAbonnement: (id, data) =>
+    api.put(`/superadmin/entreprises/${id}/abonnement`, data).then((r) => r.data),
+
   delete: (id) =>
     api.delete(`/superadmin/entreprises/${id}`).then((r) => r.data),
 };

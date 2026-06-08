@@ -429,6 +429,18 @@ pool.connect((err, client, release) => {
         })
         .then(() => console.log("✅ Compte 'SuperAdmin' vérifié (plateforme multi-entreprises)."))
         .catch((e) => console.error("⚠️  Création SuperAdmin ignorée :", e.message))
+        // ── Migration : colonnes abonnement sur entreprises ─────────────────
+        // abonnement_type : 'essai' | 'mensuel' | 'annuel' | 'illimite'
+        // abonnement_debut / abonnement_fin : dates de la période souscrite
+        .then(() =>
+          client.query(`
+            ALTER TABLE entreprises ADD COLUMN IF NOT EXISTS abonnement_type VARCHAR(20) DEFAULT 'mensuel';
+            ALTER TABLE entreprises ADD COLUMN IF NOT EXISTS abonnement_debut DATE;
+            ALTER TABLE entreprises ADD COLUMN IF NOT EXISTS abonnement_fin   DATE;
+          `)
+        )
+        .then(() => console.log("✅ Colonnes abonnement sur 'entreprises' vérifiées."))
+        .catch((e) => console.error("⚠️  Migration abonnement ignorée :", e.message))
         .finally(() => release());
     });
 });

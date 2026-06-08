@@ -11,7 +11,7 @@ async function getAll(req, res) {
     let q = `
       SELECT f.*, COUNT(lv.id) AS nb_articles
       FROM factures f
-      LEFT JOIN lignes_vente lv ON lv.facture_code = f.code
+      LEFT JOIN lignes_vente lv ON lv.facture_code = f.code AND lv.entreprise_id = f.entreprise_id
       WHERE f.entreprise_id = $1`;
     const params = [req.user.entreprise_id];
     let idx = 2;
@@ -21,7 +21,7 @@ async function getAll(req, res) {
       params.push(statut === "true" || statut === "1");
     }
     if (annee)  { q += ` AND EXTRACT(YEAR FROM f.date_facture) = $${idx++}`; params.push(annee); }
-    q += ` GROUP BY f.code ORDER BY f.code ASC`;
+    q += ` GROUP BY f.code, f.entreprise_id ORDER BY f.code ASC`;
     const result = await db.query(q, params);
     res.json(result.rows);
   } catch (err) {

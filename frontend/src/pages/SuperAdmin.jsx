@@ -418,8 +418,33 @@ function ActionBtn({ children, onClick, title, color }) {
 }
 
 // ── Modal : créer une entreprise ──────────────────────────────────────────────
+const TYPE_DUREES = { essai: 30, mensuel: 30, annuel: 365, illimite: null };
+
 function CreateModal({ form, setForm, onClose, onSubmit, loading }) {
   const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const addDays = (n) => {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    return d.toISOString().split("T")[0];
+  };
+  const today = () => new Date().toISOString().split("T")[0];
+
+  // Quand on choisit un type, préremplit automatiquement les dates
+  const setType = (t) => {
+    const duree = TYPE_DUREES[t];
+    if (duree) {
+      setForm(p => ({ ...p, abonnement_type: t, abonnement_debut: today(), abonnement_fin: addDays(duree) }));
+    } else {
+      setForm(p => ({ ...p, abonnement_type: t, abonnement_debut: "", abonnement_fin: "" }));
+    }
+  };
+
+  // Raccourcis manuels
+  const setPreset = (days) => {
+    setForm(p => ({ ...p, abonnement_debut: today(), abonnement_fin: addDays(days) }));
+  };
+
   return (
     <Modal title="Nouvelle entreprise cliente" onClose={onClose}>
       <p className="text-xs text-gray-400 mb-4 leading-relaxed">
@@ -447,13 +472,16 @@ function CreateModal({ form, setForm, onClose, onSubmit, loading }) {
         {/* Bloc abonnement */}
         <div className="bg-gray-50 rounded-xl p-4 space-y-3">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Abonnement</p>
+
+          {/* Type — clique = préremplit les dates automatiquement */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1.5">Type</label>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">
+              Type <span className="normal-case text-gray-300 font-normal">(préremplit les dates)</span>
+            </label>
             <div className="grid grid-cols-4 gap-2">
               {["essai","mensuel","annuel","illimite"].map(t => (
-                <button key={t} type="button"
-                  onClick={() => f("abonnement_type", t)}
-                  className={`py-2 rounded-xl text-xs font-bold border transition ${
+                <button key={t} type="button" onClick={() => setType(t)}
+                  className={`py-2.5 rounded-xl text-xs font-bold border transition ${
                     form.abonnement_type === t
                       ? "bg-[#0023FF] text-white border-[#0023FF]"
                       : "bg-white text-gray-600 border-gray-200 hover:border-[#0023FF]/40"
@@ -463,13 +491,42 @@ function CreateModal({ form, setForm, onClose, onSubmit, loading }) {
               ))}
             </div>
           </div>
+
+          {/* Raccourcis */}
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Raccourcis</label>
+            <div className="flex flex-wrap gap-2">
+              {[[7,"7 jours"],[30,"1 mois"],[90,"3 mois"],[180,"6 mois"],[365,"1 an"]].map(([d, l]) => (
+                <button key={d} type="button" onClick={() => setPreset(d)}
+                  className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 text-xs font-bold hover:bg-[#E6EAFF] hover:text-[#0023FF] hover:border-[#0023FF]/30 transition">
+                  +{l}
+                </button>
+              ))}
+              <button type="button" onClick={() => setForm(p => ({ ...p, abonnement_debut: "", abonnement_fin: "" }))}
+                className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-500 text-xs font-bold hover:bg-gray-100 transition">
+                Illimité
+              </button>
+            </div>
+          </div>
+
+          {/* Dates */}
           <div className="grid grid-cols-2 gap-3">
             <Input label="Début" type="date" value={form.abonnement_debut}
               onChange={e => f("abonnement_debut", e.target.value)} />
             <Input label="Fin (expiration)" type="date" value={form.abonnement_fin}
               onChange={e => f("abonnement_fin", e.target.value)} />
           </div>
-          <p className="text-[11px] text-gray-400">Laissez les dates vides pour un accès illimité.</p>
+
+          {/* Résumé visuel */}
+          {form.abonnement_fin ? (
+            <p className="text-xs text-emerald-600 font-semibold bg-emerald-50 rounded-lg px-3 py-2 border border-emerald-100">
+              ✅ Accès jusqu'au {new Date(form.abonnement_fin).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+            </p>
+          ) : (
+            <p className="text-xs text-blue-500 font-semibold bg-blue-50 rounded-lg px-3 py-2 border border-blue-100">
+              ♾️ Accès illimité (pas de date d'expiration)
+            </p>
+          )}
         </div>
       </div>
 

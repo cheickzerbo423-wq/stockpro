@@ -19,8 +19,9 @@ const superadminCtrl = require("../controllers/superadminController");
 // ============================================================
 // AUTH — Public
 // ============================================================
-router.post("/auth/login", authCtrl.login);
-router.get ("/auth/me",    authenticate, authCtrl.me);
+router.post("/auth/login",    authCtrl.login);
+router.get ("/auth/me",       authenticate, authCtrl.me);
+router.put ("/auth/password", authenticate, authCtrl.changePassword);
 
 // ============================================================
 // ARTICLES — Protégées

@@ -6,7 +6,7 @@
 // une vue d'ensemble de l'activité de chacune.
 import { useState } from "react";
 import { useSuperadminEntreprises, useMutation } from "../hooks/useApi";
-import { superadminService } from "../services";
+import { superadminService, authService } from "../services";
 import { Spinner, ErrorBox, Badge, Modal, Input, Btn, PageHeader, Toast } from "../components/UI";
 
 const fmtNombre = (n) => new Intl.NumberFormat("fr-FR").format(Math.round(Number(n) || 0));
@@ -24,6 +24,7 @@ export default function SuperAdmin() {
   const { mutate: del }    = useMutation(superadminService.delete);
 
   const [showCreate,   setShowCreate]   = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [renameTarget, setRenameTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [form, setForm] = useState({ nom: "", admin_login: "", admin_mdp: "" });
@@ -68,7 +69,12 @@ export default function SuperAdmin() {
       <PageHeader
         title="Pilotage de la plateforme"
         sub={`${nbTotal} entreprise${nbTotal > 1 ? "s" : ""} cliente${nbTotal > 1 ? "s" : ""} — ${nbActives} active${nbActives > 1 ? "s" : ""} — CA cumulé ${fmtNombre(caGlobal)}`}
-        action={<Btn onClick={() => setShowCreate(true)}>+ Nouvelle entreprise</Btn>}
+        action={
+          <div className="flex items-center gap-2">
+            <Btn color="gray" onClick={() => setShowPassword(true)}>🔑 Mon mot de passe</Btn>
+            <Btn onClick={() => setShowCreate(true)}>+ Nouvelle entreprise</Btn>
+          </div>
+        }
       />
 
       {loading ? <Spinner /> : error ? <ErrorBox message={error} onRetry={reload} /> : (
@@ -112,6 +118,11 @@ export default function SuperAdmin() {
             <Btn onClick={handleCreate} loading={creating}>Créer l'entreprise</Btn>
           </div>
         </Modal>
+      )}
+
+      {/* ── Modal changement de mot de passe ── */}
+      {showPassword && (
+        <PasswordModal onClose={() => setShowPassword(false)} notify={notify} />
       )}
 
       {/* ── Modal renommage ── */}
@@ -222,6 +233,51 @@ function RenameModal({ ent, onClose, mutate, notify, reload }) {
   return (
     <Modal title="Renommer l'entreprise" onClose={onClose}>
       <Input label="Nom *" value={nom} onChange={(e) => setNom(e.target.value)} />
+      <div className="flex justify-end gap-2 mt-5">
+        <Btn color="gray" onClick={onClose}>Annuler</Btn>
+        <Btn onClick={handleSave} loading={loading}>Enregistrer</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+// ── Modal changement de mot de passe (compte SuperAdmin) ──────────
+function PasswordModal({ onClose, notify }) {
+  const [mdpActuel,    setMdpActuel]    = useState("");
+  const [nouveauMdp,   setNouveauMdp]   = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSave = async () => {
+    if (!mdpActuel || !nouveauMdp || !confirmation)
+      return notify("Tous les champs sont obligatoires.", "error");
+    if (nouveauMdp.length < 4)
+      return notify("Le nouveau mot de passe doit contenir au moins 4 caractères.", "error");
+    if (nouveauMdp !== confirmation)
+      return notify("La confirmation ne correspond pas au nouveau mot de passe.", "error");
+    setLoading(true);
+    try {
+      await authService.changePassword(mdpActuel, nouveauMdp);
+      notify("Mot de passe modifié — utilisez-le dès votre prochaine connexion.");
+      onClose();
+    } catch (err) { notify(err.message, "error"); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <Modal title="Changer mon mot de passe" onClose={onClose}>
+      <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+        Ce mot de passe protège l'accès au pilotage complet de la plateforme — choisissez-en
+        un robuste et gardez-le secret.
+      </p>
+      <div className="grid grid-cols-1 gap-3">
+        <Input label="Mot de passe actuel *" type="password" value={mdpActuel}
+          onChange={(e) => setMdpActuel(e.target.value)} placeholder="Mot de passe en cours" />
+        <Input label="Nouveau mot de passe *" type="password" value={nouveauMdp}
+          onChange={(e) => setNouveauMdp(e.target.value)} placeholder="4 caractères minimum" />
+        <Input label="Confirmer le nouveau mot de passe *" type="password" value={confirmation}
+          onChange={(e) => setConfirmation(e.target.value)} placeholder="Retapez le nouveau mot de passe" />
+      </div>
       <div className="flex justify-end gap-2 mt-5">
         <Btn color="gray" onClick={onClose}>Annuler</Btn>
         <Btn onClick={handleSave} loading={loading}>Enregistrer</Btn>

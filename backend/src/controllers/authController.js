@@ -106,4 +106,35 @@ async function me(req, res) {
   }
 }
 
-module.exports = { login, me };
+// PUT /api/auth/password — Changer son propre mot de passe
+// Disponible pour TOUT utilisateur connecté (y compris le SuperAdmin, qui
+// n'a pas d'autre moyen de gérer son compte). Exige l'ancien mot de passe
+// pour confirmer l'identité avant d'enregistrer le nouveau.
+async function changePassword(req, res) {
+  try {
+    const { mdp_actuel, nouveau_mdp } = req.body;
+    if (!mdp_actuel || !nouveau_mdp)
+      return res.status(400).json({ message: "Mot de passe actuel et nouveau mot de passe requis." });
+    if (nouveau_mdp.length < 4)
+      return res.status(400).json({ message: "Le nouveau mot de passe doit contenir au moins 4 caractères." });
+
+    const result = await db.query(`SELECT id, mdp_hash FROM utilisateurs WHERE id = $1`, [req.user.id]);
+    const user = result.rows[0];
+    if (!user)
+      return res.status(404).json({ message: "Utilisateur introuvable." });
+
+    const ok = await bcrypt.compare(mdp_actuel, user.mdp_hash);
+    if (!ok)
+      return res.status(401).json({ message: "Mot de passe actuel incorrect." });
+
+    const hash = await bcrypt.hash(nouveau_mdp, 10);
+    await db.query(`UPDATE utilisateurs SET mdp_hash = $1 WHERE id = $2`, [hash, user.id]);
+
+    res.json({ message: "Mot de passe modifié avec succès." });
+  } catch (err) {
+    console.error("Change password error:", err);
+    res.status(500).json({ message: "Erreur serveur." });
+  }
+}
+
+module.exports = { login, me, changePassword };

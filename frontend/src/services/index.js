@@ -12,6 +12,11 @@ export const authService = {
   me: () =>
     api.get("/auth/me").then((r) => r.data),
 
+  // Changement de son propre mot de passe (disponible pour tout compte
+  // connecté, y compris le SuperAdmin qui n'a pas de page Utilisateurs).
+  changePassword: (mdp_actuel, nouveau_mdp) =>
+    api.put("/auth/password", { mdp_actuel, nouveau_mdp }).then((r) => r.data),
+
   logout: () => {
     localStorage.removeItem("warigest_token");
     localStorage.removeItem("warigest_user");

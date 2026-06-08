@@ -201,7 +201,6 @@ pool.connect((err, client, release) => {
 
             CREATE VIEW vue_stock AS
             SELECT
-              a.id,
               a.entreprise_id,
               a.code,
               a.libelle,
@@ -234,6 +233,41 @@ pool.connect((err, client, release) => {
           `);
         })
         .then(() => console.log("✅ Vue 'vue_stock' recréée avec un calcul de stock correct (plus de produit cartésien, entreprise_id exposé)."))
+        .then(() =>
+          // Backfill achats.annee et achats.mois pour les lignes existantes insérées
+          // avant que ces colonnes soient remplies automatiquement.
+          client.query(`
+            DO $bfill$
+            BEGIN
+              -- Backfill annee (colonne plain INTEGER ajoutée par migration).
+              -- Si la colonne est GENERATED ALWAYS (schéma initial), l'exception
+              -- est capturée et ignorée — la valeur est déjà calculée automatiquement.
+              BEGIN
+                UPDATE achats
+                SET annee = EXTRACT(YEAR FROM date_achat)::INTEGER
+                WHERE annee IS NULL AND date_achat IS NOT NULL;
+              EXCEPTION WHEN generated_always THEN
+                -- Colonne générée : déjà peuplée, rien à faire.
+                NULL;
+              END;
+
+              -- Backfill mois (colonne plain VARCHAR, jamais générée).
+              UPDATE achats
+              SET mois = CASE EXTRACT(MONTH FROM date_achat)::INTEGER
+                WHEN 1  THEN 'Janvier'   WHEN 2  THEN 'Février'
+                WHEN 3  THEN 'Mars'      WHEN 4  THEN 'Avril'
+                WHEN 5  THEN 'Mai'       WHEN 6  THEN 'Juin'
+                WHEN 7  THEN 'Juillet'   WHEN 8  THEN 'Août'
+                WHEN 9  THEN 'Septembre' WHEN 10 THEN 'Octobre'
+                WHEN 11 THEN 'Novembre'  WHEN 12 THEN 'Décembre'
+              END
+              WHERE mois IS NULL AND date_achat IS NOT NULL;
+            END;
+            $bfill$;
+          `)
+            .then((r) => console.log(`✅ Backfill achats.annee/mois OK (${r.rowCount ?? '?'} lignes mises à jour).`))
+            .catch((e) => console.error("⚠️  Backfill achats.annee/mois ignoré :", e.message))
+        )
         .catch((e) => console.error("⚠️  Recréation de 'vue_stock' ignorée :", e.message))
         .then(() =>
           // entreprise_config passe de table "singleton" (1 ligne globale,

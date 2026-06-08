@@ -244,14 +244,14 @@ async function create(req, res) {
       : montantTotal;
 
     const result = await db.query(
-      `INSERT INTO achats (article_code, libelle, fournisseur_id, fournisseur_nom, prix_achat, quantite, date_achat, user_id, montant_paye, montant_total, entreprise_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      `INSERT INTO achats (article_code, libelle, fournisseur_id, fournisseur_nom, prix_achat, quantite, date_achat, mois, user_id, montant_paye, montant_total, entreprise_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING id, article_code, libelle, fournisseur_id, fournisseur_nom,
                  prix_achat, quantite, date_achat, user_id, mois, annee, montant_paye,
                  (prix_achat * quantite)                 AS montant_total,
                  (prix_achat * quantite - montant_paye)  AS reste,
                  (montant_paye >= prix_achat * quantite) AS statut`,
-      [article_code, art.rows[0].libelle, fournisseur_id || null, fournisseur_nom || "", prixNum, qteNum, date, req.user?.id || null, montantPaye, montantTotal, entId]
+      [article_code, art.rows[0].libelle, fournisseur_id || null, fournisseur_nom || "", prixNum, qteNum, date, mois, req.user?.id || null, montantPaye, montantTotal, entId]
     );
 
     // Retourner aussi le stock mis à jour

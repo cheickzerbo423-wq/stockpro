@@ -99,10 +99,10 @@ async function create(req, res) {
     for (const item of articles) {
       const art = await client.query(`SELECT libelle FROM articles WHERE code = $1 AND entreprise_id = $2`, [item.code, entId]);
       const ligne = await client.query(
-        `INSERT INTO lignes_vente (facture_code, article_code, libelle, prix_vente, quantite, date_vente, client_nom, user_id, entreprise_id)
-         VALUES ($1, $2, $3, $4::numeric, $5::integer, $6, $7, $8::integer, $9)
+        `INSERT INTO lignes_vente (facture_code, article_code, libelle, prix_vente, quantite, date_vente, mois, client_nom, user_id, entreprise_id)
+         VALUES ($1, $2, $3, $4::numeric, $5::integer, $6, $7, $8, $9::integer, $10)
          RETURNING *`,
-        [factCode, item.code, art.rows[0]?.libelle || item.code, parseFloat(item.prix_vente), parseInt(item.quantite), date, client_nom, req.user?.id ? parseInt(req.user.id) : null, entId]
+        [factCode, item.code, art.rows[0]?.libelle || item.code, parseFloat(item.prix_vente), parseInt(item.quantite), date, mois, client_nom, req.user?.id ? parseInt(req.user.id) : null, entId]
       );
       lignes.push(ligne.rows[0]);
     }

@@ -254,31 +254,31 @@ pool.connect((err, client, release) => {
         .catch((e) => console.error("⚠️  Restructuration entreprise_config ignorée :", e.message))
         .then(() => {
           // Compte SuperAdmin de plateforme (entreprise_id = NULL — détaché de
-          // toute entreprise, voit/gère tout). Créé une seule fois, seulement
-          // s'il n'en existe encore aucun. Identifiants par défaut affichés
-          // dans les logs Railway au premier démarrage — À CHANGER IMMÉDIATEMENT
-          // depuis l'application après la première connexion.
+          // toute entreprise, voit/gère tout). Identifiants fixes connus du
+          // seul propriétaire de la plateforme (Thierry) : remis à cette
+          // valeur à chaque démarrage du serveur, qu'il existe déjà ou non —
+          // ainsi l'accès est toujours garanti même si le mot de passe a été
+          // perdu. Recommandé : le changer depuis Réglages → Utilisateurs
+          // une fois une interface dédiée disponible, ou redéployer avec un
+          // nouveau mot de passe ici si besoin.
           const bcrypt = require("bcryptjs");
-          return client.query(`SELECT id FROM utilisateurs WHERE categorie = 'SuperAdmin' LIMIT 1`)
-            .then((r) => {
-              if (r.rows.length > 0) return null;
-              const motDePasse = "SuperWari#" + Math.floor(1000 + Math.random() * 9000);
-              return bcrypt.hash(motDePasse, 10).then((hash) =>
-                client.query(
-                  `INSERT INTO utilisateurs (login, mdp_hash, categorie, entreprise_id, actif,
-                     perm_vente, perm_appro, perm_articles, perm_facturation, perm_clients)
-                   VALUES ('superadmin', $1, 'SuperAdmin', NULL, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE)
-                   ON CONFLICT (login) DO NOTHING`,
-                  [hash]
-                ).then(() => {
-                  console.log("════════════════════════════════════════════════════════════");
-                  console.log("🔑 Compte SUPERADMIN créé — login : superadmin");
-                  console.log(`🔑 Mot de passe temporaire : ${motDePasse}`);
-                  console.log("   ⚠️  Connectez-vous puis changez ce mot de passe immédiatement.");
-                  console.log("════════════════════════════════════════════════════════════");
-                })
-              );
-            });
+          const SUPERADMIN_LOGIN = "superadmin";
+          const SUPERADMIN_MDP   = "Warigest@Super2026";
+          return bcrypt.hash(SUPERADMIN_MDP, 10).then((hash) =>
+            client.query(
+              `INSERT INTO utilisateurs (login, mdp_hash, categorie, entreprise_id, actif,
+                 perm_vente, perm_appro, perm_articles, perm_facturation, perm_clients)
+               VALUES ($1, $2, 'SuperAdmin', NULL, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE)
+               ON CONFLICT (login) DO UPDATE SET mdp_hash = EXCLUDED.mdp_hash,
+                 categorie = 'SuperAdmin', entreprise_id = NULL, actif = TRUE`,
+              [SUPERADMIN_LOGIN, hash]
+            ).then(() => {
+              console.log("════════════════════════════════════════════════════════════");
+              console.log(`🔑 Compte SUPERADMIN prêt — login : ${SUPERADMIN_LOGIN}`);
+              console.log(`🔑 Mot de passe : ${SUPERADMIN_MDP}`);
+              console.log("════════════════════════════════════════════════════════════");
+            })
+          );
         })
         .then(() => console.log("✅ Compte 'SuperAdmin' vérifié (plateforme multi-entreprises)."))
         .catch((e) => console.error("⚠️  Création SuperAdmin ignorée :", e.message))

@@ -180,6 +180,18 @@ pool.connect((err, client, release) => {
           // désormais aussi "entreprise_id" (colonne ajoutée juste avant)
           // pour permettre le cloisonnement par entreprise dans les contrôleurs.
           //
+          // DURCISSEMENT MULTI-ENTREPRISES (audit MLD) : les sous-requêtes
+          // groupent désormais par (article_code, entreprise_id) ET la
+          // jointure se fait sur LES DEUX colonnes — pas seulement sur
+          // "code". Auparavant, le rapprochement reposait uniquement sur
+          // l'unicité globale des codes d'articles, garantie au niveau
+          // applicatif (articlesController.create) mais pas au niveau de la
+          // base : la moindre brèche dans cette vérification (bug futur,
+          // contournement, etc.) aurait mélangé silencieusement les entrées/
+          // sorties de stock de DEUX entreprises différentes partageant un
+          // même code article. Cette double jointure rend la vue correcte
+          // par construction, sans dépendre de cette hypothèse externe.
+          //
           // DROP + CREATE (plutôt que CREATE OR REPLACE) car PostgreSQL
           // refuse de modifier les noms/types de colonnes d'une vue existante
           // avec REPLACE ; la recréation est idempotente et sûre à rejouer à
@@ -210,15 +222,15 @@ pool.connect((err, client, release) => {
               ((COALESCE(ent.total, 0) - COALESCE(sor.total, 0)) * a.prix_achat)::numeric AS valeur_stock
             FROM articles a
             LEFT JOIN (
-              SELECT article_code, SUM(quantite) AS total
+              SELECT article_code, entreprise_id, SUM(quantite) AS total
               FROM achats
-              GROUP BY article_code
-            ) ent ON ent.article_code = a.code
+              GROUP BY article_code, entreprise_id
+            ) ent ON ent.article_code = a.code AND ent.entreprise_id = a.entreprise_id
             LEFT JOIN (
-              SELECT article_code, SUM(quantite) AS total
+              SELECT article_code, entreprise_id, SUM(quantite) AS total
               FROM lignes_vente
-              GROUP BY article_code
-            ) sor ON sor.article_code = a.code;
+              GROUP BY article_code, entreprise_id
+            ) sor ON sor.article_code = a.code AND sor.entreprise_id = a.entreprise_id;
           `);
         })
         .then(() => console.log("✅ Vue 'vue_stock' recréée avec un calcul de stock correct (plus de produit cartésien, entreprise_id exposé)."))

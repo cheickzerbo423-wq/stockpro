@@ -25,7 +25,7 @@ async function getAll(req, res) {
       SELECT lv.*, f.client_nom, f.date_facture, f.montant AS facture_montant,
              f.montant_paye, f.reste, f.statut AS facture_statut
       FROM lignes_vente lv
-      JOIN factures f ON f.code = lv.facture_code
+      JOIN factures f ON f.code = lv.facture_code AND f.entreprise_id = lv.entreprise_id
       WHERE lv.entreprise_id = $1`;
     const params = [req.user.entreprise_id];
     let idx = 2;

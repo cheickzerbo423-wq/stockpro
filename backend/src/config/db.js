@@ -300,13 +300,30 @@ pool.connect((err, client, release) => {
         .catch((e) => console.error("⚠️  Restructuration entreprise_config ignorée :", e.message))
         // ── Migration : PKs composites (code, entreprise_id) sur articles et
         //    factures, FKs composites sur lignes_vente et achats.
-        //    Objectif : rendre les codes article et numéros de facture uniques
-        //    PAR entreprise (et non plus globalement sur toute la plateforme).
+        //    Objectif : que CHAQUE ENTREPRISE puisse librement choisir ses
+        //    propres codes (même identiques à ceux d'autres entreprises).
+        //    Un code est unique PAR entreprise mais deux entreprises différentes
+        //    peuvent utiliser le même code sans aucune contrainte.
         .then(() =>
           client.query(`
             DO $mk_composite$
             DECLARE r RECORD;
             BEGIN
+              -- 0. Supprimer toutes les contraintes UNIQUE standalone sur
+              --    articles.code et factures.code (une seule colonne) qui
+              --    bloqueraient le même code dans deux entreprises différentes.
+              --    Seule la PK composite (code, entreprise_id) doit subsister.
+              FOR r IN
+                SELECT c.conname, t.relname AS tbl
+                FROM pg_constraint c
+                JOIN pg_class t ON t.oid = c.conrelid
+                WHERE c.contype = 'u'
+                  AND t.relname IN ('articles', 'factures')
+                  AND array_length(c.conkey, 1) = 1
+              LOOP
+                EXECUTE format('ALTER TABLE %I DROP CONSTRAINT IF EXISTS %I', r.tbl, r.conname);
+              END LOOP;
+
               -- 1. Backfill NULL entreprise_id (sécurité, ne devrait pas arriver)
               UPDATE articles     SET entreprise_id = 1 WHERE entreprise_id IS NULL;
               UPDATE factures     SET entreprise_id = 1 WHERE entreprise_id IS NULL;

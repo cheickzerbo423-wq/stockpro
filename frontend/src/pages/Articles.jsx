@@ -18,9 +18,19 @@ export default function Articles() {
   const [formErr, setFormErr]     = useState({});
   const [codeAuto, setCodeAuto]   = useState(true);
   const [loadingCode, setLoadingCode] = useState(false);
-  const debounceRef = useRef(null);
+  const debounceRef   = useRef(null);
+  const searchDebRef  = useRef(null);
 
-  const { data: articles = [], loading, error, reload } = useArticles(search);
+  // Debounce la recherche côté API : on n'envoie la requête qu'après 350 ms
+  // sans frappe, ce qui évite une requête par touche et les course conditions.
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    clearTimeout(searchDebRef.current);
+    searchDebRef.current = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(searchDebRef.current);
+  }, [search]);
+
+  const { data: articles = [], loading, error, reload } = useArticles(debouncedSearch);
   const { sorted: articlesTries, sortKey, sortDir, handleSort } = useSortableData(articles, "libelle", "asc");
   const { mutate: createArticle, loading: saving }  = useMutation(articlesService.create);
   const { mutate: updateArticle, loading: updating } = useMutation(articlesService.update);

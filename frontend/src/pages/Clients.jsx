@@ -375,7 +375,8 @@ export default function Clients() {
   };
 
   const handleSave = async () => {
-    if (!form.nom.trim()) return notify("Le nom est requis.", "error");
+    if (!form.nom.trim())     return notify("Le nom est requis.", "error");
+    if (!form.contact.trim()) return notify("Le numéro de téléphone est requis.", "error");
     try {
       await create({ ...form, type: tab });
       notify(`${isClient ? "Client" : "Fournisseur"} ajouté !`);
@@ -391,7 +392,8 @@ export default function Clients() {
   };
 
   const handleUpdate = async () => {
-    if (!editForm.nom.trim()) return notify("Le nom est requis.", "error");
+    if (!editForm.nom.trim())     return notify("Le nom est requis.", "error");
+    if (!editForm.contact.trim()) return notify("Le numéro de téléphone est requis.", "error");
     try {
       await update(editContact.id, editForm);
       notify("Informations mises à jour !");
@@ -583,7 +585,7 @@ export default function Clients() {
               <Input label="Nom & Prénom *" value={editForm.nom}
                 onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })} />
             </div>
-            <Input label="Contact (téléphone)" value={editForm.contact}
+            <Input label="Contact (téléphone) *" value={editForm.contact}
               onChange={(e) => setEditForm({ ...editForm, contact: e.target.value })}
               placeholder="07 00 00 00 00" />
             <Input label="Email" type="email" value={editForm.email}
@@ -607,7 +609,7 @@ export default function Clients() {
             <div className="col-span-2">
               <Input label="Nom & Prénom *" value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} />
             </div>
-            <Input label="Contact (téléphone)" value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} placeholder="225 00 00 00 00" />
+            <Input label="Contact (téléphone) *" value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} placeholder="225 00 00 00 00" />
             <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             <Input label="Ville" value={form.ville} onChange={(e) => setForm({ ...form, ville: e.target.value })} />
             <Input label="Adresse" value={form.adresse} onChange={(e) => setForm({ ...form, adresse: e.target.value })} />

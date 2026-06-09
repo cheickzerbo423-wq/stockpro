@@ -27,7 +27,7 @@ function MiniForm({ title, icon, onSave, onCancel, saving }) {
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF]" />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Téléphone</label>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Téléphone *</label>
             <input value={contact} onChange={(e) => setContact(e.target.value)}
               placeholder="ex: 07 00 00 00 00"
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF]" />
@@ -39,7 +39,7 @@ function MiniForm({ title, icon, onSave, onCancel, saving }) {
             Annuler
           </button>
           <button
-            disabled={!nom.trim() || saving}
+            disabled={!nom.trim() || !contact.trim() || saving}
             onClick={() => onSave({ nom: nom.trim(), contact })}
             className="flex-1 py-2 rounded-xl bg-[#0023FF] text-white text-sm font-bold hover:bg-[#0023FF] transition disabled:opacity-40">
             {saving ? "Enregistrement…" : "Enregistrer"}

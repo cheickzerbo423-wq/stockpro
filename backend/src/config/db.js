@@ -441,6 +441,34 @@ pool.connect((err, client, release) => {
         )
         .then(() => console.log("✅ Colonnes abonnement sur 'entreprises' vérifiées."))
         .catch((e) => console.error("⚠️  Migration abonnement ignorée :", e.message))
+        // ── Migration : factures.statut → GENERATED ALWAYS ─────────────────
+        // BUG CORRIGÉ : "statut" était déclaré BOOLEAN DEFAULT FALSE (jamais
+        // mis à jour automatiquement) — ce qui faisait que toutes les factures
+        // restaient "Impayées" dans les rapports même après règlement complet.
+        // Solution : recréer "statut" comme colonne GENERATED ALWAYS AS
+        // (montant_paye >= montant), exactement comme "reste".
+        // On vérifie d'abord si la colonne est déjà générée (pg_attribute.attgenerated = 's')
+        // pour rendre la migration idempotente et sûre à rejouer à chaque démarrage.
+        .then(() =>
+          client.query(`
+            DO $$
+            BEGIN
+              IF NOT EXISTS (
+                SELECT 1 FROM pg_attribute a
+                JOIN pg_class c ON c.oid = a.attrelid
+                WHERE c.relname = 'factures'
+                  AND a.attname = 'statut'
+                  AND a.attgenerated = 's'
+              ) THEN
+                ALTER TABLE factures DROP COLUMN IF EXISTS statut;
+                ALTER TABLE factures ADD COLUMN statut BOOLEAN
+                  GENERATED ALWAYS AS (montant_paye >= montant) STORED;
+              END IF;
+            END $$;
+          `)
+        )
+        .then(() => console.log("✅ factures.statut converti en GENERATED ALWAYS AS (montant_paye >= montant)."))
+        .catch((e) => console.error("⚠️  Migration factures.statut ignorée :", e.message))
         .finally(() => release());
     });
 });

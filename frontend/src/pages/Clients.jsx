@@ -293,7 +293,7 @@ function FichePanel({ bilan, onClose, onPay }) {
               <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Situation financière</div>
               {isClient ? (
                 <>
-                  <div className="text-2xl font-black text-gray-800">{fmt(kpi.ca_total)}</div>
+                  <div className="text-xl font-black text-gray-800">{fmt(kpi.ca_total)}</div>
                   <div className="text-xs text-gray-500 mt-1">
                     Encaissé <strong className="text-emerald-600">{fmt(kpi.encaisse)}</strong>
                     {parseFloat(kpi.creances) > 0 && <> · Créances <strong className="text-red-600">{fmt(kpi.creances)}</strong></>}
@@ -301,7 +301,7 @@ function FichePanel({ bilan, onClose, onPay }) {
                 </>
               ) : (
                 <>
-                  <div className="text-2xl font-black text-gray-800">{fmt(kpi.total_achats)}</div>
+                  <div className="text-xl font-black text-gray-800">{fmt(kpi.total_achats)}</div>
                   <div className="text-xs text-gray-500 mt-1">
                     Payé <strong className="text-emerald-600">{fmt(kpi.total_paye)}</strong>
                     {parseFloat(kpi.total_dettes) > 0 && <> · Dette <strong className="text-red-600">{fmt(kpi.total_dettes)}</strong></>}

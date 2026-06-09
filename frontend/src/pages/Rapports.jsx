@@ -409,11 +409,11 @@ export default function Rapports() {
               <div>
                 <div className="flex gap-3 mb-4">
                   <div className="flex-1 bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
-                    <div className="text-2xl font-black text-emerald-700">{data.factures.nb_reglees}</div>
+                    <div className="text-xl font-black text-emerald-700">{data.factures.nb_reglees}</div>
                     <div className="text-xs text-emerald-600 font-semibold mt-0.5">Réglées</div>
                   </div>
                   <div className="flex-1 bg-red-50 rounded-xl p-3 text-center border border-red-100">
-                    <div className="text-2xl font-black text-red-700">{data.factures.nb_impayees}</div>
+                    <div className="text-xl font-black text-red-700">{data.factures.nb_impayees}</div>
                     <div className="text-xs text-red-600 font-semibold mt-0.5">Impayées</div>
                   </div>
                 </div>

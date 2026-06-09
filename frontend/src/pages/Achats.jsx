@@ -572,7 +572,7 @@ export default function Achats() {
           <div className="border-t border-gray-100 pt-4">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-bold text-gray-600">Montant total de la commande</span>
-              <span className="text-2xl font-black text-[#0023FF]">{fmt(totalCommande)}</span>
+              <span className="text-xl font-black text-[#0023FF]">{fmt(totalCommande)}</span>
             </div>
             <p className="text-xs font-bold text-gray-500 uppercase mb-2">Mode de paiement</p>
             <div className="flex gap-2 mb-2">

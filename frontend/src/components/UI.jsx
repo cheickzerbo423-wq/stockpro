@@ -129,7 +129,7 @@ export function Input({ label, error, icon, ...props }) {
         )}
         <input
           {...props}
-          className={`w-full rounded-xl text-sm text-gray-800 placeholder-gray-300
+          className={`w-full rounded-xl text-[13px] text-gray-800 placeholder-gray-300
             transition-all duration-150 outline-none bg-white
             border ${error ? "border-red-300 bg-red-50/50" : "border-gray-200 hover:border-gray-300"}
             focus:border-[#0023FF] focus:ring-4 focus:ring-[#0023FF]/8
@@ -153,7 +153,7 @@ export function Select({ label, children, ...props }) {
       )}
       <select
         {...props}
-        className="w-full rounded-xl px-3 py-2.5 text-sm text-gray-800
+        className="w-full rounded-xl px-3 py-2.5 text-[13px] text-gray-800
           border border-gray-200 bg-white hover:border-gray-300
           focus:border-[#0023FF] focus:ring-4 focus:ring-[#0023FF]/8
           transition-all duration-150 outline-none cursor-pointer"
@@ -193,7 +193,7 @@ export function Btn({ children, onClick, color = "blue", sm, loading, type = "bu
       className={`
         inline-flex items-center justify-center gap-1.5 font-bold rounded-xl
         transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed
-        ${sm ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm"}
+        ${sm ? "px-3 py-1.5 text-[11px]" : "px-4 py-2 text-[13px]"}
         ${className}
       `}
     >
@@ -274,8 +274,8 @@ export function PageHeader({ title, sub, action }) {
   return (
     <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start sm:justify-between gap-3 sm:gap-4 mb-5 md:mb-6">
       <div className="min-w-0">
-        <h2 className="text-xl font-black text-gray-900 leading-tight">{title}</h2>
-        {sub && <p className="text-xs text-gray-400 mt-1 font-medium break-words">{sub}</p>}
+        <h2 className="text-lg font-black text-gray-900 leading-tight">{title}</h2>
+        {sub && <p className="text-[11px] text-gray-400 mt-0.5 font-medium break-words">{sub}</p>}
       </div>
       {action && <div className="flex-shrink-0 w-full sm:w-auto">{action}</div>}
     </div>
@@ -309,7 +309,7 @@ export function DataTable({ headers, children, empty = "Aucune donnée", sort, o
               return (
                 <th key={i}
                   onClick={canSort ? () => onSort(sk) : undefined}
-                  className={`px-4 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-[0.06em] whitespace-nowrap bg-gray-50/60
+                  className={`px-3.5 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-[0.06em] whitespace-nowrap bg-gray-50/60
                     ${right ? "text-right" : "text-left"}
                     ${canSort ? "cursor-pointer hover:text-[#0023FF] select-none transition-colors" : ""}
                     ${i === 0 ? "rounded-tl-xl" : ""} ${i === headers.length - 1 ? "rounded-tr-xl" : ""}`}>
@@ -374,12 +374,12 @@ export function TR({ children, onClick }) {
 export function TD({ children, right, bold, muted, truncate, mono }) {
   return (
     <td title={typeof children === "string" || typeof children === "number" ? String(children) : undefined}
-      className={`px-4 py-3.5 whitespace-nowrap overflow-hidden text-ellipsis
+      className={`px-3.5 py-3 whitespace-nowrap overflow-hidden text-ellipsis
       ${truncate ? "max-w-0" : ""}
       ${right ? "text-right" : ""}
       ${bold  ? "font-bold text-gray-800" : ""}
-      ${muted ? "text-gray-400 text-[11px]" : "text-gray-700 text-sm"}
-      ${mono ? "font-mono text-xs" : ""}`}>
+      ${muted ? "text-gray-400 text-[11px]" : "text-gray-600 text-[13px]"}
+      ${mono ? "font-mono text-[11px]" : ""}`}>
       {children}
     </td>
   );
@@ -411,9 +411,9 @@ export function KpiCard({ label, value, sub, icon, color = "blue", trend }) {
           </span>
         )}
       </div>
-      <div className="text-lg font-black text-gray-900 leading-tight">{value}</div>
-      <div className="text-xs text-gray-400 font-medium mt-1">{label}</div>
-      {sub && <div className="text-[10px] text-gray-400 mt-2 pt-2 border-t border-gray-50">{sub}</div>}
+      <div className="text-base font-black text-gray-900 leading-tight">{value}</div>
+      <div className="text-[11px] text-gray-400 font-medium mt-1">{label}</div>
+      {sub && <div className="text-[10px] text-gray-400 mt-1.5 pt-1.5 border-t border-gray-50">{sub}</div>}
     </div>
   );
 }

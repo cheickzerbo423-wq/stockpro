@@ -171,147 +171,127 @@ async function exportPDF(req, res) {
     const doc = new PDFDoc({ margin: 0, size: "A4" });
     doc.pipe(res);
 
-    // ── Constantes ────────────────────────────────────────────────────────
-    const PW   = 595, PH = 842;
-    const ML   = 14;              // barre accent gauche
-    const M    = 50;              // marge texte
-    const INN  = PW - M - 32;    // largeur utile
-    const INK  = "#0F172A";
-    const SUB  = "#64748B";
-    const RULE = "#E2E8F0";
-    const PALE = "#F8FAFC";
+    const PW  = 595, PH = 842;
+    const M   = 52;
+    const INN = PW - M * 2;
+    const INK = "#111827";
+    const SUB = "#6B7280";
+    const LITE = "#D1D5DB";
 
-    // ── Bande accent gauche pleine hauteur ────────────────────────────────
-    doc.rect(0, 0, ML, PH).fillColor(ACC).fill();
+    const hr = (y, w, c) =>
+      doc.moveTo(M, y).lineTo(M + INN, y).lineWidth(w).strokeColor(c).stroke();
 
-    // ── Zone en-tête (fond très léger) ───────────────────────────────────
-    doc.rect(ML, 0, PW - ML, 100).fillColor("#FAFBFF").fill();
-    doc.moveTo(ML, 100).lineTo(PW, 100).lineWidth(0.5).strokeColor(RULE).stroke();
-
-    // Logo
-    let txtX = M, txtW = 230;
+    // ── En-tête ──────────────────────────────────────────────────────────────
+    let txtX = M, txtW = 240;
     if (logoBuf) {
       try {
-        doc.image(logoBuf, M, 18, { fit: [50, 50] });
-        txtX = M + 60; txtW = 170;
-      } catch (e) { console.error("Logo PDF (rapport) ignoré :", e.message); }
+        doc.image(logoBuf, M, 36, { fit: [42, 42] });
+        txtX = M + 52; txtW = 188;
+      } catch (e) { /* ignoré */ }
     }
 
-    // Entreprise
     doc.fontSize(16).fillColor(INK).font("Helvetica-Bold")
-       .text(company, txtX, 22, { width: txtW });
-    doc.fontSize(8).fillColor(SUB).font("Helvetica")
-       .text((compAddr || "") + (compTel ? (compAddr ? "  ·  " : "") + compTel : ""), txtX, 46, { width: txtW });
+       .text(company, txtX, 36, { width: txtW });
+    doc.fontSize(8.5).fillColor(SUB).font("Helvetica")
+       .text((compAddr || "") + (compTel ? (compAddr ? "  ·  " : "") + compTel : ""), txtX, 58, { width: txtW });
 
-    // Titre rapport (droite)
     doc.fontSize(22).fillColor(ACC).font("Helvetica-Bold")
-       .text("RAPPORT", PW - 32 - 200, 20, { width: 200, align: "right" });
-    doc.fontSize(10).fillColor(INK).font("Helvetica-Bold")
-       .text("FINANCIER", PW - 32 - 200, 46, { width: 200, align: "right" });
-    doc.fontSize(8).fillColor(SUB).font("Helvetica")
-       .text(`${fmtDate(debut)} — ${fmtDate(fin)}`, PW - 32 - 200, 62, { width: 200, align: "right" });
-    doc.fontSize(7).fillColor(SUB)
-       .text(`Généré le ${fmtDate(new Date().toISOString().split("T")[0])}`, PW - 32 - 200, 76, { width: 200, align: "right" });
+       .text("RAPPORT FINANCIER", PW - M - 230, 34, { width: 230, align: "right" });
+    doc.fontSize(8.5).fillColor(INK).font("Helvetica-Bold")
+       .text(fmtDate(debut) + "  -  " + fmtDate(fin), PW - M - 230, 63, { width: 230, align: "right" });
+    doc.fontSize(7.5).fillColor(SUB).font("Helvetica")
+       .text("Genere le " + fmtDate(new Date().toISOString().split("T")[0]), PW - M - 230, 77, { width: 230, align: "right" });
 
-    doc.y = 116;
+    hr(96, 1, ACC); hr(98, 0.3, LITE);
+    doc.y = 112;
 
-    // ── KPIs (4 cases) ────────────────────────────────────────────────────
-    const kpiW = 118, kpiH = 64, kpiY = doc.y;
-    const kpiGap = (INN - M - kpiW * 4) / 3;
+    // ── KPIs (4 cases — contours seulement) ──────────────────────────────────
+    const kpiW = 116, kpiH = 58, kpiY = doc.y;
+    const kpiGap = Math.floor((INN - kpiW * 4) / 3);
     const kpis = [
       { label: "Chiffre d'Affaires", value: money(v.ca_total),    color: ACC },
-      { label: "Total Dépenses",     value: money(a.total_achats), color: "#EF4444" },
-      { label: "Bénéfice Net",       value: money(benefice),      color: benefice >= 0 ? "#10B981" : "#EF4444" },
-      { label: "Factures Émises",    value: fmtN(f.nb_total),     color: "#3B82F6" },
+      { label: "Total Depenses",     value: money(a.total_achats), color: "#EF4444" },
+      { label: "Benefice Net",       value: money(benefice),      color: benefice >= 0 ? "#10B981" : "#EF4444" },
+      { label: "Factures Emises",    value: fmtN(f.nb_total),     color: "#3B82F6" },
     ];
     kpis.forEach((k, i) => {
       const kx = M + i * (kpiW + kpiGap);
-      // Fond + bord supérieur coloré
-      doc.rect(kx, kpiY, kpiW, kpiH).fillColor("white").fill();
-      doc.rect(kx, kpiY, kpiW, 3).fillColor(k.color).fill();
-      // Contour léger
-      doc.rect(kx, kpiY, kpiW, kpiH).strokeColor(RULE).lineWidth(0.5).stroke();
-      doc.fillColor(k.color).fontSize(13).font("Helvetica-Bold")
-         .text(k.value, kx + 6, kpiY + 14, { width: kpiW - 12, align: "center" });
+      doc.rect(kx, kpiY, kpiW, kpiH).strokeColor(LITE).lineWidth(0.8).stroke();
+      // Trait accent en haut de chaque box
+      doc.moveTo(kx, kpiY).lineTo(kx + kpiW, kpiY).lineWidth(2).strokeColor(k.color).stroke();
+      doc.fillColor(k.color).fontSize(12).font("Helvetica-Bold")
+         .text(k.value, kx + 4, kpiY + 12, { width: kpiW - 8, align: "center" });
       doc.fillColor(SUB).fontSize(7).font("Helvetica")
-         .text(k.label, kx + 4, kpiY + 42, { width: kpiW - 8, align: "center" });
+         .text(k.label, kx + 4, kpiY + 38, { width: kpiW - 8, align: "center" });
     });
-    doc.y = kpiY + kpiH + 18;
+    doc.y = kpiY + kpiH + 20;
 
-    // ── Helpers sections & lignes ─────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────────────────────
     const section = (title) => {
-      doc.moveDown(0.3);
-      doc.rect(M, doc.y, INN - M, 20).fillColor(ACC).fill();
-      doc.fillColor("white").fontSize(9).font("Helvetica-Bold")
-         .text(title, M + 8, doc.y + 6);
-      doc.y += 26;
+      doc.moveDown(0.4);
+      const sy = doc.y;
+      doc.fontSize(9).fillColor(INK).font("Helvetica-Bold").text(title, M, sy);
+      doc.moveTo(M, sy + 13).lineTo(M + INN, sy + 13).lineWidth(1.2).strokeColor(ACC).stroke();
+      doc.y = sy + 20;
     };
 
-    let rowAlt = false;
-    const row = (label, value, color = INK) => {
+    const row = (label, value, color) => {
       const ry = doc.y;
-      doc.rect(M, ry, INN - M, 18).fillColor(rowAlt ? PALE : "white").fill();
-      doc.fillColor(SUB).fontSize(8.5).font("Helvetica").text(label, M + 8, ry + 5);
-      doc.fillColor(color).fontSize(8.5).font("Helvetica-Bold")
-         .text(value, M, ry + 5, { width: INN - M - 8, align: "right" });
-      doc.moveTo(M, ry + 18).lineTo(M + INN - M, ry + 18).lineWidth(0.3).strokeColor(RULE).stroke();
-      doc.y += 18;
-      rowAlt = !rowAlt;
+      doc.fontSize(8.5).fillColor(SUB).font("Helvetica").text(label, M + 4, ry);
+      doc.fillColor(color || INK).font("Helvetica-Bold")
+         .text(value, M, ry, { width: INN, align: "right" });
+      doc.moveTo(M, ry + 15).lineTo(M + INN, ry + 15).lineWidth(0.3).strokeColor(LITE).stroke();
+      doc.y = ry + 15;
     };
 
-    // ── Sections ──────────────────────────────────────────────────────────
+    // ── Sections ──────────────────────────────────────────────────────────────
     section("VENTES");
-    rowAlt = false;
     row("Chiffre d'affaires",  money(v.ca_total),   ACC);
     row("Nombre de factures",  fmtN(v.nb_factures));
-    row("Quantités vendues",   fmtN(v.qte_totale) + " unités");
+    row("Quantites vendues",   fmtN(v.qte_totale) + " unites");
 
     section("APPROVISIONNEMENTS");
-    rowAlt = false;
     row("Nombre d'achats",     fmtN(a.nb_achats));
-    row("Total dépenses",      money(a.total_achats),  "#EF4444");
-    row("Montant payé",        money(a.total_paye),    "#10B981");
+    row("Total depenses",      money(a.total_achats),  "#EF4444");
+    row("Montant paye",        money(a.total_paye),    "#10B981");
     row("Dettes fournisseurs", money(a.total_dettes),  parseInt(a.total_dettes) > 0 ? "#EF4444" : SUB);
 
     section("RECOUVREMENT FACTURES");
-    rowAlt = false;
-    row("Total facturé",       money(f.montant_total));
-    row("Montant encaissé",    money(f.montant_encaisse), "#10B981");
-    row("Créances restantes",  money(f.montant_creances), parseInt(f.montant_creances) > 0 ? "#EF4444" : SUB);
-    row("Factures réglées",    fmtN(f.nb_reglees),   "#10B981");
-    row("Factures impayées",   fmtN(f.nb_impayees),  parseInt(f.nb_impayees) > 0 ? "#EF4444" : SUB);
+    row("Total facture",       money(f.montant_total));
+    row("Montant encaisse",    money(f.montant_encaisse), "#10B981");
+    row("Creances restantes",  money(f.montant_creances), parseInt(f.montant_creances) > 0 ? "#EF4444" : SUB);
+    row("Factures reglees",    fmtN(f.nb_reglees),   "#10B981");
+    row("Factures impayees",   fmtN(f.nb_impayees),  parseInt(f.nb_impayees) > 0 ? "#EF4444" : SUB);
 
     if (topArticles.rows.length > 0) {
       section("TOP 5 ARTICLES VENDUS");
-      rowAlt = false;
       topArticles.rows.forEach((art, i) => {
-        row(`${i + 1}. ${art.libelle}`, money(art.ca) + "  ·  " + fmtN(art.qte) + " u.", ACC);
+        row(`${i + 1}. ${art.libelle}`, money(art.ca) + "  /  " + fmtN(art.qte) + " u.", ACC);
       });
     }
 
-    // ── Résumé bénéfice ───────────────────────────────────────────────────
+    // ── Résumé bénéfice ───────────────────────────────────────────────────────
     doc.moveDown(0.8);
-    const benY = doc.y;
+    const benY    = doc.y;
     const benColor = benefice >= 0 ? "#10B981" : "#EF4444";
-    const benBg    = benefice >= 0 ? "#ECFDF5" : "#FEF2F2";
-    doc.rect(M, benY, INN - M, 52).fillColor(benBg).fill();
-    doc.rect(M, benY, 4, 52).fillColor(benColor).fill();
-    doc.fillColor(SUB).fontSize(7.5).font("Helvetica")
-       .text("BÉNÉFICE NET DE LA PÉRIODE", M + 14, benY + 9);
-    doc.fillColor(benColor).fontSize(20).font("Helvetica-Bold")
-       .text(money(benefice), M + 14, benY + 22);
-    doc.fillColor(SUB).fontSize(7.5).font("Helvetica")
-       .text(`CA : ${money(v.ca_total)}   —   Dépenses : ${money(a.total_achats)}`, M + 14, benY + 44);
+    doc.moveTo(M, benY).lineTo(M + INN, benY).lineWidth(1).strokeColor(LITE).stroke();
+    doc.fontSize(7.5).fillColor(SUB).font("Helvetica")
+       .text("BENEFICE NET DE LA PERIODE", M, benY + 8);
+    doc.fontSize(22).fillColor(benColor).font("Helvetica-Bold")
+       .text(money(benefice), M, benY + 20);
+    doc.fontSize(7.5).fillColor(SUB).font("Helvetica")
+       .text("CA : " + money(v.ca_total) + "   -   Depenses : " + money(a.total_achats), M, benY + 47);
+    doc.moveTo(M, benY + 58).lineTo(M + INN, benY + 58).lineWidth(0.5).strokeColor(LITE).stroke();
 
-    // ── Pied de page ──────────────────────────────────────────────────────
+    // ── Pied de page ──────────────────────────────────────────────────────────
     const footerY = doc.page.maxY() - 15;
     doc.fillColor(SUB).fontSize(7).font("Helvetica")
-       .text("Document généré automatiquement par WariGest — Logiciel de gestion & facturation", ML, footerY, { width: PW - ML, align: "center" });
+       .text("Document genere automatiquement par WariGest - Logiciel de gestion & facturation", M, footerY, { width: INN, align: "center" });
 
     doc.end();
   } catch (err) {
     console.error(err);
-    if (!res.headersSent) res.status(500).json({ message: "Erreur génération PDF." });
+    if (!res.headersSent) res.status(500).json({ message: "Erreur generation PDF." });
   }
 }
 

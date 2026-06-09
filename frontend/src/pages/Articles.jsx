@@ -1,5 +1,71 @@
 // src/pages/Articles.jsx
 import { useState, useEffect, useRef } from "react";
+
+/* ── Compression d'image côté client (Canvas) ───────────────────────────────
+   Réduit l'image à maxSize×maxSize px max, encode en JPEG à `quality` (0-1).
+   Résultat : data-URI base64 ~15-30 Ko selon le contenu, stocké en TEXT en DB.
+─────────────────────────────────────────────────────────────────────────────*/
+function resizeImage(file, maxSize = 300, quality = 0.82) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ── Sélecteur d'image (upload + drag-and-drop + aperçu + suppression) ─────*/
+function ImagePicker({ value, onChange }) {
+  const inputRef = useRef(null);
+
+  async function handleFile(file) {
+    if (!file || !file.type.startsWith("image/")) return;
+    const dataUrl = await resizeImage(file);
+    onChange(dataUrl);
+  }
+
+  return (
+    <div>
+      <div
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); }}
+        className="w-full h-28 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center cursor-pointer hover:border-[#0023FF] hover:bg-[#F0F3FF] transition-colors overflow-hidden relative"
+      >
+        {value ? (
+          <>
+            <img src={value} alt="Aperçu" className="h-full w-full object-contain" />
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => { e.stopPropagation(); onChange(""); }}
+              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center hover:bg-red-600 shadow-sm"
+            >✕</button>
+          </>
+        ) : (
+          <div className="text-center text-gray-400 pointer-events-none">
+            <div className="text-3xl mb-1">📷</div>
+            <div className="text-xs font-semibold">Cliquer ou déposer une photo</div>
+            <div className="text-[10px] mt-0.5 text-gray-300">JPG, PNG, WebP</div>
+          </div>
+        )}
+      </div>
+      <input ref={inputRef} type="file" accept="image/*" className="hidden"
+        onChange={(e) => { if (e.target.files[0]) handleFile(e.target.files[0]); e.target.value = ""; }} />
+    </div>
+  );
+}
 import { useArticles, useMutation, useSortableData } from "../hooks/useApi";
 import { articlesService } from "../services";
 import {
@@ -11,10 +77,10 @@ export default function Articles() {
   const [search, setSearch]       = useState("");
   const [showAdd, setShowAdd]     = useState(false);
   const [editArticle, setEditArticle] = useState(null);
-  const [editForm, setEditForm]   = useState({ libelle: "", prix_achat: "", prix_vente: "", stock_min: "" });
+  const [editForm, setEditForm]   = useState({ libelle: "", prix_achat: "", prix_vente: "", stock_min: "", image_url: "" });
   const [toast, setToast]         = useState(null);
   const [delConfirm, setDelConfirm] = useState(null); // { code, libelle }
-  const [form, setForm]           = useState({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5", stock_initial: "" });
+  const [form, setForm]           = useState({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5", stock_initial: "", image_url: "" });
   const [formErr, setFormErr]     = useState({});
   const [codeAuto, setCodeAuto]   = useState(true);
   const [loadingCode, setLoadingCode] = useState(false);
@@ -69,7 +135,7 @@ export default function Articles() {
       await createArticle({ ...form });
       notify("Article créé avec succès !");
       setShowAdd(false);
-      setForm({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5", stock_initial: "" });
+      setForm({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5", stock_initial: "", image_url: "" });
       setCodeAuto(true);
       reload();
     } catch (err) { notify(err.message, "error"); }
@@ -82,6 +148,7 @@ export default function Articles() {
       prix_achat: a.prix_achat,
       prix_vente: a.prix_vente,
       stock_min:  a.stock_min,
+      image_url:  a.image_url || "",
     });
   };
 
@@ -152,7 +219,15 @@ export default function Articles() {
               return (
                 <TR key={a.code}>
                   <TD><span className="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">{a.code}</span></TD>
-                  <TD bold>{a.libelle}</TD>
+                  <TD bold>
+                    <div className="flex items-center gap-2">
+                      {a.image_url
+                        ? <img src={a.image_url} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
+                        : <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-base flex-shrink-0">📦</div>
+                      }
+                      <span className="truncate">{a.libelle}</span>
+                    </div>
+                  </TD>
                   <TD right>{fmt(a.prix_achat)}</TD>
                   <TD right>{fmt(a.prix_vente)}</TD>
                   <TD right>{fmtN(a.entree)}</TD>
@@ -232,7 +307,10 @@ export default function Articles() {
               onChange={(e) => setForm({ ...form, prix_achat: e.target.value })} />
             <Input label="Prix de Vente (FCFA)" type="number" value={form.prix_vente}
               onChange={(e) => setForm({ ...form, prix_vente: e.target.value })} />
-
+            <div className="col-span-2">
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Photo du produit <span className="font-normal text-gray-400">(optionnel)</span></label>
+              <ImagePicker value={form.image_url} onChange={(v) => setForm({ ...form, image_url: v })} />
+            </div>
           </div>
           <div className="flex justify-end gap-2 mt-5">
             <Btn color="gray" onClick={() => { setShowAdd(false); setCodeAuto(true); }}>Annuler</Btn>
@@ -261,7 +339,10 @@ export default function Articles() {
               <Input label="Stock Minimum (seuil alerte)" type="number" value={editForm.stock_min}
                 onChange={(e) => setEditForm({ ...editForm, stock_min: e.target.value })} />
             </div>
-
+            <div className="col-span-2">
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Photo du produit <span className="font-normal text-gray-400">(optionnel)</span></label>
+              <ImagePicker value={editForm.image_url} onChange={(v) => setEditForm({ ...editForm, image_url: v })} />
+            </div>
           </div>
           <div className="flex justify-end gap-2 mt-5">
             <Btn color="gray" onClick={() => setEditArticle(null)}>Annuler</Btn>

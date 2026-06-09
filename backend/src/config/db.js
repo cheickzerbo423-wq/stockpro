@@ -469,6 +469,51 @@ pool.connect((err, client, release) => {
         )
         .then(() => console.log("✅ factures.statut converti en GENERATED ALWAYS AS (montant_paye >= montant)."))
         .catch((e) => console.error("⚠️  Migration factures.statut ignorée :", e.message))
+        // ── Migration : images produits ──────────────────────────────────────
+        // Ajoute image_url (TEXT, nullable) sur la table articles pour stocker
+        // les photos de produits compressées en base64 (JPEG ~15-30 Ko chacune).
+        // La vue vue_stock est recrée pour exposer image_url au frontend.
+        // Migration idempotente : IF NOT EXISTS / DROP+CREATE sûrs à rejouer.
+        .then(() =>
+          client.query(`
+            ALTER TABLE articles ADD COLUMN IF NOT EXISTS image_url TEXT;
+            DROP VIEW IF EXISTS vue_stock;
+            CREATE VIEW vue_stock AS
+            SELECT
+              a.entreprise_id,
+              a.code,
+              a.libelle,
+              a.prix_achat,
+              a.prix_vente,
+              a.stock_min,
+              a.actif,
+              a.image_url,
+              COALESCE(ent.total, 0)::integer                                     AS entree,
+              COALESCE(sor.total, 0)::integer                                     AS sortie,
+              (COALESCE(ent.total, 0) - COALESCE(sor.total, 0))::integer          AS stock_restant,
+              CASE
+                WHEN (COALESCE(ent.total, 0) - COALESCE(sor.total, 0)) <= 0
+                  THEN 'Rupture stock'
+                WHEN (COALESCE(ent.total, 0) - COALESCE(sor.total, 0)) <= a.stock_min
+                  THEN 'Stock faible'
+                ELSE 'En stock'
+              END                                                                  AS statut,
+              ((COALESCE(ent.total, 0) - COALESCE(sor.total, 0)) * a.prix_achat)::numeric AS valeur_stock
+            FROM articles a
+            LEFT JOIN (
+              SELECT article_code, entreprise_id, SUM(quantite) AS total
+              FROM achats
+              GROUP BY article_code, entreprise_id
+            ) ent ON ent.article_code = a.code AND ent.entreprise_id = a.entreprise_id
+            LEFT JOIN (
+              SELECT article_code, entreprise_id, SUM(quantite) AS total
+              FROM lignes_vente
+              GROUP BY article_code, entreprise_id
+            ) sor ON sor.article_code = a.code AND sor.entreprise_id = a.entreprise_id;
+          `)
+        )
+        .then(() => console.log("✅ Migration images : articles.image_url + vue_stock mise à jour."))
+        .catch((e) => console.error("⚠️  Migration images ignorée :", e.message))
         .finally(() => release());
     });
 });

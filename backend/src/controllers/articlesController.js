@@ -47,7 +47,7 @@ async function getOne(req, res) {
 async function create(req, res) {
   const client = await db.connect();
   try {
-    const { code, libelle, prix_achat, prix_vente, stock_min, stock_initial } = req.body;
+    const { code, libelle, prix_achat, prix_vente, stock_min, stock_initial, image_url } = req.body;
     if (!code || !libelle)
       return res.status(400).json({ message: "Code et libellé obligatoires." });
 
@@ -66,10 +66,10 @@ async function create(req, res) {
     await client.query("BEGIN");
 
     const result = await client.query(
-      `INSERT INTO articles (code, libelle, prix_achat, prix_vente, stock_min, entreprise_id)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO articles (code, libelle, prix_achat, prix_vente, stock_min, image_url, entreprise_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [code.toUpperCase(), libelle.toUpperCase(), prix_achat || 0, prix_vente || 0, stock_min || 5, req.user.entreprise_id]
+      [code.toUpperCase(), libelle.toUpperCase(), prix_achat || 0, prix_vente || 0, stock_min || 5, image_url || null, req.user.entreprise_id]
     );
     const article = result.rows[0];
 
@@ -108,19 +108,30 @@ async function create(req, res) {
 // PUT /api/articles/:code
 async function update(req, res) {
   try {
-    const { libelle, prix_achat, prix_vente, stock_min } = req.body;
-    // AND entreprise_id = $6 : empêche toute modification d'un article d'une
-    // autre entreprise (même en devinant son code).
+    const { libelle, prix_achat, prix_vente, stock_min, image_url } = req.body;
+    const hasImage = Object.prototype.hasOwnProperty.call(req.body, "image_url");
+    // image_url : mise à jour uniquement si la clé est présente dans le body
+    // (évite d'écraser l'image existante lors d'appels qui ne l'envoient pas).
+    // Si présente et vide → NULL (suppression de l'image).
+    // AND entreprise_id : empêche toute modification d'un article d'une autre entreprise.
+    const setClauses = [
+      "libelle    = COALESCE($1, libelle)",
+      "prix_achat = COALESCE($2, prix_achat)",
+      "prix_vente = COALESCE($3, prix_vente)",
+      "stock_min  = COALESCE($4, stock_min)",
+      ...(hasImage ? ["image_url = $5"] : []),
+      "updated_at = NOW()",
+    ];
+    const codeIdx    = hasImage ? 6 : 5;
+    const entreIdx   = hasImage ? 7 : 6;
+    const params     = [libelle, prix_achat, prix_vente, stock_min,
+      ...(hasImage ? [image_url || null] : []),
+      req.params.code, req.user.entreprise_id];
     const result = await db.query(
-      `UPDATE articles
-       SET libelle    = COALESCE($1, libelle),
-           prix_achat = COALESCE($2, prix_achat),
-           prix_vente = COALESCE($3, prix_vente),
-           stock_min  = COALESCE($4, stock_min),
-           updated_at = NOW()
-       WHERE code = $5 AND entreprise_id = $6
+      `UPDATE articles SET ${setClauses.join(", ")}
+       WHERE code = $${codeIdx} AND entreprise_id = $${entreIdx}
        RETURNING *`,
-      [libelle, prix_achat, prix_vente, stock_min, req.params.code, req.user.entreprise_id]
+      params
     );
     if (!result.rows[0]) return res.status(404).json({ message: "Article introuvable." });
     res.json(result.rows[0]);

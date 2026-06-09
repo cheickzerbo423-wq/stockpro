@@ -240,10 +240,17 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                           onMouseDown={(e) => e.preventDefault()}
                           onClick={() => !rupture && addToCart(a)}
                           disabled={rupture}
-                          className={`w-full text-left px-4 py-3 border-b border-gray-50 last:border-0 transition flex items-center gap-3
+                          className={`w-full text-left px-3 py-2.5 border-b border-gray-50 last:border-0 transition flex items-center gap-3
                             ${rupture ? "opacity-40 cursor-not-allowed bg-white" : "hover:bg-[#E6EAFF] cursor-pointer"}
                             ${inCart > 0 ? "bg-[#F0F3FF]" : ""}`}
                         >
+                          {/* Miniature produit */}
+                          <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100 flex items-center justify-center">
+                            {a.image_url
+                              ? <img src={a.image_url} alt="" className="w-full h-full object-cover" />
+                              : <span className="text-lg">📦</span>
+                            }
+                          </div>
                           {/* Code + nom */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">

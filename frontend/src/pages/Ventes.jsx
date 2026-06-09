@@ -86,7 +86,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
     setPanier((prev) => {
       const ex = prev.find((p) => p.code === art.code);
       if (ex) return prev.map((p) => p.code === art.code ? { ...p, quantite: p.quantite + 1 } : p);
-      return [...prev, { code: art.code, libelle: art.libelle, prix_vente: parseInt(art.prix_vente) || 0, quantite: 1 }];
+      return [...prev, { code: art.code, libelle: art.libelle, prix_vente: parseInt(art.prix_vente) || 0, quantite: 1, image_url: art.image_url || "" }];
     });
     setArticleQ("");
     setArticleOpen(false);
@@ -245,7 +245,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                             ${inCart > 0 ? "bg-[#F0F3FF]" : ""}`}
                         >
                           {/* Miniature produit */}
-                          <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100 flex items-center justify-center">
+                          <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100 flex items-center justify-center">
                             {a.image_url
                               ? <img src={a.image_url} alt="" className="w-full h-full object-cover" />
                               : <span className="text-lg">📦</span>
@@ -300,9 +300,16 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                 {panier.map((p) => (
                   <div key={p.code} className="px-3 py-2.5 border-b border-gray-50 last:border-0">
                     <div className="flex items-center justify-between mb-1.5">
-                      <div className="min-w-0 flex-1">
-                        <span className="text-[11px] font-black text-[#0023FF] font-mono bg-[#E6EAFF] px-1.5 py-0.5 rounded mr-1.5">{p.code}</span>
-                        <span className="text-sm font-semibold text-gray-800 truncate">{p.libelle}</span>
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100 flex items-center justify-center">
+                          {p.image_url
+                            ? <img src={p.image_url} alt="" className="w-full h-full object-cover" />
+                            : <span className="text-base">📦</span>}
+                        </div>
+                        <div className="min-w-0">
+                          <div><span className="text-[11px] font-black text-[#0023FF] font-mono bg-[#E6EAFF] px-1.5 py-0.5 rounded">{p.code}</span></div>
+                          <div className="text-sm font-semibold text-gray-800 truncate mt-0.5">{p.libelle}</div>
+                        </div>
                       </div>
                       <button onClick={() => remove(p.code)}
                         className="ml-2 w-5 h-5 rounded-full bg-red-50 text-red-400 hover:bg-red-100 flex items-center justify-center text-xs shrink-0">✕</button>
@@ -439,6 +446,7 @@ export default function Ventes() {
 
   const { sorted: ventesAffichées, sortKey, sortDir, handleSort } = useSortableData(ventesFiltrees, "facture_code", "asc");
   const sortState = { key: sortKey, dir: sortDir };
+  const artMap = useMemo(() => new Map(articles.map(a => [a.code, a])), [articles]);
 
   const handleSave = async ({ client, clientId, datev, paye, panier }) => {
     if (!client)              { notify("Sélectionnez un client.", "error"); return; }
@@ -550,8 +558,15 @@ export default function Ventes() {
                         <span className="text-xs text-gray-400">{fmtDate(v.date_vente)}</span>
                       </div>
                     </div>
-                    <div className="text-sm font-bold text-gray-800 truncate">{v.libelle}</div>
-                    <div className="text-xs text-gray-500 mt-0.5 truncate">{v.client_nom}</div>
+                    <div className="flex items-center gap-2 mb-1">
+                      {(() => { const art = artMap.get(v.article_code); return art?.image_url
+                        ? <img src={art.image_url} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
+                        : <div className="w-9 h-9 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-sm flex-shrink-0">📦</div>; })()}
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold text-gray-800 truncate">{v.libelle}</div>
+                        <div className="text-xs text-gray-500 truncate">{v.client_nom}</div>
+                      </div>
+                    </div>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">
                         {fmtN(v.quantite)} × {fmtN(v.prix_vente)} FCFA
@@ -603,7 +618,14 @@ export default function Ventes() {
                         </button>
                       </TD>
                       <TD>{fmtDate(v.date_vente)}</TD>
-                      <TD bold>{v.libelle}</TD>
+                      <TD bold>
+                        <div className="flex items-center gap-2">
+                          {(() => { const art = artMap.get(v.article_code); return art?.image_url
+                            ? <img src={art.image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
+                            : <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-base flex-shrink-0">📦</div>; })()}
+                          <span className="truncate">{v.libelle}</span>
+                        </div>
+                      </TD>
                       <TD>{v.client_nom}</TD>
                       <TD right>{fmtN(v.quantite)}</TD>
                       <TD right>{fmtN(v.prix_vente)}</TD>

@@ -222,8 +222,8 @@ export default function Articles() {
                   <TD bold>
                     <div className="flex items-center gap-2">
                       {a.image_url
-                        ? <img src={a.image_url} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
-                        : <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-base flex-shrink-0">📦</div>
+                        ? <img src={a.image_url} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0 border border-gray-100 shadow-sm" />
+                        : <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-xl flex-shrink-0">📦</div>
                       }
                       <span className="truncate">{a.libelle}</span>
                     </div>

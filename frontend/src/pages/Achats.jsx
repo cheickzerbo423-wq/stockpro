@@ -74,10 +74,17 @@ function LigneCommande({ ligne, articles, onUpdate, onRemove }) {
   };
 
   const total = (+ligne.prix_achat || 0) * (+ligne.quantite || 0);
+  const selectedArt = articles.find(a => a.code === ligne.article_code);
 
   return (
     <div className="rounded-xl p-3 border bg-gray-50 border-gray-200 space-y-2">
-      <div className="flex items-end gap-2">
+      <div className="flex items-start gap-2">
+        {/* Aperçu image produit sélectionné */}
+        <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-white border border-gray-200 flex items-center justify-center mt-5">
+          {selectedArt?.image_url
+            ? <img src={selectedArt.image_url} alt="" className="w-full h-full object-cover" />
+            : <span className="text-2xl">📦</span>}
+        </div>
         <div className="flex-1 relative" ref={ref}>
           <label className="block text-xs font-semibold text-gray-500 mb-1">Article *</label>
           <input
@@ -91,24 +98,29 @@ function LigneCommande({ ligne, articles, onUpdate, onRemove }) {
             onMouseDown={(e) => { e.preventDefault(); setOpen((v) => !v); }}>▾</span>
 
           {open && (
-            <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
+            <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-72 overflow-y-auto">
               {suggestions.length === 0 ? (
                 <div className="px-3 py-3 text-xs text-gray-400 text-center">Aucun article trouvé</div>
               ) : suggestions.map((a) => (
                 <div key={a.code} onMouseDown={() => selectArticle(a)}
-                  className="px-3 py-2 cursor-pointer hover:bg-[#E6EAFF] text-sm flex justify-between items-center gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-bold text-[#0023FF] shrink-0">{a.code}</span>
-                    <span className="text-gray-700 truncate">{a.libelle}</span>
+                  className="px-3 py-3 cursor-pointer hover:bg-[#E6EAFF] text-sm flex items-center gap-3 border-b border-gray-50 last:border-0">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100 flex items-center justify-center">
+                    {a.image_url
+                      ? <img src={a.image_url} alt="" className="w-full h-full object-cover" />
+                      : <span className="text-xl">📦</span>}
                   </div>
-                  <span className="text-xs text-gray-400 shrink-0">Stock: {a.stock_restant ?? "?"}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[11px] font-black text-[#0023FF] bg-[#E6EAFF] px-1.5 py-0.5 rounded inline-block mb-0.5">{a.code}</div>
+                    <div className="text-sm font-semibold text-gray-800 truncate">{a.libelle}</div>
+                    <div className="text-xs text-gray-400 mt-0.5">Stock : {a.stock_restant ?? "?"}</div>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
         <button onClick={onRemove}
-          className="w-8 h-8 mb-0.5 flex items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 transition shrink-0"
+          className="w-8 h-8 mt-5 flex items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 transition shrink-0"
           title="Supprimer">✕</button>
       </div>
 
@@ -338,6 +350,7 @@ export default function Achats() {
 
   const { sorted: achatsAffichés, sortKey, sortDir, handleSort } = useSortableData(achatsFiltres, "date_achat", "asc");
   const sortState = { key: sortKey, dir: sortDir };
+  const artMap = useMemo(() => new Map(articles.map(a => [a.code, a])), [articles]);
 
   return (
     <div>
@@ -416,7 +429,14 @@ export default function Achats() {
             {achatsAffichés.map((a) => (
               <TR key={a.id}>
                 <TD>{fmtDate(a.date_achat)}</TD>
-                <TD bold>{a.libelle}</TD>
+                <TD bold>
+                  <div className="flex items-center gap-2">
+                    {(() => { const art = artMap.get(a.article_code); return art?.image_url
+                      ? <img src={art.image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
+                      : <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-base flex-shrink-0">📦</div>; })()}
+                    <span className="truncate">{a.libelle}</span>
+                  </div>
+                </TD>
                 <TD>{a.fournisseur_nom || <span className="text-gray-300">—</span>}</TD>
                 <TD right>{fmtN(a.quantite)}</TD>
                 <TD right>{fmtN(a.prix_achat)}</TD>

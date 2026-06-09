@@ -124,14 +124,16 @@ export default function Dashboard() {
             <span className="hidden sm:inline">Actualiser</span>
           </button>
         </div>
-        {/* Stats band */}
-        <div className="bg-white/10 border-t border-white/10 flex divide-x divide-white/10">
-          <StatChip label="CA encaissé" value={fmt(kpis.encaisse)} color="#fff" />
-          <StatChip label="Créances" value={fmt(kpis.montant_a_recouvrer)} color="#FCA5A5" />
-          <StatChip label="Clients actifs" value={fmtN(kpis.nb_clients)} color="#A5F3FC" />
-          <StatChip label="Recouvrement"
+        {/* Stats band — 2×2 mobile, 4 en ligne desktop */}
+        <div className="bg-white/10 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 divide-white/10"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+          {/* séparateurs CSS via bordures droites */}
+          <div className="border-r border-b sm:border-b-0 border-white/10"><StatChip label="CA encaissé" value={fmt(kpis.encaisse)} color="#fff" /></div>
+          <div className="border-b sm:border-b-0 sm:border-r border-white/10"><StatChip label="Créances" value={fmt(kpis.montant_a_recouvrer)} color="#FCA5A5" /></div>
+          <div className="border-r border-white/10"><StatChip label="Clients actifs" value={fmtN(kpis.nb_clients)} color="#A5F3FC" /></div>
+          <div><StatChip label="Recouvrement"
             value={`${tauxRec}%`}
-            color={tauxRec >= 80 ? "#6EE7B7" : tauxRec >= 50 ? "#FDE68A" : "#FCA5A5"} />
+            color={tauxRec >= 80 ? "#6EE7B7" : tauxRec >= 50 ? "#FDE68A" : "#FCA5A5"} /></div>
         </div>
       </div>
 

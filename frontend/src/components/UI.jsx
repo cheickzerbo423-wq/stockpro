@@ -2,8 +2,13 @@
 import React from "react";
 
 // ── Formatage ─────────────────────────────────────────────
-export const fmt     = (n) => new Intl.NumberFormat("fr-FR").format(Math.round(n || 0)) + " FCFA";
-export const fmtN    = (n) => new Intl.NumberFormat("fr-FR").format(Math.round(n || 0));
+// Séparateur de milliers : espace insécable ordinaire (U+00A0).
+// Évite le thin no-break space (U+202F) produit par Intl.NumberFormat("fr-FR")
+// qui s'affiche parfois comme une virgule ou n'apparaît pas sur certains
+// navigateurs/systèmes, donnant "1,000" au lieu de "1 000".
+const _sep = (n) => String(Math.round(parseFloat(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+export const fmtN    = (n) => _sep(n);
+export const fmt     = (n) => _sep(n) + " FCFA";
 export const today   = ()  => new Date().toISOString().split("T")[0];
 export const fmtDate = (d) => {
   if (!d) return "—";
@@ -112,7 +117,7 @@ export function Input({ label, error, icon, ...props }) {
   return (
     <div>
       {label && (
-        <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">
+        <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">
           {label}
         </label>
       )}
@@ -142,7 +147,7 @@ export function Select({ label, children, ...props }) {
   return (
     <div>
       {label && (
-        <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">
+        <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">
           {label}
         </label>
       )}
@@ -304,7 +309,7 @@ export function DataTable({ headers, children, empty = "Aucune donnée", sort, o
               return (
                 <th key={i}
                   onClick={canSort ? () => onSort(sk) : undefined}
-                  className={`px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-[0.08em] whitespace-nowrap bg-gray-50/60
+                  className={`px-4 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-[0.06em] whitespace-nowrap bg-gray-50/60
                     ${right ? "text-right" : "text-left"}
                     ${canSort ? "cursor-pointer hover:text-[#0023FF] select-none transition-colors" : ""}
                     ${i === 0 ? "rounded-tl-xl" : ""} ${i === headers.length - 1 ? "rounded-tr-xl" : ""}`}>
@@ -373,7 +378,7 @@ export function TD({ children, right, bold, muted, truncate, mono }) {
       ${truncate ? "max-w-0" : ""}
       ${right ? "text-right" : ""}
       ${bold  ? "font-bold text-gray-800" : ""}
-      ${muted ? "text-gray-400 text-xs" : "text-gray-600 text-sm"}
+      ${muted ? "text-gray-400 text-[11px]" : "text-gray-700 text-sm"}
       ${mono ? "font-mono text-xs" : ""}`}>
       {children}
     </td>

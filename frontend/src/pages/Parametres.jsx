@@ -131,7 +131,7 @@ export default function Parametres() {
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="ex: contact@entreprise.com" />
               <div>
-                <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Devise</label>
+                <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Devise</label>
                 <select value={form.devise} onChange={(e) => setForm({ ...form, devise: e.target.value })}
                   className="w-full rounded-xl px-3 py-2.5 text-sm text-gray-800 border border-gray-200 bg-white
                     hover:border-gray-300 focus:border-[#0023FF] focus:ring-4 focus:ring-[#0023FF]/8
@@ -140,7 +140,7 @@ export default function Parametres() {
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Couleur d'accent</label>
+                <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Couleur d'accent</label>
                 <div className="flex items-center gap-2">
                   <input type="color" value={form.couleur}
                     onChange={(e) => setForm({ ...form, couleur: e.target.value })}
@@ -225,7 +225,7 @@ export default function Parametres() {
                     </div>
                   </div>
                 </div>
-                <p className="text-[11px] text-gray-400 mt-3 leading-relaxed">
+                <p className="text-xs text-gray-400 mt-3 leading-relaxed">
                   Ces informations seront appliquées automatiquement à toutes les factures, tous les reçus et tous les rapports financiers générés en PDF — aucune autre modification n'est nécessaire.
                 </p>
               </div>

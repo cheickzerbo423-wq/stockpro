@@ -49,7 +49,7 @@ function KpiCard({ icon, label, value, sub, color = "blue" }) {
         <div className="text-xl sm:text-2xl font-black text-gray-900 leading-tight tracking-tight break-words">
           {value}
         </div>
-        <div className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wide">{label}</div>
+        <div className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-wide">{label}</div>
         {sub && (
           <div className="mt-3 pt-2.5 border-t border-gray-50 text-[10px] text-gray-400 font-medium">
             {sub}
@@ -163,7 +163,7 @@ export default function Dashboard() {
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
             <div className="w-1 h-4 rounded-full" style={{ background: BRAND }} />
-            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Taux de Recouvrement</span>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Taux de Recouvrement</span>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-xs text-gray-400">Encaissé : <strong className="text-gray-700">{fmt(kpis.encaisse)}</strong></span>
@@ -197,7 +197,7 @@ export default function Dashboard() {
           style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-4 rounded-full" style={{ background: BRAND }} />
-            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Évolution du CA — {annee}</h3>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Évolution du CA — {annee}</h3>
           </div>
           {!hasGraph ? (
             <div className="flex flex-col items-center justify-center py-14 gap-3">
@@ -230,7 +230,7 @@ export default function Dashboard() {
           style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-4 rounded-full bg-purple-600" />
-            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">CA Clients — {annee}</h3>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">CA Clients — {annee}</h3>
           </div>
           {top_clients.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-14 gap-3">
@@ -259,7 +259,7 @@ export default function Dashboard() {
           style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-4 rounded-full bg-purple-600" />
-            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Meilleurs Clients</h3>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Meilleurs Clients</h3>
           </div>
           {top_clients.length === 0 ? (
             <div className="flex flex-col items-center py-8 gap-2">
@@ -292,7 +292,7 @@ export default function Dashboard() {
           style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-4 rounded-full" style={{ background: BRAND }} />
-            <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Dernières Factures</h3>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Dernières Factures</h3>
           </div>
           {recent_factures.length === 0 ? (
             <div className="flex flex-col items-center py-8 gap-2">
@@ -311,11 +311,11 @@ export default function Dashboard() {
                     <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${paid ? "bg-emerald-400" : "bg-red-400"}`} />
                     <div className="min-w-0 flex-1">
                       <div className="text-xs font-black text-gray-800 font-mono leading-tight truncate">{f.code}</div>
-                      <div className="text-[10px] text-gray-400 truncate">{f.client_nom}</div>
+                      <div className="text-xs text-gray-400 truncate">{f.client_nom}</div>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <div className="text-xs font-bold text-gray-800">{fmt(f.montant)}</div>
-                      <div className="text-[10px] text-gray-400">{dateStr}</div>
+                      <div className="text-xs text-gray-400">{dateStr}</div>
                     </div>
                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                       paid ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"
@@ -335,7 +335,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="w-1 h-4 rounded-full bg-red-500" />
-              <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Alertes Stock</h3>
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Alertes Stock</h3>
             </div>
             {alertes_stock.length > 0 && (
               <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">

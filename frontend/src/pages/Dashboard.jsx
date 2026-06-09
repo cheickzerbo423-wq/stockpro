@@ -141,9 +141,9 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard icon="📈" label={`CA ${annee}`}
           value={fmt(kpis.ca_total)}
-          sub={`Dépenses : ${fmt(kpis.depenses_total)}`}
+          sub={`Achats stock : ${fmt(kpis.depenses_total)}`}
           color="blue" />
-        <KpiCard icon="💰" label="Bénéfice net"
+        <KpiCard icon="💰" label="Marge brute"
           value={fmt(kpis.benefice)}
           sub={`Marge : ${marge}%`}
           color={parseFloat(kpis.benefice) >= 0 ? "green" : "red"} />
@@ -398,14 +398,14 @@ export default function Dashboard() {
           <div>
             <div className="text-[11px] font-bold uppercase tracking-widest mb-1.5"
               style={{ color: beneficeColor + "99" }}>
-              Bénéfice net — {annee}
+              Marge brute — {annee}
             </div>
             <div className="text-3xl sm:text-4xl font-black leading-tight" style={{ color: beneficeColor }}>
               {fmt(kpis.benefice)}
             </div>
             <div className="text-xs mt-2 flex flex-wrap gap-x-4 gap-y-1" style={{ color: beneficeColor + "99" }}>
               <span>CA : <strong style={{ color: beneficeColor }}>{fmt(kpis.ca_total)}</strong></span>
-              <span>Dépenses : <strong style={{ color: beneficeColor }}>{fmt(kpis.depenses_total)}</strong></span>
+              <span>Coût des ventes : <strong style={{ color: beneficeColor }}>{fmt(kpis.cogs || 0)}</strong></span>
               <span>Marge : <strong style={{ color: beneficeColor }}>{marge}%</strong></span>
             </div>
           </div>

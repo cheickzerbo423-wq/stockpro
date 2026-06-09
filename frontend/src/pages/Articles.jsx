@@ -13,6 +13,7 @@ export default function Articles() {
   const [editArticle, setEditArticle] = useState(null);
   const [editForm, setEditForm]   = useState({ libelle: "", prix_achat: "", prix_vente: "", stock_min: "" });
   const [toast, setToast]         = useState(null);
+  const [delConfirm, setDelConfirm] = useState(null); // { code, libelle }
   const [form, setForm]           = useState({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5", stock_initial: "" });
   const [formErr, setFormErr]     = useState({});
   const [codeAuto, setCodeAuto]   = useState(true);
@@ -85,12 +86,15 @@ export default function Articles() {
   };
 
   const handleDelete = async (code) => {
-    if (!window.confirm(`Supprimer l'article ${code} ?`)) return;
     try {
       await deleteArticle(code);
       notify("Article supprimé.");
+      setDelConfirm(null);
       reload();
-    } catch (err) { notify(err.message, "error"); }
+    } catch (err) {
+      notify(err.message || "Erreur lors de la suppression.", "error");
+      setDelConfirm(null);
+    }
   };
 
   const totalValeur = articles.reduce((s, a) => s + (parseFloat(a.valeur_stock) || 0), 0);
@@ -161,7 +165,7 @@ export default function Articles() {
                           <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
                         </svg>
                       </button>
-                      <button onClick={() => handleDelete(a.code)} className="text-red-400 hover:text-red-600 text-xs font-bold" title="Supprimer">✕</button>
+                      <button onClick={() => setDelConfirm({ code: a.code, libelle: a.libelle })} className="text-red-400 hover:text-red-600 text-xs font-bold" title="Supprimer">✕</button>
                     </div>
                   </TD>
                 </TR>
@@ -252,6 +256,30 @@ export default function Articles() {
           <div className="flex justify-end gap-2 mt-5">
             <Btn color="gray" onClick={() => setEditArticle(null)}>Annuler</Btn>
             <Btn onClick={handleUpdate} loading={updating}>Enregistrer</Btn>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── Modal confirmation suppression ── */}
+      {delConfirm && (
+        <Modal title="Supprimer l'article" onClose={() => setDelConfirm(null)}>
+          <div className="flex items-start gap-4 mb-6">
+            <div className="w-11 h-11 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center flex-shrink-0 text-xl">🗑️</div>
+            <div>
+              <p className="text-sm font-semibold text-gray-800">
+                Supprimer <span className="font-mono text-red-600 font-bold">{delConfirm.code}</span> ?
+              </p>
+              <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                {delConfirm.libelle}
+              </p>
+              <p className="text-xs text-gray-400 mt-2 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                ⚠️ Impossible si l'article a des ventes ou des achats associés.
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Btn color="gray" onClick={() => setDelConfirm(null)}>Annuler</Btn>
+            <Btn color="red" onClick={() => handleDelete(delConfirm.code)}>Supprimer</Btn>
           </div>
         </Modal>
       )}

@@ -20,6 +20,7 @@ export default function Factures() {
   const [payModal,     setPayModal]     = useState(null);
   const [payAmount,    setPayAmount]    = useState("");
   const [toast,        setToast]        = useState(null);
+  const [loadingDetail, setLoadingDetail] = useState(null);
   const [loadingPDF,   setLoadingPDF]   = useState(null);
   const [loadingRecu,  setLoadingRecu]  = useState(null);
   const [search,       setSearch]       = useState("");
@@ -37,11 +38,13 @@ export default function Factures() {
   };
 
   const viewFacture = async (facture) => {
+    setLoadingDetail(facture.code);
     try {
       const data = await facturesService.getOne(facture.code);
       setSelected(facture);
       setDetail(data);
-    } catch { notify("Erreur lors du chargement.", "error"); }
+    } catch { notify("Impossible de charger le détail de la facture.", "error"); }
+    finally { setLoadingDetail(null); }
   };
 
   const handlePDF = async (code, download = false) => {
@@ -204,8 +207,15 @@ export default function Factures() {
                 <TD>
                   <button
                     onClick={() => viewFacture(f)}
-                    className="font-mono text-xs text-[#0023FF] hover:text-[#0019CC] hover:underline font-bold"
-                  >{f.code}</button>
+                    disabled={loadingDetail === f.code}
+                    className="font-mono text-xs text-[#0023FF] hover:text-[#0019CC] underline font-bold disabled:opacity-50 flex items-center gap-1"
+                    title="Voir le détail"
+                  >
+                    {loadingDetail === f.code
+                      ? <span className="inline-block w-3 h-3 border-2 border-[#0023FF] border-t-transparent rounded-full animate-spin" />
+                      : null}
+                    {f.code}
+                  </button>
                 </TD>
                 <TD>{fmtDate(f.date_facture)}</TD>
                 <TD bold>{f.client_nom}</TD>

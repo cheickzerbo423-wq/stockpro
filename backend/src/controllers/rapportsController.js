@@ -18,7 +18,7 @@ async function getRapport(req, res) {
     const fin   = req.query.fin   || now.toISOString().split("T")[0];
     const entId = req.user.entreprise_id;
 
-    const [ventes, achats, factures, graphVentes, graphAchats, topArticles] = await Promise.all([
+    const [ventes, achats, factures, graphVentes, graphAchats, topArticles, cogsRow] = await Promise.all([
       db.query(
         `SELECT
            COALESCE(SUM(montant_total), 0)            AS ca_total,
@@ -30,16 +30,14 @@ async function getRapport(req, res) {
         [debut, fin, entId]
       ),
 
-      // total_achats / total_dettes recalculés dynamiquement (prix_achat * quantite)
-      // au lieu de SUM(achats.montant_total) — cette colonne stockée peut être à 0
-      // sur d'anciens enregistrements (cf. commentaire dans achatsController.js
-      // getAll, et le même correctif déjà appliqué dans clientsController.js).
+      // total_achats = trésorerie dépensée pour le stock (achats de la période)
+      // cogs = coût des marchandises vendues (prix_achat × qté vendue sur la période)
       db.query(
         `SELECT
-           COUNT(*)                                          AS nb_achats,
-           COALESCE(SUM(prix_achat * quantite), 0)           AS total_achats,
-           COALESCE(SUM(montant_paye), 0)                    AS total_paye,
-           COALESCE(SUM(prix_achat * quantite - montant_paye), 0) AS total_dettes
+           COUNT(*)                                                       AS nb_achats,
+           COALESCE(SUM(prix_achat * quantite), 0)                        AS total_achats,
+           COALESCE(SUM(montant_paye), 0)                                 AS total_paye,
+           COALESCE(SUM(prix_achat * quantite - montant_paye), 0)         AS total_dettes
          FROM achats
          WHERE entreprise_id = $3 AND date_achat BETWEEN $1 AND $2`,
         [debut, fin, entId]
@@ -79,17 +77,29 @@ async function getRapport(req, res) {
          GROUP BY article_code, libelle ORDER BY ca DESC LIMIT 5`,
         [debut, fin, entId]
       ),
+
+      // COGS : coût des marchandises vendues sur la période
+      db.query(
+        `SELECT COALESCE(SUM(lv.quantite * a.prix_achat), 0) AS cogs
+         FROM lignes_vente lv
+         JOIN articles a ON a.code = lv.article_code AND a.entreprise_id = lv.entreprise_id
+         WHERE lv.entreprise_id = $3 AND lv.date_vente BETWEEN $1 AND $2`,
+        [debut, fin, entId]
+      ),
     ]);
 
-    const v  = ventes.rows[0];
-    const a  = achats.rows[0];
-    const f  = factures.rows[0];
+    const v    = ventes.rows[0];
+    const a    = achats.rows[0];
+    const f    = factures.rows[0];
+    const cogs = parseInt(cogsRow.rows[0]?.cogs || 0);
 
     res.json({
       periode:     { debut, fin },
       ventes:      { ca_total: parseInt(v.ca_total), nb_factures: parseInt(v.nb_factures), nb_lignes: parseInt(v.nb_lignes), qte_totale: parseInt(v.qte_totale) },
       achats:      { nb_achats: parseInt(a.nb_achats), total_achats: parseInt(a.total_achats), total_paye: parseInt(a.total_paye), total_dettes: parseInt(a.total_dettes) },
-      benefice:    parseInt(v.ca_total) - parseInt(a.total_achats),
+      cogs,
+      // marge_brute = CA - coût des ventes (≠ CA - total achats stock)
+      benefice:    parseInt(v.ca_total) - cogs,
       factures:    { nb_total: parseInt(f.nb_total), nb_reglees: parseInt(f.nb_reglees), nb_impayees: parseInt(f.nb_impayees), montant_total: parseInt(f.montant_total), montant_encaisse: parseInt(f.montant_encaisse), montant_creances: parseInt(f.montant_creances) },
       graphique:   { ventes: graphVentes.rows, achats: graphAchats.rows },
       top_articles: topArticles.rows,

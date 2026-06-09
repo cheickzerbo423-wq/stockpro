@@ -120,13 +120,20 @@ router.get("/dashboard", authenticate, async (req, res) => {
         SELECT
           (SELECT COALESCE(SUM(montant_total),0) FROM lignes_vente WHERE annee = $1 AND entreprise_id = $2)   AS ca_total,
           (SELECT COALESCE(SUM(valeur_stock),0)  FROM vue_stock WHERE actif = TRUE AND entreprise_id = $2)      AS valeur_stock,
-          -- depenses_total / benefice recalculés dynamiquement (prix_achat * quantite)
-          -- au lieu de SUM(achats.montant_total) : cette colonne stockée peut être à 0
-          -- sur d'anciens enregistrements (cf. correctif identique appliqué dans
-          -- clientsController.js, ventesController.js et rapportsController.js).
+          -- depenses_total = total achats stock (trésorerie dépensée)
           (SELECT COALESCE(SUM(prix_achat * quantite),0) FROM achats WHERE annee = $1 AND entreprise_id = $2)  AS depenses_total,
+          -- cogs = coût des marchandises réellement vendues (prix_achat × qté vendue)
+          -- C'est la base correcte du bénéfice : pas le total des achats stock.
+          (SELECT COALESCE(SUM(lv.quantite * a.prix_achat), 0)
+           FROM lignes_vente lv
+           JOIN articles a ON a.code = lv.article_code AND a.entreprise_id = lv.entreprise_id
+           WHERE lv.annee = $1 AND lv.entreprise_id = $2)                                                       AS cogs,
+          -- benefice = marge brute (CA - coût des ventes), pas CA - achats stock
           (SELECT COALESCE(SUM(montant_total),0) FROM lignes_vente WHERE annee = $1 AND entreprise_id = $2)
-           - (SELECT COALESCE(SUM(prix_achat * quantite),0) FROM achats WHERE annee = $1 AND entreprise_id = $2) AS benefice,
+           - (SELECT COALESCE(SUM(lv.quantite * a.prix_achat), 0)
+              FROM lignes_vente lv
+              JOIN articles a ON a.code = lv.article_code AND a.entreprise_id = lv.entreprise_id
+              WHERE lv.annee = $1 AND lv.entreprise_id = $2)                                                    AS benefice,
           (SELECT COUNT(*) FROM factures WHERE statut = FALSE AND entreprise_id = $2)                           AS factures_impayees,
           (SELECT COALESCE(SUM(reste),0)  FROM factures WHERE statut = FALSE AND entreprise_id = $2)           AS montant_a_recouvrer,
           (SELECT COALESCE(SUM(montant),0) FROM factures WHERE EXTRACT(YEAR FROM date_facture)=$1 AND entreprise_id = $2) AS ca_facture,

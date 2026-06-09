@@ -33,7 +33,7 @@ async function getAll(req, res) {
 // GET /api/factures/:code — Détail d'une facture
 async function getOne(req, res) {
   try {
-    const code = req.params[0] || req.params.code;
+    const code = decodeURIComponent(req.params[0] || req.params.code || "");
     const facture = await db.query(
       `SELECT * FROM factures WHERE code = $1 AND entreprise_id = $2`,
       [code, req.user.entreprise_id]
@@ -54,7 +54,7 @@ async function getOne(req, res) {
 // PUT /api/factures/:code/paiement — Mettre à jour le paiement
 async function updatePaiement(req, res) {
   try {
-    const code = req.params[0] || req.params.code;
+    const code = decodeURIComponent(req.params[0] || req.params.code || "");
     const { montant_paye } = req.body;
     if (montant_paye === undefined || isNaN(parseFloat(montant_paye)))
       return res.status(400).json({ message: "Montant payé invalide." });
@@ -105,7 +105,7 @@ function formatMoney(n, devise) {
 // GET /api/factures/:code/pdf — Générer la facture en PDF
 async function generatePDF(req, res) {
   try {
-    const code = req.params[0] || req.params.code;
+    const code = decodeURIComponent(req.params[0] || req.params.code || "");
     const entId = req.user.entreprise_id;
     const facture = await db.query(
       `SELECT * FROM factures WHERE code = $1 AND entreprise_id = $2`,

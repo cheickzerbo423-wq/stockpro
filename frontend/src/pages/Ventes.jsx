@@ -52,17 +52,17 @@ function MiniForm({ title, icon, onSave, onCancel, saving }) {
 
 /* ─── Modal Nouvelle Vente ─────────────────────────────── */
 function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient }) {
-  const [q, setQ]               = useState("");
-  const [client, setClient]     = useState("");
-  const [clientId, setClientId] = useState("");
-  const [clientQ, setClientQ]   = useState("");
+  const [articleQ, setArticleQ]   = useState("");
+  const [articleOpen, setArticleOpen] = useState(false);
+  const [client, setClient]       = useState("");
+  const [clientId, setClientId]   = useState("");
+  const [clientQ, setClientQ]     = useState("");
   const [clientOpen, setClientOpen] = useState(false);
-  const [showNewClient, setShowNewClient]   = useState(false);
-  const [savingClient, setSavingClient]     = useState(false);
-  const [datev, setDatev]       = useState(today());
-  const [panier, setPanier]     = useState([]);
-  const [paye, setPaye]         = useState("");
-  const [mobileTab, setMobileTab] = useState("catalogue"); // "catalogue" | "panier"
+  const [showNewClient, setShowNewClient] = useState(false);
+  const [savingClient, setSavingClient]   = useState(false);
+  const [datev, setDatev]         = useState(today());
+  const [panier, setPanier]       = useState([]);
+  const [paye, setPaye]           = useState("");
 
   const clientsFiltres = clientQ.trim()
     ? clients.filter((c) => c.nom.toLowerCase().includes(clientQ.toLowerCase()))
@@ -71,13 +71,14 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
   const totalPanier = panier.reduce((s, p) => s + p.prix_vente * p.quantite, 0);
   const monnaie     = paye !== "" ? (+paye - totalPanier) : null;
 
-  const filtered = useMemo(() => {
-    if (!q.trim()) return articles;
-    const s = q.toLowerCase();
-    return articles.filter(
-      (a) => a.code.toLowerCase().includes(s) || a.libelle.toLowerCase().includes(s)
-    );
-  }, [q, articles]);
+  /* Articles filtrés pour le dropdown */
+  const filteredArticles = useMemo(() => {
+    const s = articleQ.trim().toLowerCase();
+    const list = s
+      ? articles.filter((a) => a.code.toLowerCase().includes(s) || a.libelle.toLowerCase().includes(s))
+      : articles;
+    return list.slice(0, 10);
+  }, [articleQ, articles]);
 
   const addToCart = (art) => {
     const stock = parseInt(art.stock_restant) || 0;
@@ -87,6 +88,8 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
       if (ex) return prev.map((p) => p.code === art.code ? { ...p, quantite: p.quantite + 1 } : p);
       return [...prev, { code: art.code, libelle: art.libelle, prix_vente: parseInt(art.prix_vente) || 0, quantite: 1 }];
     });
+    setArticleQ("");
+    setArticleOpen(false);
   };
 
   const setQty = (code, val) => {
@@ -101,318 +104,269 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
 
   const remove = (code) => setPanier((prev) => prev.filter((p) => p.code !== code));
 
-  const qteInCart = (code) => {
-    const item = panier.find((p) => p.code === code);
-    return item ? item.quantite : 0;
-  };
-
   return (
-    /* Overlay plein écran */
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "rgba(15,23,42,0.55)", backdropFilter: "blur(2px)" }}>
-      {/* Fenêtre */}
-      <div className="flex flex-col m-auto w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden" style={{ maxHeight: "92vh", background: "#fff" }}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-4"
+      style={{ background: "rgba(15,23,42,0.6)", backdropFilter: "blur(3px)" }}>
+
+      <div className="flex flex-col w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden"
+        style={{ maxHeight: "96vh" }}>
 
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0"
+          style={{ background: "linear-gradient(135deg,#0023FF 0%,#4B6BFF 100%)" }}>
           <div>
-            <h2 className="text-lg font-black text-gray-900">Nouvelle Vente</h2>
-            <p className="text-xs text-gray-400 mt-0.5">{panier.length} article(s) · <span className="font-bold text-[#0023FF]">{fmt(totalPanier)}</span></p>
+            <h2 className="text-base font-black text-white">Nouvelle Vente</h2>
+            <p className="text-xs text-blue-200 mt-0.5">
+              {panier.length > 0
+                ? <><span className="font-bold text-white">{panier.length}</span> article(s) · <span className="font-bold text-white">{fmt(totalPanier)}</span></>
+                : "Sélectionnez un client et ajoutez des articles"}
+            </p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 text-sm font-bold">✕</button>
+          <button onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-sm font-bold transition">✕</button>
         </div>
 
-        {/* ── Client + Date ── */}
-        <div className="grid grid-cols-2 gap-3 px-4 py-3 border-b border-gray-100 flex-shrink-0">
-          {/* Combobox client avec recherche */}
-          <div className="relative">
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Client *</label>
+        {/* ── Formulaire (scrollable) ── */}
+        <div className="flex-1 overflow-y-auto">
+
+          {/* Client + Date */}
+          <div className="grid grid-cols-2 gap-3 px-4 pt-4 pb-2">
+            {/* Combobox client */}
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Client *</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
+                <input
+                  type="text"
+                  value={clientOpen ? clientQ : client}
+                  onChange={(e) => { setClientQ(e.target.value); setClientOpen(true); setClient(""); setClientId(""); }}
+                  onFocus={() => { setClientOpen(true); setClientQ(""); }}
+                  onBlur={() => setTimeout(() => setClientOpen(false), 150)}
+                  placeholder="Chercher client…"
+                  className={`w-full pl-8 pr-7 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] transition
+                    ${client ? "border-[#B3BFFF] bg-[#E6EAFF] text-[#0019CC] font-semibold" : "border-gray-200 bg-white"}`}
+                />
+                {client && (
+                  <button onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => { setClient(""); setClientId(""); setClientQ(""); }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 text-xs">✕</button>
+                )}
+              </div>
+              {clientOpen && (
+                <div className="absolute z-30 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-56 overflow-y-auto">
+                  <button onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => { setClientOpen(false); setShowNewClient(true); }}
+                    className="w-full text-left px-4 py-2.5 text-sm font-bold text-[#0023FF] hover:bg-[#E6EAFF] transition flex items-center gap-2 border-b border-[#B3BFFF]">
+                    <span className="w-6 h-6 rounded-full bg-[#0023FF] text-white text-xs font-black flex items-center justify-center flex-shrink-0">+</span>
+                    Nouveau client
+                  </button>
+                  {clientsFiltres.length === 0
+                    ? <div className="px-4 py-3 text-xs text-gray-400 text-center">Aucun client trouvé</div>
+                    : clientsFiltres.map((c) => (
+                      <button key={c.id} onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => { setClient(c.nom); setClientId(c.id); setClientQ(c.nom); setClientOpen(false); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[#E6EAFF] hover:text-[#0019CC] transition flex items-center gap-2
+                          ${client === c.nom ? "bg-[#E6EAFF] text-[#0019CC] font-semibold" : "text-gray-700"}`}>
+                        <span className="w-6 h-6 rounded-full bg-[#E6EAFF] text-[#0023FF] text-xs font-bold flex items-center justify-center flex-shrink-0">
+                          {c.nom[0].toUpperCase()}
+                        </span>
+                        {c.nom}
+                      </button>
+                    ))}
+                </div>
+              )}
+              {showNewClient && (
+                <MiniForm title="Nouveau Client" icon="👤" saving={savingClient}
+                  onCancel={() => setShowNewClient(false)}
+                  onSave={async ({ nom, contact }) => {
+                    setSavingClient(true);
+                    try {
+                      const created = await onCreateClient({ nom, contact });
+                      setClient(nom); setClientId(created?.id || ""); setClientQ(nom);
+                      setShowNewClient(false);
+                    } finally { setSavingClient(false); }
+                  }} />
+              )}
+            </div>
+            <Input label="Date *" type="date" value={datev} onChange={(e) => setDatev(e.target.value)} />
+          </div>
+
+          {/* ── Combobox article ── */}
+          <div className="px-4 pb-3 relative">
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Ajouter un article</label>
+            <div className="relative">
+              {/* Icône loupe */}
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">🔍</span>
               <input
                 type="text"
-                value={clientOpen ? clientQ : client}
-                onChange={(e) => { setClientQ(e.target.value); setClientOpen(true); setClient(""); setClientId(""); }}
-                onFocus={() => { setClientOpen(true); setClientQ(""); }}
-                onBlur={() => setTimeout(() => setClientOpen(false), 150)}
-                placeholder="Rechercher un client…"
-                className={`w-full pl-8 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] transition
-                  ${client ? "border-[#B3BFFF] bg-[#E6EAFF] text-[#0019CC] font-semibold" : "border-gray-200 bg-white text-gray-800"}`}
+                value={articleQ}
+                onChange={(e) => { setArticleQ(e.target.value); setArticleOpen(true); }}
+                onFocus={() => setArticleOpen(true)}
+                onBlur={() => setTimeout(() => setArticleOpen(false), 160)}
+                placeholder="Rechercher par code ou nom…"
+                className="w-full pl-9 pr-9 py-2.5 border-2 border-[#B3BFFF] rounded-xl text-sm bg-[#F7F8FF] focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] focus:border-[#0023FF] focus:bg-white transition"
+                autoComplete="off"
               />
-              {client && (
-                <button
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => { setClient(""); setClientId(""); setClientQ(""); }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 text-xs"
-                >✕</button>
+              {articleQ && (
+                <button onClick={() => { setArticleQ(""); setArticleOpen(false); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">✕</button>
               )}
             </div>
-            {clientOpen && (
-              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
-                {/* Bouton nouveau client toujours visible en tête */}
-                <button
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => { setClientOpen(false); setShowNewClient(true); }}
-                  className="w-full text-left px-4 py-2.5 text-sm font-bold text-[#0023FF] hover:bg-[#E6EAFF] transition flex items-center gap-2 border-b border-[#B3BFFF]"
-                >
-                  <span className="w-6 h-6 rounded-full bg-[#0023FF] text-white text-xs font-black flex items-center justify-center flex-shrink-0">+</span>
-                  Nouveau client
-                </button>
-                {clientsFiltres.length === 0 ? (
-                  <div className="px-4 py-3 text-xs text-gray-400 text-center">Aucun client trouvé</div>
+
+            {/* Dropdown articles */}
+            {articleOpen && (
+              <div className="absolute z-30 left-4 right-4 mt-1 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden"
+                style={{ maxHeight: "280px", overflowY: "auto" }}>
+                {filteredArticles.length === 0 ? (
+                  <div className="px-4 py-5 text-center text-sm text-gray-400">
+                    <div className="text-2xl mb-1">🔎</div>
+                    Aucun article trouvé
+                  </div>
                 ) : (
-                  clientsFiltres.map((c) => (
-                    <button
-                      key={c.id}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => { setClient(c.nom); setClientId(c.id); setClientQ(c.nom); setClientOpen(false); }}
-                      className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[#E6EAFF] hover:text-[#0019CC] transition flex items-center gap-2
-                        ${client === c.nom ? "bg-[#E6EAFF] text-[#0019CC] font-semibold" : "text-gray-700"}`}
-                    >
-                      <span className="w-6 h-6 rounded-full bg-[#E6EAFF] text-[#0023FF] text-xs font-bold flex items-center justify-center flex-shrink-0">
-                        {c.nom[0].toUpperCase()}
+                  <>
+                    <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-100">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+                        {articleQ.trim() ? `${filteredArticles.length} résultat(s)` : "Articles disponibles"}
                       </span>
-                      {c.nom}
-                    </button>
-                  ))
+                    </div>
+                    {filteredArticles.map((a) => {
+                      const stock = parseInt(a.stock_restant) || 0;
+                      const rupture = stock <= 0;
+                      const inCart = panier.find((p) => p.code === a.code)?.quantite || 0;
+                      const stockLow = !rupture && stock <= (parseInt(a.stock_min) || 5);
+                      return (
+                        <button
+                          key={a.code}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => !rupture && addToCart(a)}
+                          disabled={rupture}
+                          className={`w-full text-left px-4 py-3 border-b border-gray-50 last:border-0 transition flex items-center gap-3
+                            ${rupture ? "opacity-40 cursor-not-allowed bg-white" : "hover:bg-[#E6EAFF] cursor-pointer"}
+                            ${inCart > 0 ? "bg-[#F0F3FF]" : ""}`}
+                        >
+                          {/* Code + nom */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-[11px] font-black text-[#0023FF] bg-[#E6EAFF] border border-[#B3BFFF] px-1.5 py-0.5 rounded font-mono leading-none">{a.code}</span>
+                              {inCart > 0 && (
+                                <span className="text-[10px] bg-[#0023FF] text-white font-bold px-1.5 py-0.5 rounded-full leading-none">×{inCart} dans le panier</span>
+                              )}
+                            </div>
+                            <div className="text-sm font-semibold text-gray-800 truncate">{a.libelle}</div>
+                          </div>
+                          {/* Prix + stock */}
+                          <div className="text-right shrink-0">
+                            <div className="text-sm font-bold text-gray-900">{fmtN(a.prix_vente)} <span className="text-[11px] font-normal text-gray-400">FCFA</span></div>
+                            <div className={`text-[11px] font-bold mt-0.5
+                              ${rupture ? "text-red-500" : stockLow ? "text-amber-500" : "text-emerald-500"}`}>
+                              {rupture ? "Rupture" : `Stock : ${stock}`}
+                            </div>
+                          </div>
+                          {/* + */}
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-base font-black shrink-0 transition
+                            ${rupture ? "bg-gray-100 text-gray-300" : inCart > 0 ? "bg-[#0023FF] text-white" : "bg-gray-100 text-gray-500 group-hover:bg-[#0023FF] group-hover:text-white"}`}>
+                            +
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </>
                 )}
               </div>
             )}
-
-            {/* Mini-form nouveau client */}
-            {showNewClient && (
-              <MiniForm
-                title="Nouveau Client"
-                icon="👤"
-                saving={savingClient}
-                onCancel={() => setShowNewClient(false)}
-                onSave={async ({ nom, contact }) => {
-                  setSavingClient(true);
-                  try {
-                    const created = await onCreateClient({ nom, contact });
-                    setClient(nom); setClientId(created?.id || ""); setClientQ(nom);
-                    setShowNewClient(false);
-                  } finally { setSavingClient(false); }
-                }}
-              />
-            )}
           </div>
-          <Input label="Date *" type="date" value={datev} onChange={(e) => setDatev(e.target.value)} />
-        </div>
 
-        {/* ── Onglets mobile ── */}
-        <div className="flex md:hidden border-b border-gray-100 flex-shrink-0">
-          <button
-            onClick={() => setMobileTab("catalogue")}
-            className={`flex-1 py-2.5 text-xs font-bold transition ${mobileTab === "catalogue" ? "border-b-2 border-[#0023FF] text-[#0023FF] bg-[#E6EAFF]" : "text-gray-500"}`}
-          >
-            🛍️ Catalogue
-          </button>
-          <button
-            onClick={() => setMobileTab("panier")}
-            className={`flex-1 py-2.5 text-xs font-bold transition relative ${mobileTab === "panier" ? "border-b-2 border-[#0023FF] text-[#0023FF] bg-[#E6EAFF]" : "text-gray-500"}`}
-          >
-            🛒 Panier
-            {panier.length > 0 && (
-              <span className="ml-1 bg-[#0023FF] text-white text-xs font-black px-1.5 py-0.5 rounded-full">{panier.length}</span>
-            )}
-          </button>
-        </div>
-
-        {/* ── Corps : deux colonnes desktop / onglets mobile ── */}
-        <div className="flex flex-1 overflow-hidden min-h-0">
-
-          {/* ═══ COLONNE GAUCHE : Catalogue ═══ */}
-          <div className={`flex flex-col w-full md:w-3/5 border-r border-gray-100 min-h-0 ${mobileTab === "panier" ? "hidden md:flex" : "flex"}`}>
-            {/* Barre de recherche */}
-            <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0">
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
-                <input
-                  className="w-full pl-9 pr-8 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] focus:bg-white"
-                  placeholder="Rechercher par code ou nom…"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                />
-                {q && <button onClick={() => setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">✕</button>}
+          {/* ── Panier ── */}
+          <div className="px-4 pb-2">
+            {panier.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-gray-300 text-sm text-center rounded-2xl border-2 border-dashed border-gray-100">
+                <div className="text-3xl mb-2">🛒</div>
+                <span className="text-xs text-gray-400">Aucun article ajouté</span>
               </div>
-            </div>
-            {/* Liste produits */}
-            <div className="flex-1 overflow-y-auto">
-              {filtered.length === 0 && (
-                <div className="p-8 text-center text-sm text-gray-400">Aucun article trouvé</div>
-              )}
-              {filtered.map((a) => {
-                const stock = parseInt(a.stock_restant) || 0;
-                const inCart = qteInCart(a.code);
-                const rupture = stock <= 0;
-                return (
-                  <div
-                    key={a.code}
-                    onClick={() => !rupture && addToCart(a)}
-                    className={`flex items-center gap-3 px-4 py-3 border-b border-gray-50 transition-colors
-                      ${rupture ? "opacity-40 cursor-not-allowed bg-white" : "cursor-pointer hover:bg-[#E6EAFF] active:bg-[#E6EAFF]"}
-                      ${inCart > 0 ? "bg-[#E6EAFF]" : ""}`}
-                  >
-                    {/* Code + Libellé */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-[#0023FF] bg-[#E6EAFF] border border-[#B3BFFF] px-1.5 py-0.5 rounded font-mono">{a.code}</span>
-                        {inCart > 0 && (
-                          <span className="text-xs bg-[#0023FF] text-white font-bold px-1.5 py-0.5 rounded-full">{inCart}</span>
-                        )}
+            ) : (
+              <div className="rounded-2xl border border-gray-100 overflow-hidden">
+                {/* En-tête panier */}
+                <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-100">
+                  <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Panier — {panier.length} article(s)</span>
+                  <button onClick={() => setPanier([])} className="text-[11px] text-red-400 hover:text-red-600 font-semibold">Vider</button>
+                </div>
+                {panier.map((p) => (
+                  <div key={p.code} className="px-3 py-2.5 border-b border-gray-50 last:border-0">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[11px] font-black text-[#0023FF] font-mono bg-[#E6EAFF] px-1.5 py-0.5 rounded mr-1.5">{p.code}</span>
+                        <span className="text-sm font-semibold text-gray-800 truncate">{p.libelle}</span>
                       </div>
-                      <div className="text-sm font-semibold text-gray-800 truncate mt-0.5">{a.libelle}</div>
+                      <button onClick={() => remove(p.code)}
+                        className="ml-2 w-5 h-5 rounded-full bg-red-50 text-red-400 hover:bg-red-100 flex items-center justify-center text-xs shrink-0">✕</button>
                     </div>
-                    {/* Prix + Stock */}
-                    <div className="text-right shrink-0">
-                      <div className="text-sm font-bold text-gray-900">{fmtN(a.prix_vente)} <span className="text-xs font-normal text-gray-400">FCFA</span></div>
-                      <div className={`text-xs font-semibold mt-0.5 ${rupture ? "text-red-500" : stock <= (parseInt(a.stock_min) || 5) ? "text-amber-500" : "text-emerald-500"}`}>
-                        Stock : {stock}
+                    <div className="flex items-center gap-2">
+                      {/* − qty + */}
+                      <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
+                        <button onClick={() => setQty(p.code, p.quantite - 1)}
+                          className="w-6 h-6 rounded-md bg-white shadow-sm text-gray-600 font-bold text-sm hover:text-[#0023FF] flex items-center justify-center">−</button>
+                        <input type="number" min="1" value={p.quantite}
+                          onChange={(e) => setQty(p.code, e.target.value)}
+                          className="w-9 text-center text-sm font-bold bg-transparent border-0 focus:outline-none" />
+                        <button onClick={() => setQty(p.code, p.quantite + 1)}
+                          className="w-6 h-6 rounded-md bg-[#0023FF] text-white font-bold text-sm flex items-center justify-center">+</button>
                       </div>
+                      {/* Prix unitaire */}
+                      <input type="number" min="0" value={p.prix_vente}
+                        onChange={(e) => setPrice(p.code, e.target.value)}
+                        className="flex-1 text-right text-sm border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B3BFFF] min-w-0"
+                        title="Prix unitaire" />
+                      <span className="text-sm font-black text-[#0023FF] shrink-0 w-20 text-right">{fmt(p.prix_vente * p.quantite)}</span>
                     </div>
-                    {/* Bouton + */}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); if (!rupture) addToCart(a); }}
-                      disabled={rupture}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold shrink-0 transition
-                        ${rupture ? "bg-gray-100 text-gray-300" : inCart > 0 ? "bg-[#0023FF] text-white hover:bg-[#0023FF]" : "bg-gray-100 text-gray-600 hover:bg-[#0023FF] hover:text-white"}`}
-                    >+</button>
                   </div>
-                );
-              })}
-            </div>
-            <div className="px-4 py-2 border-t border-gray-100 flex-shrink-0 flex items-center justify-between">
-              <span className="text-xs text-gray-400">{filtered.length} produit(s)</span>
-              {panier.length > 0 && (
-                <button
-                  onClick={() => setMobileTab("panier")}
-                  className="md:hidden text-xs font-bold text-white bg-[#0023FF] px-3 py-1.5 rounded-xl"
-                >
-                  Voir panier ({panier.length}) →
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* ═══ COLONNE DROITE : Panier + Paiement ═══ */}
-          <div className={`flex-col w-full md:w-2/5 min-h-0 ${mobileTab === "catalogue" ? "hidden md:flex" : "flex"}`}>
-
-            {/* Titre panier */}
-            <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0 flex items-center justify-between">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Panier</span>
-              {panier.length > 0 && (
-                <button onClick={() => setPanier([])} className="text-xs text-red-400 hover:text-red-600">Vider</button>
-              )}
-            </div>
-
-            {/* Lignes panier */}
-            <div className="flex-1 overflow-y-auto">
-              {panier.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-full text-gray-300 text-sm p-6 text-center">
-                  <div className="text-4xl mb-2">🛒</div>
-                  Cliquez sur un produit<br/>pour l'ajouter
-                </div>
-              )}
-              {panier.map((p) => (
-                <div key={p.code} className="px-4 py-3 border-b border-gray-50">
-                  {/* Nom + Supprimer */}
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-bold text-[#0023FF] font-mono">{p.code}</div>
-                      <div className="text-sm font-semibold text-gray-800 truncate">{p.libelle}</div>
-                    </div>
-                    <button onClick={() => remove(p.code)} className="ml-2 w-5 h-5 rounded-full bg-red-50 text-red-400 hover:bg-red-100 flex items-center justify-center text-xs shrink-0">✕</button>
-                  </div>
-                  {/* Quantité + Prix + Total */}
-                  <div className="flex items-center gap-2">
-                    {/* − qty + */}
-                    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
-                      <button onClick={() => setQty(p.code, p.quantite - 1)} className="w-6 h-6 rounded-md bg-white shadow-sm text-gray-600 font-bold text-sm hover:text-[#0023FF] flex items-center justify-center">−</button>
-                      <input
-                        type="number" min="1"
-                        value={p.quantite}
-                        onChange={(e) => setQty(p.code, e.target.value)}
-                        className="w-9 text-center text-sm font-bold bg-transparent border-0 focus:outline-none"
-                      />
-                      <button onClick={() => setQty(p.code, p.quantite + 1)} className="w-6 h-6 rounded-md bg-[#0023FF] text-white font-bold text-sm hover:bg-[#0023FF] flex items-center justify-center">+</button>
-                    </div>
-                    {/* Prix unitaire */}
-                    <input
-                      type="number" min="0"
-                      value={p.prix_vente}
-                      onChange={(e) => setPrice(p.code, e.target.value)}
-                      className="flex-1 text-right text-sm border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B3BFFF] min-w-0"
-                      title="Prix unitaire"
-                    />
-                    {/* Total ligne */}
-                    <span className="text-sm font-black text-[#0023FF] shrink-0 w-20 text-right">{fmt(p.prix_vente * p.quantite)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* ── Paiement ── */}
-            {panier.length > 0 && (
-              <div className="border-t border-gray-200 px-4 py-4 flex-shrink-0 space-y-3">
-                {/* Total */}
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-bold text-gray-600">Total</span>
-                  <span className="text-xl font-black text-[#0023FF]">{fmt(totalPanier)}</span>
-                </div>
-                {/* Raccourcis */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setPaye(String(totalPanier))}
-                    className="flex-1 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold hover:bg-emerald-200 transition"
-                  >✅ Comptant</button>
-                  <button
-                    onClick={() => setPaye("0")}
-                    className="flex-1 py-1.5 rounded-lg bg-red-100 text-red-600 text-xs font-bold hover:bg-red-200 transition"
-                  >📋 Crédit</button>
-                </div>
-                {/* Champ montant */}
-                <div>
-                  <label className="text-xs text-gray-500 font-semibold mb-1 block">Montant encaissé (FCFA)</label>
-                  <input
-                    type="number"
-                    value={paye}
-                    onChange={(e) => setPaye(e.target.value)}
-                    placeholder={`${totalPanier}`}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF]"
-                  />
-                </div>
-                {/* Monnaie / Reste */}
-                {monnaie !== null && (
-                  <div className={`flex justify-between items-center px-3 py-2 rounded-xl text-sm font-bold
-                    ${monnaie >= 0 ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-600 border border-red-200"}`}>
-                    <span>{monnaie >= 0 ? "Monnaie à rendre" : "Reste à payer"}</span>
-                    <span>{fmt(Math.abs(monnaie))}</span>
-                  </div>
-                )}
+                ))}
               </div>
             )}
-
-            {/* ── Footer boutons ── */}
-            <div className="px-4 py-3 border-t border-gray-100 flex gap-2 flex-shrink-0">
-              {/* Mobile: bouton retour catalogue */}
-              <button
-                onClick={() => setMobileTab("catalogue")}
-                className="md:hidden px-3 py-2 rounded-xl text-xs font-bold bg-gray-100 text-gray-500 hover:bg-gray-200 shrink-0"
-              >← Catalogue</button>
-              {/* Desktop: annuler */}
-              <Btn color="gray" onClick={onClose} className="hidden md:block flex-1">Annuler</Btn>
-              <button
-                disabled={saving || panier.length === 0 || !client}
-                onClick={() => onSave({ client, clientId, datev, paye, panier })}
-                className={`flex-1 py-2 rounded-xl text-sm font-bold transition
-                  ${panier.length === 0 || !client
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm"}`}
-              >
-                {saving ? "Enregistrement…" : `Valider${panier.length > 0 ? ` (${panier.length})` : ""}`}
-              </button>
-            </div>
           </div>
+
+          {/* ── Paiement ── */}
+          {panier.length > 0 && (
+            <div className="mx-4 mb-4 rounded-2xl border border-gray-200 px-4 py-3 space-y-3 bg-gray-50">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-bold text-gray-600">Total</span>
+                <span className="text-xl font-black text-[#0023FF]">{fmt(totalPanier)}</span>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setPaye(String(totalPanier))}
+                  className="flex-1 py-2 rounded-xl bg-emerald-100 text-emerald-700 text-xs font-bold hover:bg-emerald-200 transition">✅ Comptant</button>
+                <button onClick={() => setPaye("0")}
+                  className="flex-1 py-2 rounded-xl bg-red-100 text-red-600 text-xs font-bold hover:bg-red-200 transition">📋 Crédit</button>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 font-semibold mb-1 block">Montant encaissé (FCFA)</label>
+                <input type="number" value={paye} onChange={(e) => setPaye(e.target.value)}
+                  placeholder={`${totalPanier}`}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white" />
+              </div>
+              {monnaie !== null && (
+                <div className={`flex justify-between items-center px-3 py-2 rounded-xl text-sm font-bold
+                  ${monnaie >= 0 ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-600 border border-red-200"}`}>
+                  <span>{monnaie >= 0 ? "Monnaie à rendre" : "Reste à payer"}</span>
+                  <span>{fmt(Math.abs(monnaie))}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ── Footer ── */}
+        <div className="px-4 py-3 border-t border-gray-100 flex gap-2 flex-shrink-0 bg-white">
+          <Btn color="gray" onClick={onClose} className="flex-1">Annuler</Btn>
+          <button
+            disabled={saving || panier.length === 0 || !client}
+            onClick={() => onSave({ client, clientId, datev, paye, panier })}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition shadow-sm
+              ${panier.length === 0 || !client
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-emerald-500 text-white hover:bg-emerald-600"}`}
+          >
+            {saving ? "Enregistrement…" : panier.length > 0 ? `✓ Valider (${panier.length} art.)` : "Valider"}
+          </button>
         </div>
       </div>
     </div>

@@ -141,18 +141,17 @@ async function update(req, res) {
 }
 
 // DELETE /api/articles/:code — soft delete
+// Désactive l'article (actif = FALSE) sans toucher à son historique
+// (achats/ventes déjà enregistrés restent intacts et continuent d'apparaître
+// dans les rapports). L'article disparaît simplement des listes actives
+// (catalogue, vue_stock, suggestions de saisie).
+// On ne bloque plus sur la présence d'achats/ventes : un article ayant déjà
+// du mouvement de stock doit pouvoir être désactivé tout aussi bien qu'un
+// article neuf — bloquer ici rendait la suppression impossible dans la
+// quasi-totalité des cas réels.
 async function remove(req, res) {
   try {
     const entId = req.user.entreprise_id;
-    const [ventes, achats] = await Promise.all([
-      db.query(`SELECT COUNT(*) FROM lignes_vente WHERE article_code = $1 AND entreprise_id = $2`, [req.params.code, entId]),
-      db.query(`SELECT COUNT(*) FROM achats WHERE article_code = $1 AND entreprise_id = $2`, [req.params.code, entId]),
-    ]);
-    if (parseInt(ventes.rows[0].count) > 0)
-      return res.status(409).json({ message: "Impossible de supprimer : cet article a des ventes associées." });
-    if (parseInt(achats.rows[0].count) > 0)
-      return res.status(409).json({ message: "Impossible de supprimer : cet article a des achats associés." });
-
     // AND entreprise_id = $2 : empêche la suppression d'un article appartenant
     // à une autre entreprise.
     const upd = await db.query(
@@ -162,6 +161,7 @@ async function remove(req, res) {
     if (!upd.rows[0]) return res.status(404).json({ message: "Article introuvable." });
     res.json({ message: "Article désactivé avec succès." });
   } catch (err) {
+    console.error("Erreur suppression article :", err.code, err.message);
     res.status(500).json({ message: "Erreur lors de la suppression." });
   }
 }

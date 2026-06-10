@@ -52,7 +52,7 @@ function KpiCard({ label, value, sub, icon, accent, dark }) {
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${accent.badge}`}>{sub}</span>
         )}
       </div>
-      <div className={`text-sm font-black leading-tight break-words ${dark ? "text-white" : accent.text}`}>{value}</div>
+      <div className={`text-sm font-black leading-tight break-normal ${dark ? "text-white" : accent.text}`}>{value}</div>
       <div className={`text-xs font-semibold mt-1.5 ${dark ? "text-gray-400" : "text-gray-500"}`}>{label}</div>
     </div>
   );

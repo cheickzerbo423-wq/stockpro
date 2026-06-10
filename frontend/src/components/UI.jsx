@@ -8,7 +8,10 @@ import React from "react";
 // navigateurs/systèmes, donnant "1,000" au lieu de "1 000".
 const _sep = (n) => String(Math.round(parseFloat(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 export const fmtN    = (n) => _sep(n);
-export const fmt     = (n) => _sep(n) + " FCFA";
+// Espace normal (sécable) avant "FCFA" : si la place manque, "FCFA" passe
+// entièrement à la ligne suivante au lieu d'être coupé en plein milieu
+// (ex. "FCF" / "A").
+export const fmt     = (n) => _sep(n) + " FCFA";
 export const today   = ()  => new Date().toISOString().split("T")[0];
 export const fmtDate = (d) => {
   if (!d) return "—";

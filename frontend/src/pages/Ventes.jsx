@@ -508,7 +508,7 @@ export default function Ventes() {
           { label: "Panier moyen",         value: fmt(moyPanier), color: "text-[#0023FF]",  bg: "bg-[#E6EAFF] border-[#B3BFFF]", full: true },
         ].map((k) => (
           <div key={k.label} className={`rounded-2xl border p-3 md:p-4 ${k.bg} ${k.full ? "col-span-2 sm:col-span-1" : ""}`}>
-            <div className={`text-sm font-black ${k.color} break-words leading-tight`}>{k.value}</div>
+            <div className={`text-sm font-black ${k.color} break-normal leading-tight`}>{k.value}</div>
             <div className="text-xs font-semibold text-gray-500 mt-1 leading-tight">{k.label}</div>
           </div>
         ))}

@@ -233,10 +233,10 @@ async function create(req, res) {
       return res.status(400).json({ message: "Quantité ou prix d'achat invalide. Saisissez des nombres positifs." });
 
     const montantTotal = prixNum * qteNum;
-    // La colonne montant_total (générée) est de type entier : au-delà d'environ
-    // 2,1 milliards, Postgres renvoie une erreur "out of range" peu compréhensible.
-    // On bloque ici avec un message clair plutôt que de laisser planter l'insertion.
-    if (montantTotal > 2_000_000_000)
+    // La colonne montant_total est un NUMERIC(15,2) : valeur maximale acceptée
+    // par Postgres = 9 999 999 999 999,99. On bloque juste avant cette limite
+    // avec un message clair plutôt que de laisser planter l'insertion (code 22003).
+    if (montantTotal > 9_999_999_999_999)
       return res.status(400).json({ message: "Le montant total (quantité × prix) est trop élevé pour être enregistré. Vérifiez la quantité et le prix saisis pour cet article." });
 
     const montantPaye  = req.body.montant_paye !== undefined

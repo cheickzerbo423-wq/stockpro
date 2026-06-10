@@ -131,7 +131,7 @@ export default function Factures() {
           { label: "Reste à recouvrer", value: fmt(totalReste),  color: "text-[#0023FF]",  bg: "bg-[#E6EAFF]",        border: "border-[#B3BFFF]" },
         ].map((k) => (
           <div key={k.label} className={`rounded-2xl border ${k.bg} ${k.border} p-4`}>
-            <div className={`text-sm font-black ${k.color} break-words leading-tight`}>{k.value}</div>
+            <div className={`text-sm font-black ${k.color} break-normal leading-tight`}>{k.value}</div>
             <div className="text-xs font-semibold text-gray-500 mt-1">{k.label}</div>
           </div>
         ))}

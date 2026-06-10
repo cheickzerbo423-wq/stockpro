@@ -164,8 +164,11 @@ export default function Rapports() {
     { name: "Créances",  value: data.factures.montant_creances,  color: "#ef4444" },
   ].filter(d => d.value > 0) : [];
 
+  // Cohérent avec le KPI "Bénéfice Net" (data.benefice = CA - COGS), et non
+  // CA - total achats stock (qui mélange achats de période et ventes de stock
+  // ancien, et donnait un % incohérent avec le montant affiché juste au-dessus).
   const tauxMarge = data && data.ventes.ca_total > 0
-    ? Math.round(((data.ventes.ca_total - data.achats.total_achats) / data.ventes.ca_total) * 100)
+    ? Math.round((data.benefice / data.ventes.ca_total) * 100)
     : 0;
   const tauxRecouvrement = data && data.factures.montant_total > 0
     ? Math.round((data.factures.montant_encaisse / data.factures.montant_total) * 100)
@@ -359,8 +362,12 @@ export default function Rapports() {
                   />
                 </div>
               </div>
-              <StatRow label="CA brut"              value={fmt(data.ventes.ca_total)}     color="text-[#0023FF]" />
-              <StatRow label="Coût des achats"      value={fmt(data.achats.total_achats)} color="text-red-500" />
+              <StatRow label="CA brut"              value={fmt(data.ventes.ca_total)} color="text-[#0023FF]" />
+              {/* Coût des ventes (COGS) : seule valeur dont CA brut - ce coût = Marge nette ;
+                  ne pas confondre avec "Total Dépenses" (achats de stock de la période,
+                  affiché plus haut) qui peut différer si le stock acheté n'est pas
+                  entièrement revendu sur la période. */}
+              <StatRow label="Coût des ventes"      value={fmt(data.cogs)}            color="text-red-500" />
               <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
                 <span className="text-xs font-bold text-gray-500">Marge nette</span>
                 <span className={`text-base font-black ${data.benefice >= 0 ? "text-emerald-600" : "text-red-600"}`}>
@@ -490,7 +497,7 @@ export default function Rapports() {
                 {fmt(data.benefice)}
               </div>
               <div className="text-xs text-gray-500 mt-1.5">
-                CA <strong>{fmt(data.ventes.ca_total)}</strong> — Dépenses <strong>{fmt(data.achats.total_achats)}</strong>
+                CA <strong>{fmt(data.ventes.ca_total)}</strong> — Coût des ventes <strong>{fmt(data.cogs)}</strong>
               </div>
             </div>
             <div className="text-5xl select-none">{data.benefice >= 0 ? "📈" : "📉"}</div>

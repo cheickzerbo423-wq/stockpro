@@ -178,7 +178,12 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                     setSavingClient(true);
                     try {
                       const created = await onCreateClient({ nom, contact });
-                      setClient(nom); setClientId(created?.id || ""); setClientQ(nom);
+                      // Le backend enregistre le nom en MAJUSCULES (clients_fournisseurs.nom) :
+                      // on réutilise created.nom pour que client_nom (facture/vente) soit
+                      // affiché avec la même casse que dans la liste Clients, plutôt que
+                      // la saisie brute de l'utilisateur.
+                      const nomAffiche = created?.nom || nom.toUpperCase();
+                      setClient(nomAffiche); setClientId(created?.id || ""); setClientQ(nomAffiche);
                       setShowNewClient(false);
                     } finally { setSavingClient(false); }
                   }} />

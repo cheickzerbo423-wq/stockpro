@@ -587,9 +587,13 @@ export default function Achats() {
                     try {
                       const created = await clientsService.create({ nom, contact, type: "Fournisseurs" });
                       await reloadFournisseurs();
-                      setFournisseurNom(nom);
+                      // Le backend enregistre le nom en MAJUSCULES (clients_fournisseurs.nom) :
+                      // on réutilise created.nom pour que fournisseur_nom (achat) soit affiché
+                      // avec la même casse que dans la liste Clients/Fournisseurs.
+                      const nomAffiche = created?.nom || nom.toUpperCase();
+                      setFournisseurNom(nomAffiche);
                       setFournisseurId(created?.id || "");
-                      setFournisseurQ(nom);
+                      setFournisseurQ(nomAffiche);
                       setShowNewFournisseur(false);
                     } finally { setSavingFournisseur(false); }
                   }}

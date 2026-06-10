@@ -3,6 +3,9 @@
 const db     = require("../config/db");
 const PDFDoc = require("pdfkit");
 const { getEntrepriseConfig, logoBuffer } = require("../utils/entrepriseConfig");
+const { getStyle } = require("../utils/pdfStyles");
+const factureLayouts = require("../pdf/facturesLayouts");
+const recuLayouts = require("../pdf/recuLayouts");
 
 // GET /api/factures
 async function getAll(req, res) {
@@ -132,126 +135,14 @@ async function generatePDF(req, res) {
     const doc = new PDFDoc({ margin: 0, size: "A4" });
     doc.pipe(res);
 
-    const PW  = 595, PH = 842;
-    const M   = 52;
-    const INN = PW - M * 2;
-    const ACC = cfg.couleur || "#0023FF";
-    const INK = "#111827";
-    const SUB = "#6B7280";
-    const LITE = "#D1D5DB";
-
-    const hr = (y, w, col) =>
-      doc.moveTo(M, y).lineTo(M + INN, y).lineWidth(w).strokeColor(col).stroke();
-
-    // ── En-tête : entreprise gauche / FACTURE droite ────────────────────────
-    let nameX = M, nameW = 250;
-    if (logoBuf) {
-      try {
-        doc.image(logoBuf, M, 40, { fit: [44, 44] });
-        nameX = M + 54; nameW = 196;
-      } catch (e) { /* logo ignoré */ }
-    }
-
-    doc.fontSize(16).fillColor(INK).font("Helvetica-Bold")
-       .text(cfg.nom, nameX, 40, { width: nameW });
-    let cy = 62;
-    doc.fontSize(8.5).fillColor(SUB).font("Helvetica");
-    if (cfg.adresse)   { doc.text(cfg.adresse,            nameX, cy, { width: nameW }); cy += 12; }
-    if (cfg.telephone) { doc.text("Tel : " + cfg.telephone, nameX, cy, { width: nameW }); cy += 12; }
-    if (cfg.email)     { doc.text(cfg.email,               nameX, cy, { width: nameW }); }
-
-    // FACTURE + infos droite
-    const rX = M + 300, rW = INN - 300;
-    doc.fontSize(26).fillColor(ACC).font("Helvetica-Bold")
-       .text("FACTURE", rX, 40, { width: rW, align: "right" });
-    doc.fontSize(9).fillColor(INK).font("Helvetica-Bold")
-       .text(f.code, rX, 74, { width: rW, align: "right" });
-    doc.fontSize(8.5).fillColor(SUB).font("Helvetica")
-       .text(dateStr, rX, 88, { width: rW, align: "right" });
-    const paid   = !!f.statut;
-    const sColor = paid ? "#16A34A" : "#DC2626";
-    const sLabel = paid ? "REGLEE" : "IMPAYEE";
-    doc.fontSize(8.5).fillColor(sColor).font("Helvetica-Bold")
-       .text(sLabel, rX, 104, { width: rW, align: "right" });
-
-    // ── Filet séparation ────────────────────────────────────────────────────
-    hr(128, 1, ACC);
-
-    // ── Bloc client ─────────────────────────────────────────────────────────
-    doc.fontSize(7.5).fillColor(SUB).font("Helvetica-Bold")
-       .text("FACTURE A :", M, 144);
-    doc.fontSize(13).fillColor(INK).font("Helvetica-Bold")
-       .text(f.client_nom, M, 157, { width: 260 });
-
-    // ── Filet avant tableau ──────────────────────────────────────────────────
-    hr(190, 0.5, LITE);
-
-    // ── TABLEAU ─────────────────────────────────────────────────────────────
-    const TY = 198, RH = 26;
-    const C1x = M,       C1w = 240;
-    const C2x = M + 240, C2w = 50;
-    const C3x = M + 290, C3w = 115;
-    const C4x = M + 405, C4w = INN - 405;
-
-    // En-tête tableau : texte gras + filet bas
-    doc.fontSize(8).fillColor(SUB).font("Helvetica-Bold");
-    doc.text("DESIGNATION",  C1x,     TY + 9, { width: C1w });
-    doc.text("QTE",           C2x,     TY + 9, { width: C2w, align: "center" });
-    doc.text("PRIX UNIT.",    C3x,     TY + 9, { width: C3w, align: "right" });
-    doc.text("MONTANT",       C4x,     TY + 9, { width: C4w, align: "right" });
-    hr(TY + RH, 1, INK);
-
-    let ry = TY + RH;
-    lignes.rows.forEach((l) => {
-      ry += 4;
-      doc.fontSize(9.5).fillColor(INK).font("Helvetica")
-         .text(l.libelle,                                C1x,     ry, { width: C1w - 8 });
-      doc.text(String(parseFloat(l.quantite) || 0),      C2x,     ry, { width: C2w, align: "center" });
-      doc.fillColor(SUB)
-         .text(money(l.prix_vente),                      C3x,     ry, { width: C3w, align: "right" });
-      doc.fillColor(INK).font("Helvetica-Bold")
-         .text(money(l.montant_total),                   C4x,     ry, { width: C4w, align: "right" });
-      ry += 22;
-      hr(ry, 0.3, LITE);
+    // ── Style choisi (catalogue layouts x palettes — voir utils/pdfStyles.js)
+    const style = getStyle(cfg.facture_style);
+    const renderer = factureLayouts[style.layoutId] || factureLayouts.classic;
+    renderer(doc, {
+      f, lignes: lignes.rows, cfg, money, dateStr, logoBuf,
+      pal: style.palette,
+      PW: 595, PH: 842, M: 52, INN: 595 - 52 * 2,
     });
-
-    hr(ry + 4, 0.5, LITE);
-
-    // ── TOTAUX ───────────────────────────────────────────────────────────────
-    const TotW = 210, TotX = M + INN - TotW;
-    let TotY = ry + 18;
-
-    const tLine = (lbl, val, bold, col) => {
-      doc.fontSize(9).fillColor(SUB).font("Helvetica")
-         .text(lbl, TotX, TotY, { width: 108 });
-      doc.fillColor(col || INK).font(bold ? "Helvetica-Bold" : "Helvetica")
-         .text(val, TotX, TotY, { width: TotW, align: "right" });
-      TotY += 18;
-    };
-
-    tLine("Sous-total", money(f.montant));
-    hr(TotY, 0.3, LITE); TotY += 6;
-    tLine("Montant encaisse", money(f.montant_paye), true, "#16A34A");
-    if (parseFloat(f.reste) > 0)
-      tLine("Reste a payer", money(f.reste), true, "#DC2626");
-
-    // Filet double avant TOTAL
-    hr(TotY + 2, 0.5, INK); TotY += 6;
-    doc.fontSize(11).fillColor(INK).font("Helvetica-Bold")
-       .text("TOTAL", TotX, TotY);
-    doc.fontSize(14).fillColor(ACC).font("Helvetica-Bold")
-       .text(money(f.montant), TotX, TotY - 1, { width: TotW, align: "right" });
-
-    // ── PIED DE PAGE ─────────────────────────────────────────────────────────
-    const footY = PH - 52;
-    hr(footY, 0.5, LITE);
-    doc.fontSize(7.5).fillColor(ACC).font("Helvetica-Bold")
-       .text("WariGest", M, footY + 12);
-    doc.fontSize(7).fillColor(SUB).font("Helvetica")
-       .text("Logiciel de gestion & facturation", M, footY + 24);
-    const msg = cfg.pied_de_page || "Merci pour votre confiance. Ce document tient lieu de facture officielle.";
-    doc.fontSize(7.5).fillColor(SUB).font("Helvetica-Oblique")
-       .text(msg, M, footY + 17, { width: INN, align: "center" });
 
     doc.end();
   } catch (err) {
@@ -287,15 +178,14 @@ async function generateRecu(req, res) {
     const W     = 226;
     const M     = 12;
     const INNER = W - M * 2;
-    const ACC   = cfg.couleur || "#0023FF";
-    const DARK  = "#111827";
-    const GREY  = "#6B7280";
-    const LITE  = "#D1D5DB";
 
-    const LINE_H = 16;
-    const extraH = parseFloat(f.reste) > 0 ? 16 : 0;
-    const logoH  = logoBuf ? 46 : 0;
-    const H      = 290 + logoH + lignes.rows.length * LINE_H + extraH;
+    const style    = getStyle(cfg.recu_style);
+    const renderer = recuLayouts[style.layoutId] || recuLayouts.classic;
+    const ctx = {
+      f, lignes: lignes.rows, cfg, money, dateStr, logoBuf,
+      pal: style.palette, W, M, INNER,
+    };
+    const H = renderer.height(ctx);
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename="recu_${f.code}.pdf"`);
@@ -303,111 +193,7 @@ async function generateRecu(req, res) {
     const doc = new PDFDoc({ size: [W, H], margins: { top: 0, bottom: 0, left: 0, right: 0 } });
     doc.pipe(res);
 
-    const hr  = (yy, t, c) => doc.moveTo(M, yy).lineTo(W - M, yy).lineWidth(t).strokeColor(c).stroke();
-    const hrW = (yy, t, c) => doc.moveTo(0, yy).lineTo(W, yy).lineWidth(t).strokeColor(c).stroke();
-
-    let y = 12;
-
-    // ── Logo centré ──────────────────────────────────────────────────────────
-    if (logoBuf) {
-      try {
-        doc.image(logoBuf, (W - 36) / 2, y, { fit: [36, 36] });
-        y += 44;
-      } catch (e) { /* ignoré */ }
-    }
-
-    // ── Nom entreprise ───────────────────────────────────────────────────────
-    doc.fontSize(12).fillColor(DARK).font("Helvetica-Bold")
-       .text(cfg.nom, 0, y, { width: W, align: "center" });
-    y += 15;
-    doc.fontSize(7).fillColor(GREY).font("Helvetica");
-    if (cfg.adresse)   { doc.text(cfg.adresse,          0, y, { width: W, align: "center" }); y += 10; }
-    if (cfg.telephone) { doc.text("Tel : " + cfg.telephone, 0, y, { width: W, align: "center" }); y += 10; }
-
-    y += 4; hrW(y, 0.5, LITE); y += 8;
-
-    // ── Titre ────────────────────────────────────────────────────────────────
-    doc.fontSize(9.5).fillColor(DARK).font("Helvetica-Bold")
-       .text("RECU DE PAIEMENT", 0, y, { width: W, align: "center" });
-    y += 13;
-    doc.fontSize(7).fillColor(GREY).font("Helvetica")
-       .text("Ref : " + f.code, 0, y, { width: W, align: "center" });
-    y += 10;
-
-    hrW(y, 0.5, LITE); y += 8;
-
-    // ── Date / Client ─────────────────────────────────────────────────────────
-    const infoLine = (lbl, val) => {
-      doc.fontSize(7.5).fillColor(GREY).font("Helvetica").text(lbl, M, y, { width: 40 });
-      doc.fontSize(7.5).fillColor(DARK).font("Helvetica-Bold").text(val, M + 40, y, { width: INNER - 40 });
-      y += 12;
-    };
-    infoLine("Date :", dateStr);
-    infoLine("Client :", f.client_nom);
-
-    y += 3; hrW(y, 0.5, LITE); y += 8;
-
-    // ── En-tête tableau ───────────────────────────────────────────────────────
-    doc.fontSize(7).fillColor(GREY).font("Helvetica-Bold");
-    doc.text("ARTICLE",  M,       y, { width: 72 });
-    doc.text("QTE",      M + 72,  y, { width: 22, align: "center" });
-    doc.text("P.U.",     M + 94,  y, { width: 50, align: "right" });
-    doc.text("TOTAL",    M + 144, y, { width: INNER - 144, align: "right" });
-    y += 10;
-    hr(y, 0.8, DARK); y += 4;
-
-    // ── Lignes articles ───────────────────────────────────────────────────────
-    lignes.rows.forEach((l) => {
-      const lib = l.libelle.length > 15 ? l.libelle.slice(0, 14) + "." : l.libelle;
-      doc.fontSize(7.5).fillColor(DARK).font("Helvetica")
-         .text(lib,                                 M,       y, { width: 72 });
-      doc.text(String(parseFloat(l.quantite) || 0), M + 72,  y, { width: 22, align: "center" });
-      doc.fillColor(GREY)
-         .text(money(l.prix_vente),                 M + 94,  y, { width: 50, align: "right" });
-      doc.fillColor(DARK).font("Helvetica-Bold")
-         .text(money(l.montant_total),              M + 144, y, { width: INNER - 144, align: "right" });
-      y += LINE_H;
-      hr(y, 0.3, LITE);
-    });
-
-    y += 5; hr(y, 0.8, DARK); y += 8;
-
-    // ── Totaux ────────────────────────────────────────────────────────────────
-    const totLn = (lbl, val, col) => {
-      doc.fontSize(8).fillColor(GREY).font("Helvetica").text(lbl, M, y);
-      doc.fillColor(col || DARK).font("Helvetica-Bold")
-         .text(val, M, y, { width: INNER, align: "right" });
-      y += 13;
-    };
-
-    totLn("Montant encaisse", money(f.montant_paye), "#15803D");
-    if (parseFloat(f.reste) > 0) totLn("Reste a payer", money(f.reste), "#DC2626");
-
-    y += 2; hr(y, 0.5, LITE); y += 6;
-
-    // TOTAL
-    doc.fontSize(10).fillColor(DARK).font("Helvetica-Bold").text("TOTAL", M, y);
-    doc.fontSize(13).fillColor(ACC).font("Helvetica-Bold")
-       .text(money(f.montant), M, y - 1, { width: INNER, align: "right" });
-    y += 18;
-
-    hr(y, 0.5, LITE); y += 8;
-
-    // Statut
-    const paid  = !!f.statut;
-    const sCol  = paid ? "#16A34A" : "#DC2626";
-    const sLbl  = paid ? "FACTURE REGLEE" : "RESTE A PAYER";
-    doc.fontSize(8).fillColor(sCol).font("Helvetica-Bold")
-       .text(sLbl, 0, y, { width: W, align: "center" });
-    y += 13;
-
-    hrW(y, 0.5, LITE); y += 8;
-
-    doc.fontSize(7).fillColor(GREY).font("Helvetica-Oblique")
-       .text(cfg.pied_de_page || "Merci pour votre confiance !", 0, y, { width: W, align: "center" });
-    y += 11;
-    doc.fontSize(6.5).fillColor(ACC).font("Helvetica-Bold")
-       .text("Edite par WariGest", 0, y, { width: W, align: "center" });
+    renderer.draw(doc, ctx);
 
     doc.end();
   } catch (err) {

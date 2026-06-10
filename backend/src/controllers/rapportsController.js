@@ -2,6 +2,8 @@
 const db     = require("../config/db");
 const PDFDoc = require("pdfkit");
 const { getEntrepriseConfig, logoBuffer } = require("../utils/entrepriseConfig");
+const { getStyle } = require("../utils/pdfStyles");
+const rapportLayouts = require("../pdf/rapportLayouts");
 
 /* ─── helpers ─────────────────────────────────────────────────── */
 const sep = (n) => String(parseInt(n) || 0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -159,10 +161,6 @@ async function exportPDF(req, res) {
     const benefice = parseInt(v.ca_total) - parseInt(a.total_achats);
     const cfg      = await getEntrepriseConfig(entId);
     const logoBuf  = logoBuffer(cfg.logo);
-    const ACC      = cfg.couleur || "#0023FF";   // couleur d'accent — personnalisable par entreprise
-    const company  = cfg.nom;
-    const compAddr = cfg.adresse;
-    const compTel  = cfg.telephone;
     const money    = (n) => sep(n) + " " + (cfg.devise || "FCFA");
 
     res.setHeader("Content-Type", "application/pdf");
@@ -171,122 +169,20 @@ async function exportPDF(req, res) {
     const doc = new PDFDoc({ margin: 0, size: "A4" });
     doc.pipe(res);
 
-    const PW  = 595, PH = 842;
-    const M   = 52;
-    const INN = PW - M * 2;
-    const INK = "#111827";
-    const SUB = "#6B7280";
-    const LITE = "#D1D5DB";
-
-    const hr = (y, w, c) =>
-      doc.moveTo(M, y).lineTo(M + INN, y).lineWidth(w).strokeColor(c).stroke();
-
-    // ── En-tête ──────────────────────────────────────────────────────────────
-    let txtX = M, txtW = 240;
-    if (logoBuf) {
-      try {
-        doc.image(logoBuf, M, 36, { fit: [42, 42] });
-        txtX = M + 52; txtW = 188;
-      } catch (e) { /* ignoré */ }
-    }
-
-    doc.fontSize(16).fillColor(INK).font("Helvetica-Bold")
-       .text(company, txtX, 36, { width: txtW });
-    doc.fontSize(8.5).fillColor(SUB).font("Helvetica")
-       .text((compAddr || "") + (compTel ? (compAddr ? "  ·  " : "") + compTel : ""), txtX, 58, { width: txtW });
-
-    doc.fontSize(22).fillColor(ACC).font("Helvetica-Bold")
-       .text("RAPPORT FINANCIER", PW - M - 230, 34, { width: 230, align: "right" });
-    doc.fontSize(8.5).fillColor(INK).font("Helvetica-Bold")
-       .text(fmtDate(debut) + "  -  " + fmtDate(fin), PW - M - 230, 63, { width: 230, align: "right" });
-    doc.fontSize(7.5).fillColor(SUB).font("Helvetica")
-       .text("Genere le " + fmtDate(new Date().toISOString().split("T")[0]), PW - M - 230, 77, { width: 230, align: "right" });
-
-    hr(96, 1, ACC); hr(98, 0.3, LITE);
-    doc.y = 112;
-
-    // ── KPIs (4 cases — contours seulement) ──────────────────────────────────
-    const kpiW = 116, kpiH = 58, kpiY = doc.y;
-    const kpiGap = Math.floor((INN - kpiW * 4) / 3);
-    const kpis = [
-      { label: "Chiffre d'Affaires", value: money(v.ca_total),    color: ACC },
-      { label: "Total Depenses",     value: money(a.total_achats), color: "#EF4444" },
-      { label: "Benefice Net",       value: money(benefice),      color: benefice >= 0 ? "#10B981" : "#EF4444" },
-      { label: "Factures Emises",    value: fmtN(f.nb_total),     color: "#3B82F6" },
-    ];
-    kpis.forEach((k, i) => {
-      const kx = M + i * (kpiW + kpiGap);
-      doc.rect(kx, kpiY, kpiW, kpiH).strokeColor(LITE).lineWidth(0.8).stroke();
-      // Trait accent en haut de chaque box
-      doc.moveTo(kx, kpiY).lineTo(kx + kpiW, kpiY).lineWidth(2).strokeColor(k.color).stroke();
-      doc.fillColor(k.color).fontSize(12).font("Helvetica-Bold")
-         .text(k.value, kx + 4, kpiY + 12, { width: kpiW - 8, align: "center" });
-      doc.fillColor(SUB).fontSize(7).font("Helvetica")
-         .text(k.label, kx + 4, kpiY + 38, { width: kpiW - 8, align: "center" });
+    // ── Style choisi (catalogue layouts x palettes — voir utils/pdfStyles.js)
+    const style = getStyle(cfg.rapport_style);
+    const renderer = rapportLayouts[style.layoutId] || rapportLayouts.classic;
+    renderer(doc, {
+      v, a, f, benefice,
+      topArticles: topArticles.rows,
+      cfg, money, fmtN,
+      debutStr: fmtDate(debut),
+      finStr:   fmtDate(fin),
+      genStr:   fmtDate(new Date().toISOString().split("T")[0]),
+      logoBuf,
+      pal: style.palette,
+      PW: 595, PH: 842, M: 52, INN: 595 - 52 * 2,
     });
-    doc.y = kpiY + kpiH + 20;
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-    const section = (title) => {
-      doc.moveDown(0.4);
-      const sy = doc.y;
-      doc.fontSize(9).fillColor(INK).font("Helvetica-Bold").text(title, M, sy);
-      doc.moveTo(M, sy + 13).lineTo(M + INN, sy + 13).lineWidth(1.2).strokeColor(ACC).stroke();
-      doc.y = sy + 20;
-    };
-
-    const row = (label, value, color) => {
-      const ry = doc.y;
-      doc.fontSize(8.5).fillColor(SUB).font("Helvetica").text(label, M + 4, ry);
-      doc.fillColor(color || INK).font("Helvetica-Bold")
-         .text(value, M, ry, { width: INN, align: "right" });
-      doc.moveTo(M, ry + 15).lineTo(M + INN, ry + 15).lineWidth(0.3).strokeColor(LITE).stroke();
-      doc.y = ry + 15;
-    };
-
-    // ── Sections ──────────────────────────────────────────────────────────────
-    section("VENTES");
-    row("Chiffre d'affaires",  money(v.ca_total),   ACC);
-    row("Nombre de factures",  fmtN(v.nb_factures));
-    row("Quantites vendues",   fmtN(v.qte_totale) + " unites");
-
-    section("APPROVISIONNEMENTS");
-    row("Nombre d'achats",     fmtN(a.nb_achats));
-    row("Total depenses",      money(a.total_achats),  "#EF4444");
-    row("Montant paye",        money(a.total_paye),    "#10B981");
-    row("Dettes fournisseurs", money(a.total_dettes),  parseInt(a.total_dettes) > 0 ? "#EF4444" : SUB);
-
-    section("RECOUVREMENT FACTURES");
-    row("Total facture",       money(f.montant_total));
-    row("Montant encaisse",    money(f.montant_encaisse), "#10B981");
-    row("Creances restantes",  money(f.montant_creances), parseInt(f.montant_creances) > 0 ? "#EF4444" : SUB);
-    row("Factures reglees",    fmtN(f.nb_reglees),   "#10B981");
-    row("Factures impayees",   fmtN(f.nb_impayees),  parseInt(f.nb_impayees) > 0 ? "#EF4444" : SUB);
-
-    if (topArticles.rows.length > 0) {
-      section("TOP 5 ARTICLES VENDUS");
-      topArticles.rows.forEach((art, i) => {
-        row(`${i + 1}. ${art.libelle}`, money(art.ca) + "  /  " + fmtN(art.qte) + " u.", ACC);
-      });
-    }
-
-    // ── Résumé bénéfice ───────────────────────────────────────────────────────
-    doc.moveDown(0.8);
-    const benY    = doc.y;
-    const benColor = benefice >= 0 ? "#10B981" : "#EF4444";
-    doc.moveTo(M, benY).lineTo(M + INN, benY).lineWidth(1).strokeColor(LITE).stroke();
-    doc.fontSize(7.5).fillColor(SUB).font("Helvetica")
-       .text("BENEFICE NET DE LA PERIODE", M, benY + 8);
-    doc.fontSize(22).fillColor(benColor).font("Helvetica-Bold")
-       .text(money(benefice), M, benY + 20);
-    doc.fontSize(7.5).fillColor(SUB).font("Helvetica")
-       .text("CA : " + money(v.ca_total) + "   -   Depenses : " + money(a.total_achats), M, benY + 47);
-    doc.moveTo(M, benY + 58).lineTo(M + INN, benY + 58).lineWidth(0.5).strokeColor(LITE).stroke();
-
-    // ── Pied de page ──────────────────────────────────────────────────────────
-    const footerY = doc.page.maxY() - 15;
-    doc.fillColor(SUB).fontSize(7).font("Helvetica")
-       .text("Document genere automatiquement par WariGest - Logiciel de gestion & facturation", M, footerY, { width: INN, align: "center" });
 
     doc.end();
   } catch (err) {

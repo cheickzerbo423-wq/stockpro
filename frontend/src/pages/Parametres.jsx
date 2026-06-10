@@ -13,7 +13,113 @@ const DEVISES = ["FCFA", "EUR", "USD", "XOF", "XAF", "MAD", "GNF", "CDF", "NGN",
 const DEFAULT_FORM = {
   nom: "", adresse: "", telephone: "", email: "",
   devise: "FCFA", couleur: "#0023FF", logo: "", pied_de_page: "",
+  facture_style: "classic-bleu", recu_style: "classic-bleu", rapport_style: "classic-bleu",
 };
+
+// Onglets de la galerie de styles PDF (3 types de documents)
+const DOC_TABS = [
+  { key: "facture", label: "Factures", field: "facture_style" },
+  { key: "recu",    label: "Reçus",    field: "recu_style" },
+  { key: "rapport", label: "Rapports", field: "rapport_style" },
+];
+
+// ── Aperçu miniature CSS d'une mise en page (5 architectures) ─────────────
+function StyleThumb({ layoutId, pal }) {
+  const ACC = pal.primary, LIGHT = pal.light, DARK = pal.dark;
+  switch (layoutId) {
+    case "moderne":
+      return (
+        <div className="relative w-full h-full bg-white">
+          <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: ACC }} />
+          <div className="absolute top-3 left-3 w-2/5 h-2 rounded-sm bg-gray-100" />
+          <div className="absolute top-7 left-3 w-1/3 h-2.5 rounded-sm bg-gray-200" />
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="absolute left-3 right-3 h-px bg-gray-100" style={{ top: `${52 + i * 11}%` }} />
+          ))}
+          <div className="absolute bottom-2.5 right-3 w-1/3 h-1.5 rounded-sm" style={{ background: ACC }} />
+        </div>
+      );
+    case "bloc":
+      return (
+        <div className="relative w-full h-full bg-white">
+          <div className="absolute top-0 left-0 right-0 h-[36%]" style={{ background: ACC }} />
+          <div className="absolute top-2 left-3 w-1/3 h-2 rounded-sm bg-white/85" />
+          <div className="absolute top-2 right-3 w-1/4 h-2 rounded-sm bg-white/60" />
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="absolute left-3 right-3 h-1.5 rounded-sm" style={{ top: `${46 + i * 13}%`, background: i % 2 ? LIGHT : "#F3F4F6" }} />
+          ))}
+          <div className="absolute bottom-2 right-3 w-1/3 h-2 rounded-sm border" style={{ background: LIGHT, borderColor: ACC }} />
+        </div>
+      );
+    case "elegant":
+      return (
+        <div className="relative w-full h-full bg-white flex flex-col items-center pt-2.5">
+          <div className="w-1/3 h-1.5 rounded-sm bg-gray-300 mb-1.5" />
+          <div className="w-2/3 h-px bg-gray-200 mb-0.5" />
+          <div className="w-2/3 h-px mb-2" style={{ background: ACC }} />
+          <div className="w-1/2 h-2 rounded-sm mb-2.5" style={{ background: DARK }} />
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="w-4/5 h-px bg-gray-100 mb-1.5" />
+          ))}
+          <div className="w-2/3 h-px mt-1" style={{ background: ACC }} />
+        </div>
+      );
+    case "compact":
+      return (
+        <div className="relative w-full h-full bg-white p-2.5">
+          <div className="flex justify-between mb-1.5">
+            <div className="w-1/3 h-1.5 rounded-sm bg-gray-300" />
+            <div className="w-1/4 h-1.5 rounded-sm" style={{ background: ACC }} />
+          </div>
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="w-full h-[5px] mb-[2px] rounded-sm" style={{ background: i % 2 ? LIGHT : "transparent" }} />
+          ))}
+        </div>
+      );
+    case "classic":
+    default:
+      return (
+        <div className="relative w-full h-full bg-white">
+          <div className="absolute top-2 left-3 w-1/3 h-2 rounded-sm bg-gray-300" />
+          <div className="absolute top-2 right-3 w-1/4 h-2.5 rounded-sm" style={{ background: ACC }} />
+          <div className="absolute top-7 left-3 right-3 h-px bg-gray-200" />
+          <div className="absolute top-9 left-3 right-3 h-2 rounded-sm" style={{ background: ACC }} />
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="absolute left-3 right-3 h-1.5 rounded-sm bg-gray-50 border border-gray-100" style={{ top: `${52 + i * 12}%` }} />
+          ))}
+          <div className="absolute bottom-2 right-3 w-1/3 h-2 rounded-sm border" style={{ background: LIGHT, borderColor: ACC }} />
+        </div>
+      );
+  }
+}
+
+// ── Galerie de sélection des 25 styles (5 layouts × 5 palettes) ───────────
+function StyleGallery({ catalog, palettes, value, onChange }) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 max-h-[24rem] overflow-y-auto p-1 -m-1">
+      {catalog.map((s) => {
+        const pal = palettes[s.palette];
+        const active = value === s.id;
+        return (
+          <button key={s.id} type="button" onClick={() => onChange(s.id)}
+            className={`relative rounded-xl border-2 overflow-hidden text-left transition-all ${active ? "" : "border-gray-100 hover:border-gray-200"}`}
+            style={active ? { borderColor: pal.primary, boxShadow: `0 0 0 2px ${pal.primary}33` } : undefined}>
+            <div className="h-16 w-full">
+              <StyleThumb layoutId={s.layout} pal={pal} />
+            </div>
+            <div className="px-2 py-1.5 bg-white border-t border-gray-50">
+              <p className="text-[10px] font-bold text-gray-700 truncate">{s.label}</p>
+            </div>
+            {active && (
+              <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                style={{ background: pal.primary }}>✓</div>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 // Redimensionne et compresse une image côté client avant envoi (même logique
 // que le scan de facture dans Achats.jsx) — garde le PNG pour préserver la
@@ -49,7 +155,14 @@ export default function Parametres() {
   const [saving,  setSaving]  = useState(false);
   const [logoErr, setLogoErr] = useState("");
   const [toast,   setToast]   = useState(null);
+  const [pdfStyles, setPdfStyles] = useState(null);
+  const [styleTab,  setStyleTab]  = useState("facture");
   const fileRef = useRef(null);
+
+  // Charge le catalogue des 25 styles PDF (layouts × palettes)
+  useEffect(() => {
+    entrepriseService.getPdfStyles().then(setPdfStyles).catch(() => {});
+  }, []);
 
   const notify = (msg, type = "success") => { setToast({ message: msg, type }); setTimeout(() => setToast(null), 3500); };
 
@@ -65,6 +178,9 @@ export default function Parametres() {
         couleur:      cfg.couleur      || "#0023FF",
         logo:         cfg.logo         || "",
         pied_de_page: cfg.pied_de_page || "",
+        facture_style: cfg.facture_style || "classic-bleu",
+        recu_style:    cfg.recu_style    || "classic-bleu",
+        rapport_style: cfg.rapport_style || "classic-bleu",
       });
     }
   }, [cfg]);
@@ -232,6 +348,39 @@ export default function Parametres() {
             </Card>
           </div>
         </div>
+      </div>
+
+      {/* ── Styles des documents PDF ── */}
+      <div className="mt-5">
+        <Card>
+          <SectionTitle>Styles des documents PDF</SectionTitle>
+          <p className="text-xs text-gray-400 mt-1 mb-4">
+            Choisissez l'apparence de vos factures, reçus et rapports financiers parmi 25 styles (5 mises en page × 5 palettes de couleurs). Le style est appliqué immédiatement à la prochaine génération PDF.
+          </p>
+
+          {!pdfStyles ? <Spinner sm /> : (
+            <>
+              <div className="flex gap-2 mb-3 flex-wrap">
+                {DOC_TABS.map((t) => (
+                  <button key={t.key} type="button" onClick={() => setStyleTab(t.key)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                      styleTab === t.key ? "bg-[#0023FF] text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                    }`}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+              {DOC_TABS.filter((t) => t.key === styleTab).map((t) => (
+                <StyleGallery key={t.key}
+                  catalog={pdfStyles.catalog}
+                  palettes={pdfStyles.palettes}
+                  value={form[t.field]}
+                  onChange={(id) => setForm((f) => ({ ...f, [t.field]: id }))}
+                />
+              ))}
+            </>
+          )}
+        </Card>
       </div>
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}

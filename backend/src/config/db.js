@@ -537,6 +537,20 @@ pool.connect((err, client, release) => {
         )
         .then(() => console.log("✅ Colonne 'must_change_password' vérifiée + comptes existants marqués pour changement de mot de passe."))
         .catch((e) => console.error("⚠️  Migration must_change_password ignorée :", e.message))
+        // ── Migration : styles de documents PDF (factures/reçus/rapports) ────
+        // Chaque entreprise peut choisir, parmi un catalogue de styles (5 mises
+        // en page × 5 palettes de couleurs = 25 combinaisons), l'apparence de
+        // ses factures, reçus et rapports financiers PDF. Valeur par défaut
+        // "classic-bleu" = design historique avec la couleur d'accent existante.
+        .then(() =>
+          client.query(`
+            ALTER TABLE entreprise_config ADD COLUMN IF NOT EXISTS facture_style VARCHAR(30) DEFAULT 'classic-bleu';
+            ALTER TABLE entreprise_config ADD COLUMN IF NOT EXISTS recu_style    VARCHAR(30) DEFAULT 'classic-bleu';
+            ALTER TABLE entreprise_config ADD COLUMN IF NOT EXISTS rapport_style VARCHAR(30) DEFAULT 'classic-bleu';
+          `)
+        )
+        .then(() => console.log("✅ Colonnes 'facture_style/recu_style/rapport_style' vérifiées (catalogue de styles PDF)."))
+        .catch((e) => console.error("⚠️  Migration styles PDF ignorée :", e.message))
         .finally(() => release());
     });
 });

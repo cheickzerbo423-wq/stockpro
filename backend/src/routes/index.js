@@ -86,6 +86,7 @@ router.post("/admin/reset", authenticate, usersCtrl.resetData);
 // ============================================================
 router.get("/entreprise", authenticate, entrepriseCtrl.getConfig);
 router.put("/entreprise", authenticate, audit("MODIFICATION", "entreprise_config"), entrepriseCtrl.updateConfig);
+router.get("/entreprise/pdf-styles", authenticate, entrepriseCtrl.getPdfStyles);
 
 // ============================================================
 // SUPER-ADMIN — Pilotage de la plateforme (gestion des entreprises clientes)

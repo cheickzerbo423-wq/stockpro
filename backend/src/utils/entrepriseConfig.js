@@ -9,6 +9,7 @@
 // d'environnement COMPANY_* comme valeurs de repli pour les entreprises qui
 // n'ont pas encore configuré leurs informations depuis l'interface.
 const db = require("../config/db");
+const { DEFAULT_STYLE, VALID_STYLE_IDS } = require("./pdfStyles");
 
 const DEFAULTS = {
   nom:          process.env.COMPANY_NAME    || "WariGest",
@@ -19,6 +20,9 @@ const DEFAULTS = {
   couleur:      "#0023FF",
   logo:         null,
   pied_de_page: "",
+  facture_style: DEFAULT_STYLE,
+  recu_style:    DEFAULT_STYLE,
+  rapport_style: DEFAULT_STYLE,
 };
 
 // `entrepriseId` : identifiant de l'entreprise cliente (req.user.entreprise_id).
@@ -41,6 +45,9 @@ async function getEntrepriseConfig(entrepriseId) {
       couleur:      /^#[0-9A-Fa-f]{6}$/.test(c.couleur || "") ? c.couleur : DEFAULTS.couleur,
       logo:         c.logo         || null,
       pied_de_page: c.pied_de_page ?? DEFAULTS.pied_de_page,
+      facture_style: VALID_STYLE_IDS.has(c.facture_style) ? c.facture_style : DEFAULTS.facture_style,
+      recu_style:    VALID_STYLE_IDS.has(c.recu_style)    ? c.recu_style    : DEFAULTS.recu_style,
+      rapport_style: VALID_STYLE_IDS.has(c.rapport_style) ? c.rapport_style : DEFAULTS.rapport_style,
     };
   } catch (e) {
     // Table pas encore créée (ancien déploiement) ou erreur réseau —

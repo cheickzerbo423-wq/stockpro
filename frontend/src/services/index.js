@@ -207,6 +207,9 @@ export const entrepriseService = {
 
   updateConfig: (data) =>
     api.put("/entreprise", data).then((r) => r.data),
+
+  getPdfStyles: () =>
+    api.get("/entreprise/pdf-styles").then((r) => r.data),
 };
 
 // ══════════════════════════════════════════

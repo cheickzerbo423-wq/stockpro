@@ -15,13 +15,12 @@ const MODULES = [
 ];
 
 const RESET_MODULES = [
-  { key: "ventes",   label: "Ventes",             desc: "Toutes les lignes de vente",                    color: "orange" },
-  { key: "factures", label: "Factures",            desc: "Factures et paiements associés",                color: "blue"   },
-  { key: "achats",   label: "Approvisionnements",  desc: "Achats fournisseurs",                           color: "purple" },
-  { key: "clients",  label: "Clients & Fourn.",    desc: "Tous les contacts",                             color: "teal"   },
-  { key: "articles", label: "Articles & Stock",    desc: "Catalogue produits et stocks",                  color: "green"  },
-  { key: "gammes",   label: "Gammes",              desc: "Familles de produits et leurs variantes",       color: "amber"  },
-  { key: "audit",    label: "Journal d'audit",     desc: "Historique des actions",                        color: "gray"   },
+  { key: "ventes",     label: "Ventes",             desc: "Toutes les lignes de vente",                    color: "orange" },
+  { key: "factures",   label: "Factures",            desc: "Factures et paiements associés",                color: "blue"   },
+  { key: "achats",     label: "Approvisionnements",  desc: "Achats fournisseurs",                           color: "purple" },
+  { key: "clients",    label: "Clients & Fourn.",    desc: "Tous les contacts",                             color: "teal"   },
+  { key: "articles",   label: "Articles & Stock",    desc: "Catalogue produits et stocks",                  color: "green"  },
+  { key: "parametres", label: "Paramètres",          desc: "Coordonnées, logo, couleur et pied de page de l'entreprise", color: "indigo" },
 ];
 
 const COLOR_MAP = {
@@ -32,6 +31,7 @@ const COLOR_MAP = {
   teal:   { bg: "bg-teal-50",    border: "border-teal-200",    text: "text-teal-700"    },
   green:  { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700" },
   gray:   { bg: "bg-gray-50",    border: "border-gray-200",    text: "text-gray-600"    },
+  indigo: { bg: "bg-indigo-50",  border: "border-indigo-200",  text: "text-indigo-700"  },
 };
 
 const ROLE_COLOR = { Admin: "purple", Gestionnaire: "blue", Vendeur: "amber" };
@@ -237,13 +237,9 @@ function ResetModal({ onClose, notify }) {
   const [confirm,  setConfirm]  = useState("");
   const [loading,  setLoading]  = useState(false);
 
-  const toggle = (key) => setSelected(s => {
-    const next = s.includes(key) ? s.filter(k => k !== key) : [...s, key];
-    // Supprimer gammes impose de supprimer articles (FK)
-    if (key === "gammes" && !s.includes("gammes") && !next.includes("articles"))
-      return [...next, "articles"];
-    return next;
-  });
+  const toggle = (key) => setSelected(s =>
+    s.includes(key) ? s.filter(k => k !== key) : [...s, key]
+  );
   const selectAll = () => setSelected(selected.length === RESET_MODULES.length ? [] : RESET_MODULES.map(m => m.key));
 
   const handleReset = async () => {
@@ -295,10 +291,10 @@ function ResetModal({ onClose, notify }) {
               );
             })}
           </div>
-          {selected.includes("gammes") && (
+          {selected.includes("parametres") && (
             <div className="flex items-start gap-2 px-3 py-2 mb-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700 font-medium">
               <span className="text-base leading-none mt-0.5">⚠️</span>
-              <span>La suppression des <strong>Gammes</strong> entraîne automatiquement celle des <strong>Articles & Stock</strong> liés.</span>
+              <span>La réinitialisation des <strong>Paramètres</strong> efface le logo, les coordonnées, la couleur et le pied de page de l'entreprise (retour aux valeurs par défaut).</span>
             </div>
           )}
           <div className="flex justify-end gap-2">

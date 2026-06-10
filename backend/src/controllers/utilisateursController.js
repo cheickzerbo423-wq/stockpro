@@ -155,10 +155,6 @@ async function resetData(req, res) {
   try {
     await client.query("BEGIN");
 
-    // ── 1. Journal d'audit ───────────────────────────────────────
-    if (modules.includes("audit"))
-      await client.query("DELETE FROM audit_log WHERE entreprise_id = $1", [entId]);
-
     // ── 2. Lignes de vente ───────────────────────────────────────
     // Obligatoire si ventes OU factures OU articles (FK NOT NULL vers article)
     if (modules.includes("ventes") || modules.includes("factures") || modules.includes("articles"))
@@ -190,14 +186,11 @@ async function resetData(req, res) {
     if (modules.includes("articles"))
       await client.query("DELETE FROM articles WHERE entreprise_id = $1", [entId]);
 
-    // ── 8. Gammes ────────────────────────────────────────────────
-    // FK : articles.gamme_code → gammes.code
-    // Si articles pas supprimés, on nullifie d'abord le lien
-    if (modules.includes("gammes")) {
-      if (!modules.includes("articles"))
-        await client.query("UPDATE articles SET gamme_code = NULL, unite_par_base = 1 WHERE entreprise_id = $1", [entId]);
-      await client.query("DELETE FROM gammes WHERE entreprise_id = $1", [entId]);
-    }
+    // ── 8. Paramètres de l'entreprise ─────────────────────────────
+    // Supprime la config (logo, coordonnées, couleur, pied de page) ;
+    // getEntrepriseConfig() retombera automatiquement sur les valeurs par défaut.
+    if (modules.includes("parametres"))
+      await client.query("DELETE FROM entreprise_config WHERE entreprise_id = $1", [entId]);
 
     await client.query("COMMIT");
     res.json({ message: "Réinitialisation effectuée avec succès.", modules });

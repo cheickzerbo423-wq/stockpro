@@ -524,7 +524,7 @@ export default function Guide() {
         <SectionTitle>Réinitialiser les données</SectionTitle>
         <div className="space-y-2">
           <Step n="1">Cliquez sur le bouton rouge <strong>« Réinitialiser les données »</strong> (en haut à droite de la page Utilisateurs) pour ouvrir le panneau de réinitialisation.</Step>
-          <Step n="2">Cochez les modules à effacer parmi : <em>Ventes, Factures, Approvisionnements, Clients &amp; Fournisseurs, Articles &amp; Stock, Gammes, Journal d'audit</em>.</Step>
+          <Step n="2">Cochez les modules à effacer parmi : <em>Ventes, Factures, Approvisionnements, Clients &amp; Fournisseurs, Articles &amp; Stock, Paramètres</em>.</Step>
           <Step n="3">Cliquez <strong>Continuer</strong>, tapez <code className="bg-red-100 text-red-700 px-1 rounded font-mono text-xs">REINITIALISER</code> dans le champ de confirmation.</Step>
           <Step n="4">Cliquez <strong>Réinitialiser définitivement</strong> pour exécuter l'opération.</Step>
         </div>
@@ -534,7 +534,7 @@ export default function Guide() {
           <p className="text-xs text-red-700">• L'action est <strong>irréversible</strong> — les données ne peuvent pas être récupérées.</p>
           <p className="text-xs text-red-700">• Effacer les <strong>Articles</strong> supprime aussi automatiquement les ventes et achats liés.</p>
           <p className="text-xs text-red-700">• Effacer les <strong>Factures</strong> supprime aussi les lignes de vente associées.</p>
-          <p className="text-xs text-red-700">• Cocher <strong>Gammes</strong> sélectionne automatiquement aussi <strong>Articles &amp; Stock</strong> : la suppression des gammes entraîne celle des articles qui leur sont liés (contrainte de cohérence des données).</p>
+          <p className="text-xs text-red-700">• Effacer les <strong>Paramètres</strong> supprime la configuration personnalisée (logo, coordonnées, couleur, pied de page) : l'entreprise revient aux valeurs par défaut.</p>
           <p className="text-xs text-red-700">• Les comptes utilisateurs ne sont <strong>jamais</strong> affectés par cette réinitialisation.</p>
         </div>
       </Section>

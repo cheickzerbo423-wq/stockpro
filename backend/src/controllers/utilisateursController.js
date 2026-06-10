@@ -11,6 +11,12 @@ const { isPasswordValid, PASSWORD_MESSAGE } = require("../utils/passwordPolicy")
 
 async function getAll(req, res) {
   try {
+    // Reserve aux administrateurs : la liste expose les logins et permissions
+    // de tous les comptes de l'entreprise (meme protection que update/remove
+    // ci-dessous, qui etaient deja restreints aux Admin).
+    if (req.user.categorie !== "Admin")
+      return res.status(403).json({ message: "Réservé aux administrateurs." });
+
     const result = await db.query(
       `SELECT id, login, categorie, perm_vente, perm_appro, perm_articles,
               perm_facturation, perm_clients, actif, created_at
@@ -27,6 +33,13 @@ async function getAll(req, res) {
 
 async function create(req, res) {
   try {
+    // Reserve aux administrateurs : sans cette verification, n'importe quel
+    // utilisateur authentifie pouvait creer un compte (y compris "Admin" avec
+    // toutes les permissions) dans sa propre entreprise — faille d'escalade
+    // de privileges. Coherent avec update()/remove() ci-dessous.
+    if (req.user.categorie !== "Admin")
+      return res.status(403).json({ message: "Réservé aux administrateurs." });
+
     const { login, mdp, categorie, perm_vente, perm_appro, perm_articles,
             perm_facturation, perm_clients } = req.body;
 

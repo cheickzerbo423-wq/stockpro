@@ -121,7 +121,7 @@ async function exportPDF(req, res) {
     const entId = req.user.entreprise_id;
 
     // Réutiliser la même logique de données
-    const [ventes, achats, factures, topArticles] = await Promise.all([
+    const [ventes, achats, factures, topArticles, cogsRow] = await Promise.all([
       db.query(
         `SELECT COALESCE(SUM(montant_total), 0) AS ca_total,
                 COUNT(DISTINCT facture_code) AS nb_factures,
@@ -153,12 +153,24 @@ async function exportPDF(req, res) {
          GROUP BY libelle ORDER BY ca DESC LIMIT 5`,
         [debut, fin, entId]
       ),
+      // COGS (coût des marchandises vendues) : même calcul que /rapports (JSON),
+      // pour que le "Benefice Net" du PDF corresponde a celui affiche a l'ecran
+      // (CA - COGS), et non CA - achats de stock de la periode.
+      db.query(
+        `SELECT COALESCE(SUM(lv.quantite * a.prix_achat), 0) AS cogs
+         FROM lignes_vente lv
+         JOIN articles a ON a.code = lv.article_code AND a.entreprise_id = lv.entreprise_id
+         WHERE lv.entreprise_id = $3 AND lv.date_vente BETWEEN $1 AND $2`,
+        [debut, fin, entId]
+      ),
     ]);
 
     const v       = ventes.rows[0];
     const a       = achats.rows[0];
     const f       = factures.rows[0];
-    const benefice = parseInt(v.ca_total) - parseInt(a.total_achats);
+    const cogs     = parseInt(cogsRow.rows[0]?.cogs || 0);
+    // Coherent avec /rapports (JSON) et l'ecran Rapports.jsx : Benefice Net = CA - COGS
+    const benefice = parseInt(v.ca_total) - cogs;
     const cfg      = await getEntrepriseConfig(entId);
     const logoBuf  = logoBuffer(cfg.logo);
     const money    = (n) => sep(n) + " " + (cfg.devise || "FCFA");
@@ -173,7 +185,7 @@ async function exportPDF(req, res) {
     const style = getStyle(cfg.rapport_style);
     const renderer = rapportLayouts[style.layoutId] || rapportLayouts.classic;
     renderer(doc, {
-      v, a, f, benefice,
+      v, a, f, benefice, cogs,
       topArticles: topArticles.rows,
       cfg, money, fmtN,
       debutStr: fmtDate(debut),

@@ -75,7 +75,10 @@ async function previewPdf(req, res) {
       const v = { ca_total: 1250000, nb_factures: 18, nb_lignes: 47, qte_totale: 132 };
       const a = { nb_achats: 9, total_achats: 620000, total_paye: 500000, total_dettes: 120000 };
       const f = { nb_total: 18, nb_reglees: 14, nb_impayees: 4, montant_total: 1250000, montant_encaisse: 980000, montant_creances: 270000 };
-      const benefice = v.ca_total - 820000; // marge brute fictive
+      // cogs = cout des marchandises vendues (fictif) ; benefice = CA - cogs,
+      // coherent avec /rapports (JSON) et l'ecran Rapports.jsx.
+      const cogs = 820000;
+      const benefice = v.ca_total - cogs;
       const topArticles = [
         { code: "ART001", libelle: "Article Premium A",    ca: 320000, qte: 42 },
         { code: "ART002", libelle: "Service Installation", ca: 250000, qte: 10 },
@@ -91,7 +94,7 @@ async function previewPdf(req, res) {
       const doc = new PDFDoc({ margin: 0, size: "A4" });
       doc.pipe(res);
       renderer(doc, {
-        v, a, f, benefice, topArticles, cfg, money,
+        v, a, f, benefice, cogs, topArticles, cfg, money,
         fmtN: sep,
         debutStr: fmtDate(debut), finStr: fmtDate(today), genStr: fmtDate(today),
         logoBuf, pal: style.palette,

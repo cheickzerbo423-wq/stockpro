@@ -4,13 +4,16 @@
 //
 // Chaque fonction reçoit le document PDFKit déjà créé (taille A4, marges à 0)
 // et un contexte `ctx` :
-//   { v, a, f, benefice, topArticles, cfg, money, fmtN, debutStr, finStr,
+//   { v, a, f, benefice, cogs, topArticles, cfg, money, fmtN, debutStr, finStr,
 //     genStr, logoBuf, pal, PW, PH, M, INN }
+// "benefice" = CA - cogs (coherent avec /rapports JSON et l'ecran Rapports.jsx).
+// "a.total_achats" = depenses de stock de la periode (metrique distincte,
+// affichee uniquement dans la section APPROVISIONNEMENTS).
 // où `pal` = { primary, dark, light, mid }.
 
 // ─── 1. Classique ───────────────────────────────────────────────────────────
 function classic(doc, ctx) {
-  const { v, a, f, benefice, topArticles, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
+  const { v, a, f, benefice, cogs, topArticles, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
   const ACC = pal.primary, INK = "#111827", SUB = "#6B7280", LITE = "#D1D5DB";
   const hr = (y, w, c) => doc.moveTo(M, y).lineTo(M + INN, y).lineWidth(w).strokeColor(c).stroke();
 
@@ -34,7 +37,7 @@ function classic(doc, ctx) {
   const kpiGap = Math.floor((INN - kpiW * 4) / 3);
   const kpis = [
     { label: "Chiffre d'Affaires", value: money(v.ca_total),     color: ACC },
-    { label: "Total Depenses",     value: money(a.total_achats), color: "#EF4444" },
+    { label: "Cout des ventes",    value: money(cogs),           color: "#EF4444" },
     { label: "Benefice Net",       value: money(benefice),       color: benefice >= 0 ? "#10B981" : "#EF4444" },
     { label: "Factures Emises",    value: fmtN(f.nb_total),      color: "#3B82F6" },
   ];
@@ -91,7 +94,7 @@ function classic(doc, ctx) {
   doc.moveTo(M, benY).lineTo(M + INN, benY).lineWidth(1).strokeColor(LITE).stroke();
   doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("BENEFICE NET DE LA PERIODE", M, benY + 8);
   doc.fontSize(22).fillColor(benColor).font("Helvetica-Bold").text(money(benefice), M, benY + 20);
-  doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("CA : " + money(v.ca_total) + "   -   Depenses : " + money(a.total_achats), M, benY + 47);
+  doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("CA : " + money(v.ca_total) + "   -   Cout des ventes : " + money(cogs), M, benY + 47);
   doc.moveTo(M, benY + 58).lineTo(M + INN, benY + 58).lineWidth(0.5).strokeColor(LITE).stroke();
 
   const footerY = doc.page.maxY() - 15;
@@ -101,7 +104,7 @@ function classic(doc, ctx) {
 
 // ─── 2. Moderne ─────────────────────────────────────────────────────────────
 function moderne(doc, ctx) {
-  const { v, a, f, benefice, topArticles, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
+  const { v, a, f, benefice, cogs, topArticles, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
   const ACC = pal.primary, INK = "#1F2937", SUB = "#9CA3AF", LINE = "#E5E7EB";
   const hr = (y, w, c) => doc.moveTo(M, y).lineTo(M + INN, y).lineWidth(w).strokeColor(c).stroke();
 
@@ -124,7 +127,7 @@ function moderne(doc, ctx) {
 
   const kpis = [
     { label: "Chiffre d'affaires", value: money(v.ca_total) },
-    { label: "Depenses",           value: money(a.total_achats) },
+    { label: "Cout des ventes",    value: money(cogs) },
     { label: "Benefice net",       value: money(benefice), color: benefice >= 0 ? "#10B981" : "#EF4444" },
     { label: "Factures emises",    value: fmtN(f.nb_total) },
   ];
@@ -185,7 +188,7 @@ function moderne(doc, ctx) {
 
 // ─── 3. Bloc Couleur ────────────────────────────────────────────────────────
 function bloc(doc, ctx) {
-  const { v, a, f, benefice, topArticles, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
+  const { v, a, f, benefice, cogs, topArticles, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
   const ACC = pal.primary, INK = "#111827", SUB = "#6B7280", TINT = pal.light;
   const hr = (y, w, c) => doc.moveTo(M, y).lineTo(M + INN, y).lineWidth(w).strokeColor(c).stroke();
 
@@ -215,7 +218,7 @@ function bloc(doc, ctx) {
   const kpiW = 116, kpiH = 58, kpiGap = Math.floor((INN - kpiW * 4) / 3);
   const kpis = [
     { label: "Chiffre d'Affaires", value: money(v.ca_total),     color: ACC },
-    { label: "Total Depenses",     value: money(a.total_achats), color: "#EF4444" },
+    { label: "Cout des ventes",    value: money(cogs),           color: "#EF4444" },
     { label: "Benefice Net",       value: money(benefice),       color: benefice >= 0 ? "#10B981" : "#EF4444" },
     { label: "Factures Emises",    value: fmtN(f.nb_total),      color: "#3B82F6" },
   ];
@@ -274,7 +277,7 @@ function bloc(doc, ctx) {
   doc.roundedRect(M, benY, INN, 60, 6).fillAndStroke(TINT, ACC);
   doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("BENEFICE NET DE LA PERIODE", M + 12, benY + 10);
   doc.fontSize(22).fillColor(benColor).font("Helvetica-Bold").text(money(benefice), M + 12, benY + 22);
-  doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("CA : " + money(v.ca_total) + "   -   Depenses : " + money(a.total_achats), M + 12, benY + 46);
+  doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("CA : " + money(v.ca_total) + "   -   Cout des ventes : " + money(cogs), M + 12, benY + 46);
 
   const footerY = doc.page.maxY() - 15;
   doc.fillColor(SUB).fontSize(7).font("Helvetica")
@@ -283,7 +286,7 @@ function bloc(doc, ctx) {
 
 // ─── 4. Élégant ─────────────────────────────────────────────────────────────
 function elegant(doc, ctx) {
-  const { v, a, f, benefice, topArticles, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
+  const { v, a, f, benefice, cogs, topArticles, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
   const ACC = pal.primary, INK = "#1F2937", SUB = "#6B7280", LINE = "#E5E7EB";
   const hr = (y, w, c) => doc.moveTo(M, y).lineTo(M + INN, y).lineWidth(w).strokeColor(c).stroke();
 
@@ -305,7 +308,7 @@ function elegant(doc, ctx) {
 
   const kpis = [
     { label: "Chiffre d'affaires", value: money(v.ca_total) },
-    { label: "Depenses",           value: money(a.total_achats) },
+    { label: "Cout des ventes",    value: money(cogs) },
     { label: "Benefice net",       value: money(benefice), color: benefice >= 0 ? "#15803D" : "#B91C1C" },
     { label: "Factures",           value: fmtN(f.nb_total) },
   ];
@@ -374,7 +377,7 @@ function elegant(doc, ctx) {
 
 // ─── 5. Compact ─────────────────────────────────────────────────────────────
 function compact(doc, ctx) {
-  const { v, a, f, benefice, topArticles, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW } = ctx;
+  const { v, a, f, benefice, cogs, topArticles, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW } = ctx;
   const M = 30, INN = PW - M * 2;
   const ACC = pal.primary, INK = "#111827", SUB = "#6B7280", LINE = "#E5E7EB";
   const hr = (y, w, c) => doc.moveTo(M, y).lineTo(M + INN, y).lineWidth(w).strokeColor(c).stroke();
@@ -396,10 +399,10 @@ function compact(doc, ctx) {
 
   // Ligne de KPI compacts
   const kpis = [
-    { label: "CA",        value: money(v.ca_total) },
-    { label: "Depenses",  value: money(a.total_achats) },
-    { label: "Benefice",  value: money(benefice), color: benefice >= 0 ? "#10B981" : "#EF4444" },
-    { label: "Factures",  value: fmtN(f.nb_total) },
+    { label: "CA",            value: money(v.ca_total) },
+    { label: "Cout ventes",   value: money(cogs) },
+    { label: "Benefice",      value: money(benefice), color: benefice >= 0 ? "#10B981" : "#EF4444" },
+    { label: "Factures",      value: fmtN(f.nb_total) },
   ];
   const kw = INN / 4;
   kpis.forEach((k, i) => {

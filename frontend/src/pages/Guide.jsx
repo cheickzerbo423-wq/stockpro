@@ -585,6 +585,26 @@ export default function Guide() {
         <Tip icon="💡" color="blue">
           Tant qu'aucune information n'est renseignée, WariGest applique des valeurs par défaut neutres — vous pouvez donc personnaliser progressivement, à votre rythme.
         </Tip>
+
+        <SectionTitle>🎨 Styles des documents PDF — catalogue de 25 modèles</SectionTitle>
+        <p className="text-xs text-gray-500 leading-relaxed">
+          En bas de la page Paramètres, la carte <strong>Styles des documents PDF</strong> propose un catalogue de
+          <strong> 25 styles</strong> — 5 mises en page (Classique, Moderne, Bloc, Élégant, Compact) déclinées en
+          5 palettes de couleurs (Bleu, Émeraude, Ambre, Violet, Graphite) — pour habiller vos <strong>factures</strong>,
+          vos <strong>reçus</strong> et vos <strong>rapports financiers</strong>.
+        </p>
+        <div className="space-y-2">
+          <Step n="1">Choisissez l'onglet du document concerné : <strong>Factures</strong>, <strong>Reçus</strong> ou <strong>Rapports</strong>.</Step>
+          <Step n="2">Parcourez la galerie : chaque vignette montre un <strong>aperçu miniature</strong> de la mise en page et de ses couleurs.</Step>
+          <Step n="3">Cliquez sur le style souhaité — il est mis en surbrillance pour confirmer la sélection.</Step>
+          <Step n="4">Cliquez <strong>Enregistrer les modifications</strong> : le style choisi s'applique <strong>immédiatement</strong> à la prochaine génération PDF du document concerné.</Step>
+        </div>
+        <Tip icon="🎯" color="amber">
+          Chaque type de document (factures, reçus, rapports) a son <strong>propre style</strong>, indépendant des deux autres — vous pouvez par exemple choisir un style "Élégant Violet" pour les factures et "Compact Graphite" pour les reçus.
+        </Tip>
+        <Tip icon="🖌️" color="blue">
+          Par défaut, le style <strong>Classique Bleu</strong> est appliqué. Avec 25 combinaisons disponibles, chaque entreprise peut trouver un rendu adapté à son identité visuelle.
+        </Tip>
       </Section>
 
       {/* ── Pied de page ── */}

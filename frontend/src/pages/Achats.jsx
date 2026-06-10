@@ -73,8 +73,26 @@ function LigneCommande({ ligne, articles, onUpdate, onRemove }) {
     onUpdate({ ...ligne, article_code: a.code, libelle: a.libelle, prix_achat: a.prix_achat || "" });
   };
 
+  // Si l'utilisateur tape le nom (ou code) exact d'un article du catalogue puis
+  // quitte le champ sans cliquer sur la suggestion, on l'associe quand même —
+  // évite une ligne "complète à l'œil" mais non reconnue (article_code vide).
+  const handleBlur = () => {
+    setTimeout(() => {
+      if (ligne.article_code) return;
+      const q = search.trim().toLowerCase();
+      if (!q) return;
+      const exact = articles.find(
+        (a) => a.libelle.toLowerCase() === q || a.code.toLowerCase() === q
+      );
+      if (exact) selectArticle(exact);
+      setOpen(false);
+    }, 150);
+  };
+
   const total = (+ligne.prix_achat || 0) * (+ligne.quantite || 0);
   const selectedArt = articles.find(a => a.code === ligne.article_code);
+  // Texte saisi mais non associé à un article du catalogue : à signaler.
+  const nonReconnu = !ligne.article_code && !!search.trim() && !open;
 
   return (
     <div className="rounded-xl p-3 border bg-gray-50 border-gray-200 space-y-2">
@@ -88,14 +106,23 @@ function LigneCommande({ ligne, articles, onUpdate, onRemove }) {
         <div className="flex-1 relative" ref={ref}>
           <label className="block text-xs font-semibold text-gray-500 mb-1">Article *</label>
           <input
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white pr-8"
+            className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 bg-white pr-8 ${
+              nonReconnu ? "border-red-300 focus:ring-red-200" : "border-gray-200 focus:ring-[#B3BFFF]"
+            }`}
             placeholder="Rechercher par code ou nom…"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setOpen(true); onUpdate({ ...ligne, article_code: "", libelle: "" }); }}
+            onChange={(e) => { setSearch(e.target.value); setOpen(true); onUpdate({ ...ligne, article_code: "", libelle: e.target.value }); }}
             onFocus={() => setOpen(true)}
+            onBlur={handleBlur}
           />
           <span className="absolute right-3 top-8 text-gray-400 cursor-pointer select-none"
             onMouseDown={(e) => { e.preventDefault(); setOpen((v) => !v); }}>▾</span>
+
+          {nonReconnu && (
+            <p className="text-[11px] text-red-500 font-semibold mt-1">
+              ⚠️ Article non reconnu — choisissez-le dans la liste, ou créez-le d'abord dans Articles.
+            </p>
+          )}
 
           {open && (
             <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-72 overflow-y-auto">
@@ -273,8 +300,24 @@ export default function Achats() {
   /* ── Enregistrement multi-produits ── */
   const handleSave = async () => {
     const valides = lignes.filter((l) => l.article_code && l.quantite && l.prix_achat);
-    if (valides.length === 0)
+    if (valides.length === 0) {
+      // Message précis : aide l'utilisateur à comprendre pourquoi rien n'est
+      // pris en compte (cas le plus fréquent : article tapé mais non
+      // sélectionné dans la liste, donc non lié au catalogue).
+      const remplie = lignes.find((l) => (l.libelle?.trim() || l.quantite || l.prix_achat) && !l.article_code);
+      if (remplie) {
+        return notify(
+          remplie.libelle?.trim()
+            ? `"${remplie.libelle.trim()}" n'est pas lié à un article du catalogue. Sélectionnez-le dans la liste déroulante (ou créez-le d'abord dans Articles).`
+            : "Sélectionnez un article dans la liste déroulante pour chaque ligne.",
+          "error"
+        );
+      }
+      const incomplete = lignes.find((l) => l.article_code && (!l.quantite || !l.prix_achat));
+      if (incomplete)
+        return notify(`Renseignez la quantité et le prix d'achat pour "${incomplete.libelle}".`, "error");
       return notify("Ajoutez au moins un article complet.", "error");
+    }
     if (!fournisseurNom)
       return notify("Veuillez sélectionner un fournisseur.", "error");
 

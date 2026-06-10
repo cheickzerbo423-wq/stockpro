@@ -210,6 +210,19 @@ export const entrepriseService = {
 
   getPdfStyles: () =>
     api.get("/entreprise/pdf-styles").then((r) => r.data),
+
+  // Récupère un PDF d'exemple (données fictives) pour prévisualiser un style
+  // avant de l'enregistrer. Retourne une URL "blob:" à utiliser dans un
+  // <iframe> ou window.open — penser à révoquer l'URL après usage.
+  getPdfPreviewBlobUrl: async (type, style) => {
+    const token = localStorage.getItem("warigest_token");
+    const base  = process.env.REACT_APP_API_URL || "/api";
+    const url   = `${base}/entreprise/pdf-preview?type=${encodeURIComponent(type)}&style=${encodeURIComponent(style)}`;
+    const res   = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error("Erreur serveur");
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
+  },
 };
 
 // ══════════════════════════════════════════

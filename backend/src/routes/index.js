@@ -14,6 +14,7 @@ const facturesCtrl = require("../controllers/facturesController");
 const usersCtrl    = require("../controllers/utilisateursController");
 const rapportsCtrl = require("../controllers/rapportsController");
 const entrepriseCtrl = require("../controllers/entrepriseController");
+const previewCtrl    = require("../controllers/previewController");
 const superadminCtrl = require("../controllers/superadminController");
 
 // ============================================================
@@ -87,6 +88,7 @@ router.post("/admin/reset", authenticate, usersCtrl.resetData);
 router.get("/entreprise", authenticate, entrepriseCtrl.getConfig);
 router.put("/entreprise", authenticate, audit("MODIFICATION", "entreprise_config"), entrepriseCtrl.updateConfig);
 router.get("/entreprise/pdf-styles", authenticate, entrepriseCtrl.getPdfStyles);
+router.get("/entreprise/pdf-preview", authenticate, previewCtrl.previewPdf);
 
 // ============================================================
 // SUPER-ADMIN — Pilotage de la plateforme (gestion des entreprises clientes)

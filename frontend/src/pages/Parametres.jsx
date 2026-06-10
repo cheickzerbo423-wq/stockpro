@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useEntreprise } from "../hooks/useApi";
 import { entrepriseService } from "../services";
-import { Spinner, ErrorBox, Card, Input, Btn, PageHeader, Toast, SectionTitle } from "../components/UI";
+import { Spinner, ErrorBox, Card, Input, Btn, PageHeader, Toast, SectionTitle, Modal } from "../components/UI";
 
 const DEVISES = ["FCFA", "EUR", "USD", "XOF", "XAF", "MAD", "GNF", "CDF", "NGN", "GHS"];
 
@@ -94,7 +94,7 @@ function StyleThumb({ layoutId, pal }) {
 }
 
 // ── Galerie de sélection des 25 styles (5 layouts × 5 palettes) ───────────
-function StyleGallery({ catalog, palettes, value, onChange }) {
+function StyleGallery({ catalog, palettes, value, onChange, onPreview }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 max-h-[24rem] overflow-y-auto p-1 -m-1">
       {catalog.map((s) => {
@@ -107,8 +107,18 @@ function StyleGallery({ catalog, palettes, value, onChange }) {
             <div className="h-16 w-full">
               <StyleThumb layoutId={s.layout} pal={pal} />
             </div>
-            <div className="px-2 py-1.5 bg-white border-t border-gray-50">
+            <div className="px-2 py-1.5 bg-white border-t border-gray-50 flex items-center justify-between gap-1">
               <p className="text-[10px] font-bold text-gray-700 truncate">{s.label}</p>
+              <span
+                role="button"
+                tabIndex={0}
+                title="Aperçu du document"
+                onClick={(e) => { e.stopPropagation(); onPreview(s); }}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); e.preventDefault(); onPreview(s); } }}
+                className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-[11px] text-gray-400 hover:text-white hover:bg-[#0023FF] transition"
+              >
+                👁
+              </span>
             </div>
             {active && (
               <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
@@ -118,6 +128,41 @@ function StyleGallery({ catalog, palettes, value, onChange }) {
         );
       })}
     </div>
+  );
+}
+
+// ── Modal d'aperçu PDF (données fictives) pour un style donné ────────────
+function PdfPreviewModal({ docType, docLabel, style, onClose }) {
+  const [url, setUrl] = useState(null);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    let blobUrl = null;
+    let cancelled = false;
+    setUrl(null);
+    setErr("");
+    entrepriseService.getPdfPreviewBlobUrl(docType, style.id)
+      .then((u) => { if (!cancelled) { blobUrl = u; setUrl(u); } else { URL.revokeObjectURL(u); } })
+      .catch((e) => { if (!cancelled) setErr(e.message || "Impossible de générer l'aperçu."); });
+    return () => {
+      cancelled = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [docType, style.id]);
+
+  return (
+    <Modal title={`Aperçu — ${docLabel} · ${style.label}`} onClose={onClose} wide>
+      <p className="text-xs text-gray-400 -mt-2 mb-3">
+        Exemple généré avec des données fictives, à partir de vos informations d'entreprise (nom, logo, devise...).
+      </p>
+      {err ? (
+        <div className="text-sm text-red-500 font-medium py-8 text-center">{err}</div>
+      ) : !url ? (
+        <div className="py-16"><Spinner /></div>
+      ) : (
+        <iframe src={url} title="Aperçu PDF" className="w-full h-[70vh] rounded-xl border border-gray-100" />
+      )}
+    </Modal>
   );
 }
 
@@ -157,6 +202,7 @@ export default function Parametres() {
   const [toast,   setToast]   = useState(null);
   const [pdfStyles, setPdfStyles] = useState(null);
   const [styleTab,  setStyleTab]  = useState("facture");
+  const [preview,   setPreview]   = useState(null); // { id, label } du style à prévisualiser
   const fileRef = useRef(null);
 
   // Charge le catalogue des 25 styles PDF (layouts × palettes)
@@ -376,6 +422,7 @@ export default function Parametres() {
                   palettes={pdfStyles.palettes}
                   value={form[t.field]}
                   onChange={(id) => setForm((f) => ({ ...f, [t.field]: id }))}
+                  onPreview={(s) => setPreview(s)}
                 />
               ))}
             </>
@@ -384,6 +431,14 @@ export default function Parametres() {
       </div>
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      {preview && (
+        <PdfPreviewModal
+          docType={styleTab}
+          docLabel={DOC_TABS.find((t) => t.key === styleTab)?.label}
+          style={preview}
+          onClose={() => setPreview(null)}
+        />
+      )}
     </div>
   );
 }

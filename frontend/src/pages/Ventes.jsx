@@ -53,7 +53,6 @@ function MiniForm({ title, icon, onSave, onCancel, saving }) {
 /* ─── Modal Nouvelle Vente ─────────────────────────────── */
 function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient }) {
   const [articleQ, setArticleQ]   = useState("");
-  const [articleOpen, setArticleOpen] = useState(false);
   const [client, setClient]       = useState("");
   const [clientId, setClientId]   = useState("");
   const [clientQ, setClientQ]     = useState("");
@@ -71,13 +70,12 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
   const totalPanier = panier.reduce((s, p) => s + p.prix_vente * p.quantite, 0);
   const monnaie     = paye !== "" ? (+paye - totalPanier) : null;
 
-  /* Articles filtrés pour le dropdown */
+  /* Articles filtrés pour le catalogue */
   const filteredArticles = useMemo(() => {
     const s = articleQ.trim().toLowerCase();
-    const list = s
+    return s
       ? articles.filter((a) => a.code.toLowerCase().includes(s) || a.libelle.toLowerCase().includes(s))
       : articles;
-    return list.slice(0, 10);
   }, [articleQ, articles]);
 
   const addToCart = (art) => {
@@ -88,8 +86,6 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
       if (ex) return prev.map((p) => p.code === art.code ? { ...p, quantite: p.quantite + 1 } : p);
       return [...prev, { code: art.code, libelle: art.libelle, prix_vente: parseInt(art.prix_vente) || 0, quantite: 1, image_url: art.image_url || "" }];
     });
-    setArticleQ("");
-    setArticleOpen(false);
   };
 
   const setQty = (code, val) => {
@@ -191,94 +187,94 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
             <Input label="Date *" type="date" value={datev} onChange={(e) => setDatev(e.target.value)} />
           </div>
 
-          {/* ── Combobox article ── */}
-          <div className="px-4 pb-3 relative">
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Ajouter un article</label>
-            <div className="relative">
-              {/* Icône loupe */}
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">🔍</span>
+          {/* ── Catalogue articles ── */}
+          <div className="px-4 pb-3">
+            {/* En-tête section */}
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Catalogue</span>
+              {articleQ.trim()
+                ? <span className="text-[11px] text-[#0023FF] font-semibold">{filteredArticles.length} résultat(s)</span>
+                : <span className="text-[11px] text-gray-400">{articles.length} article(s)</span>}
+            </div>
+
+            {/* Barre de recherche */}
+            <div className="relative mb-3">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
               <input
                 type="text"
                 value={articleQ}
-                onChange={(e) => { setArticleQ(e.target.value); setArticleOpen(true); }}
-                onFocus={() => setArticleOpen(true)}
-                onBlur={() => setTimeout(() => setArticleOpen(false), 160)}
-                placeholder="Rechercher par code ou nom…"
-                className="w-full pl-9 pr-9 py-2.5 border-2 border-[#B3BFFF] rounded-xl text-sm bg-[#F7F8FF] focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] focus:border-[#0023FF] focus:bg-white transition"
+                onChange={(e) => setArticleQ(e.target.value)}
+                placeholder="Rechercher par nom ou code…"
+                className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#0023FF]/10 focus:border-[#0023FF] focus:bg-white transition"
                 autoComplete="off"
               />
               {articleQ && (
-                <button onClick={() => { setArticleQ(""); setArticleOpen(false); }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                <button onClick={() => setArticleQ("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-500 text-xs transition">✕</button>
               )}
             </div>
 
-            {/* Dropdown articles */}
-            {articleOpen && (
-              <div className="absolute z-30 left-4 right-4 mt-1 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden"
-                style={{ maxHeight: "280px", overflowY: "auto" }}>
-                {filteredArticles.length === 0 ? (
-                  <div className="px-4 py-5 text-center text-sm text-gray-400">
-                    <div className="text-2xl mb-1">🔎</div>
-                    Aucun article trouvé
-                  </div>
-                ) : (
-                  <>
-                    <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-100">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
-                        {articleQ.trim() ? `${filteredArticles.length} résultat(s)` : "Articles disponibles"}
-                      </span>
-                    </div>
-                    {filteredArticles.map((a) => {
-                      const stock = parseInt(a.stock_restant) || 0;
-                      const rupture = stock <= 0;
-                      const inCart = panier.find((p) => p.code === a.code)?.quantite || 0;
-                      const stockLow = !rupture && stock <= (parseInt(a.stock_min) || 5);
-                      return (
-                        <button
-                          key={a.code}
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => !rupture && addToCart(a)}
-                          disabled={rupture}
-                          className={`w-full text-left px-3 py-2.5 border-b border-gray-50 last:border-0 transition flex items-center gap-3
-                            ${rupture ? "opacity-40 cursor-not-allowed bg-white" : "hover:bg-[#E6EAFF] cursor-pointer"}
-                            ${inCart > 0 ? "bg-[#F0F3FF]" : ""}`}
-                        >
-                          {/* Miniature produit */}
-                          <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100 flex items-center justify-center">
-                            {a.image_url
-                              ? <img src={a.image_url} alt="" className="w-full h-full object-cover" />
-                              : <span className="text-lg">📦</span>
-                            }
+            {/* Grille catalogue — 2 colonnes */}
+            {filteredArticles.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <div className="text-3xl mb-2">🔎</div>
+                <p className="text-sm text-gray-400 font-medium">Aucun article trouvé</p>
+                <p className="text-xs text-gray-300 mt-0.5">Essayez un autre mot-clé</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2.5 max-h-56 overflow-y-auto pb-0.5">
+                {filteredArticles.map((a) => {
+                  const stock   = parseInt(a.stock_restant) || 0;
+                  const rupture = stock <= 0;
+                  const stockLow = !rupture && stock <= (parseInt(a.stock_min) || 5);
+                  const inCart  = panier.find((p) => p.code === a.code)?.quantite || 0;
+                  return (
+                    <button
+                      key={a.code}
+                      onClick={() => !rupture && addToCart(a)}
+                      disabled={rupture}
+                      className={`relative rounded-2xl border p-2.5 text-left transition-all duration-150 flex flex-col
+                        ${rupture
+                          ? "opacity-35 cursor-not-allowed border-gray-100 bg-white"
+                          : inCart > 0
+                            ? "border-[#0023FF] bg-[#F0F3FF] shadow-md"
+                            : "border-gray-100 bg-white hover:border-[#B3BFFF] hover:bg-[#F7F8FF] hover:shadow-sm"}`}
+                    >
+                      {/* Badge quantité panier */}
+                      {inCart > 0 && (
+                        <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#0023FF] text-white text-[10px] font-black flex items-center justify-center shadow">
+                          {inCart}
+                        </span>
+                      )}
+                      {/* Image produit */}
+                      <div className="w-full aspect-square rounded-xl overflow-hidden bg-gray-100 mb-2 flex items-center justify-center">
+                        {a.image_url
+                          ? <img src={a.image_url} alt={a.libelle} className="w-full h-full object-cover" />
+                          : <span className="text-3xl">📦</span>}
+                      </div>
+                      {/* Infos */}
+                      <div className="flex flex-col flex-1">
+                        <div className="text-[10px] text-gray-400 font-mono mb-0.5">{a.code}</div>
+                        <div className="text-xs font-bold text-gray-800 leading-tight mb-1.5 line-clamp-2">{a.libelle}</div>
+                        <div className="mt-auto">
+                          <div className="text-sm font-black text-[#0023FF]">{fmtN(a.prix_vente)}<span className="text-[10px] font-normal text-gray-400 ml-0.5">F</span></div>
+                          <div className={`text-[10px] font-bold mt-0.5 ${rupture ? "text-red-500" : stockLow ? "text-amber-500" : "text-emerald-500"}`}>
+                            {rupture ? "Rupture" : `Stock : ${stock}`}
                           </div>
-                          {/* Code + nom */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-[11px] font-black text-[#0023FF] bg-[#E6EAFF] border border-[#B3BFFF] px-1.5 py-0.5 rounded font-mono leading-none">{a.code}</span>
-                              {inCart > 0 && (
-                                <span className="text-[10px] bg-[#0023FF] text-white font-bold px-1.5 py-0.5 rounded-full leading-none">×{inCart} dans le panier</span>
-                              )}
-                            </div>
-                            <div className="text-sm font-semibold text-gray-800 truncate">{a.libelle}</div>
-                          </div>
-                          {/* Prix + stock */}
-                          <div className="text-right shrink-0">
-                            <div className="text-sm font-bold text-gray-900">{fmtN(a.prix_vente)} <span className="text-[11px] font-normal text-gray-400">FCFA</span></div>
-                            <div className={`text-[11px] font-bold mt-0.5
-                              ${rupture ? "text-red-500" : stockLow ? "text-amber-500" : "text-emerald-500"}`}>
-                              {rupture ? "Rupture" : `Stock : ${stock}`}
-                            </div>
-                          </div>
-                          {/* + */}
-                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-base font-black shrink-0 transition
-                            ${rupture ? "bg-gray-100 text-gray-300" : inCart > 0 ? "bg-[#0023FF] text-white" : "bg-gray-100 text-gray-500 group-hover:bg-[#0023FF] group-hover:text-white"}`}>
-                            +
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </>
-                )}
+                        </div>
+                      </div>
+                      {/* Bouton + */}
+                      {!rupture && (
+                        <div className={`absolute bottom-2.5 right-2.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black transition
+                          ${inCart > 0 ? "bg-[#0023FF] text-white" : "bg-gray-100 text-gray-500"}`}>
+                          +
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

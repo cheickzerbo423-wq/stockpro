@@ -492,7 +492,7 @@ function Layout({ children }) {
         <ConfirmModal
           icon="🔒"
           title="Se déconnecter ?"
-          message="Vous allez quitter votre session. Toutes les modifications non enregistrées seront perdues."
+          message="Voulez-vous vraiment vous déconnecter de votre espace de gestion ?"
           confirmLabel="Déconnexion"
           confirmColor="red"
           onConfirm={handleLogout}

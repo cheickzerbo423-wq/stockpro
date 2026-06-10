@@ -160,7 +160,17 @@ function PdfPreviewModal({ docType, docLabel, style, onClose }) {
       ) : !url ? (
         <div className="py-16"><Spinner /></div>
       ) : (
-        <iframe src={url} title="Aperçu PDF" className="w-full h-[70vh] rounded-xl border border-gray-100" />
+        <>
+          {/* Aperçu intégré — fonctionne sur la plupart des navigateurs de bureau */}
+          <iframe src={url} title="Aperçu PDF" className="hidden sm:block w-full h-[70vh] rounded-xl border border-gray-100" />
+          {/* Sur mobile, les navigateurs n'affichent pas les PDF dans un cadre :
+              on propose d'ouvrir l'aperçu dans le lecteur PDF du téléphone. */}
+          <div className="sm:hidden flex flex-col items-center gap-3 py-10 px-4 bg-gray-50 rounded-xl border border-gray-100 text-center">
+            <span className="text-4xl">📄</span>
+            <p className="text-sm text-gray-500">L'aperçu intégré n'est pas disponible sur ce navigateur.</p>
+            <Btn onClick={() => window.open(url, "_blank")}>Ouvrir l'aperçu PDF</Btn>
+          </div>
+        </>
       )}
     </Modal>
   );

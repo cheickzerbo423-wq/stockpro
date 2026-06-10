@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { useSuperadminEntreprises, useMutation } from "../hooks/useApi";
 import { superadminService, authService } from "../services";
-import { Spinner, ErrorBox, Badge, Modal, Input, Btn, Toast } from "../components/UI";
+import { Spinner, ErrorBox, Badge, Modal, Input, Btn, Toast, ConfirmModal } from "../components/UI";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const fmtNombre = (n) => new Intl.NumberFormat("fr-FR").format(Math.round(Number(n) || 0));
@@ -42,6 +42,7 @@ export default function SuperAdmin() {
   const [renameTarget,  setRenameTarget]  = useState(null);
   const [aboTarget,     setAboTarget]     = useState(null);
   const [deleteTarget,  setDeleteTarget]  = useState(null);
+  const [toggleTarget,  setToggleTarget]  = useState(null);
   const [search,        setSearch]        = useState("");
   const [form, setForm] = useState({ nom: "", admin_login: "", admin_mdp: "",
     abonnement_type: "mensuel", abonnement_debut: "", abonnement_fin: "" });
@@ -67,17 +68,15 @@ export default function SuperAdmin() {
     } catch (err) { notify(err.message, "error"); }
   };
 
-  const handleToggle = async (ent) => {
-    const action = ent.actif ? "suspendre" : "réactiver";
-    const detail = ent.actif
-      ? "Tous ses utilisateurs perdront immédiatement l'accès."
-      : "Ses utilisateurs retrouveront l'accès à l'application.";
-    if (!window.confirm(`Voulez-vous ${action} « ${ent.nom} » ?\n\n${detail}`)) return;
+  const handleToggle = (ent) => setToggleTarget(ent);
+  const confirmToggle = async () => {
+    const ent = toggleTarget;
     try {
       await toggle(ent.id, !ent.actif);
       notify(`« ${ent.nom} » ${ent.actif ? "suspendue" : "réactivée"}.`);
+      setToggleTarget(null);
       reload();
-    } catch (err) { notify(err.message, "error"); }
+    } catch (err) { notify(err.message, "error"); setToggleTarget(null); }
   };
 
   // KPIs
@@ -241,6 +240,21 @@ export default function SuperAdmin() {
       {/* ── Modal suppression ── */}
       {deleteTarget && (
         <DeleteModal ent={deleteTarget} onClose={() => setDeleteTarget(null)} mutate={del} notify={notify} reload={reload} />
+      )}
+
+      {/* ── Confirmation suspension/réactivation ── */}
+      {toggleTarget && (
+        <ConfirmModal
+          icon={toggleTarget.actif ? "⏸️" : "▶️"}
+          title={`${toggleTarget.actif ? "Suspendre" : "Réactiver"} « ${toggleTarget.nom} » ?`}
+          sub={toggleTarget.actif
+            ? "Tous ses utilisateurs perdront immédiatement l'accès."
+            : "Ses utilisateurs retrouveront l'accès à l'application."}
+          confirmLabel={toggleTarget.actif ? "Suspendre" : "Réactiver"}
+          confirmColor={toggleTarget.actif ? "amber" : "green"}
+          onConfirm={confirmToggle}
+          onCancel={() => setToggleTarget(null)}
+        />
       )}
 
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}

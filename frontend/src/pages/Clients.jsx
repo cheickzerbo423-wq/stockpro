@@ -7,7 +7,7 @@ import { useClients, useMutation, useSortableData } from "../hooks/useApi";
 import { clientsService, achatsService } from "../services";
 import {
   fmt, fmtN, Spinner, ErrorBox, Modal, Input, Btn,
-  PageHeader, DataTable, TR, TD, Toast, Badge, SearchBox,
+  PageHeader, DataTable, TR, TD, Toast, Badge, SearchBox, ConfirmModal,
 } from "../components/UI";
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -344,6 +344,7 @@ export default function Clients() {
   const [bilanLoading, setBilanLoading] = useState(false);
   const [payModal, setPayModal]     = useState(null);
   const [payAmount, setPayAmount]   = useState("");
+  const [delConfirm, setDelConfirm] = useState(null); // { id, nom }
   const [form, setForm]             = useState({ nom: "", contact: "", email: "", ville: "", adresse: "" });
   const [toast, setToast]           = useState(null);
   const notify = (msg, type = "success") => { setToast({ message: msg, type }); setTimeout(() => setToast(null), 3500); };
@@ -402,10 +403,10 @@ export default function Clients() {
     } catch (err) { notify(err.message, "error"); }
   };
 
-  const handleDel = async (id, nom) => {
-    if (!window.confirm(`Supprimer ${nom} ?`)) return;
-    try { await del(id); notify("Supprimé."); reload(); }
-    catch (err) { notify(err.message, "error"); }
+  const handleDel = (id, nom) => setDelConfirm({ id, nom });
+  const confirmDel = async () => {
+    try { await del(delConfirm.id); notify("Supprimé."); setDelConfirm(null); reload(); }
+    catch (err) { notify(err.message, "error"); setDelConfirm(null); }
   };
 
   const handlePay = async () => {
@@ -622,6 +623,18 @@ export default function Clients() {
       )}
 
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
+
+      {delConfirm && (
+        <ConfirmModal
+          icon="🗑️"
+          title={`Supprimer ${delConfirm.nom} ?`}
+          message="Cette action est irréversible. Toutes les données associées seront perdues."
+          confirmLabel="Supprimer"
+          confirmColor="red"
+          onConfirm={confirmDel}
+          onCancel={() => setDelConfirm(null)}
+        />
+      )}
     </div>
   );
 }

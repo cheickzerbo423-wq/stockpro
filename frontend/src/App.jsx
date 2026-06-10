@@ -13,6 +13,7 @@ import Factures     from "./pages/Factures";
 import Utilisateurs from "./pages/Utilisateurs";
 import Rapports     from "./pages/Rapports";
 import Guide        from "./pages/Guide";
+import { ConfirmModal } from "./components/UI";
 import Parametres   from "./pages/Parametres";
 import SuperAdmin   from "./pages/SuperAdmin";
 
@@ -382,8 +383,9 @@ function BottomNav({ allItems }) {
 function Layout({ children }) {
   const { user, logout, canAccess } = useAuth();
   const navigate = useNavigate();
-  const [collapsed,  setCollapsed]  = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [collapsed,     setCollapsed]     = useState(false);
+  const [drawerOpen,    setDrawerOpen]    = useState(false);
+  const [logoutConfirm, setLogoutConfirm] = useState(false);
 
   const handleLogout = () => { logout(); navigate("/login"); };
 
@@ -416,7 +418,7 @@ function Layout({ children }) {
         collapsed={collapsed}
         setCollapsed={setCollapsed}
         user={user}
-        onLogout={handleLogout}
+        onLogout={() => setLogoutConfirm(true)}
         visibleSections={visibleSections}
       />
 
@@ -426,7 +428,7 @@ function Layout({ children }) {
         onClose={() => setDrawerOpen(false)}
         visibleSections={visibleSections}
         user={user}
-        onLogout={handleLogout}
+        onLogout={() => setLogoutConfirm(true)}
       />
 
       {/* Contenu principal */}
@@ -483,6 +485,19 @@ function Layout({ children }) {
 
       {/* Barre mobile bas */}
       <BottomNav allItems={allItems} />
+
+      {/* Confirmation déconnexion */}
+      {logoutConfirm && (
+        <ConfirmModal
+          icon="🔒"
+          title="Se déconnecter ?"
+          message="Vous allez quitter votre session. Toutes les modifications non enregistrées seront perdues."
+          confirmLabel="Déconnexion"
+          confirmColor="red"
+          onConfirm={handleLogout}
+          onCancel={() => setLogoutConfirm(false)}
+        />
+      )}
     </div>
   );
 }

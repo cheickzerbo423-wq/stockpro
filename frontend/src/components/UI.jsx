@@ -171,6 +171,7 @@ export function Btn({ children, onClick, color = "blue", sm, loading, type = "bu
     blue:   { bg: "#0023FF", hover: "#0019CC", shadow: "rgba(0,35,255,0.25)",   text: "white" },
     orange: { bg: "#0023FF", hover: "#0019CC", shadow: "rgba(0,35,255,0.25)",   text: "white" },
     red:    { bg: "#EF4444", hover: "#DC2626", shadow: "rgba(239,68,68,0.25)",  text: "white" },
+    amber:  { bg: "#F59E0B", hover: "#D97706", shadow: "rgba(245,158,11,0.25)", text: "white" },
     purple: { bg: "#8B5CF6", hover: "#7C3AED", shadow: "rgba(139,92,246,0.25)", text: "white" },
     gray:   { bg: "#F3F4F6", hover: "#E5E7EB", shadow: "transparent",           text: "#374151", border: "#E5E7EB" },
     "orange-light": { bg: "#E6EAFF", hover: "#D1D9FF", shadow: "transparent", text: "#0023FF" },
@@ -450,6 +451,64 @@ export function Toast({ message, type = "success", onClose }) {
       <span className="text-sm font-semibold text-white flex-1">{message}</span>
       <button onClick={onClose}
         className="opacity-50 hover:opacity-100 transition text-white text-lg leading-none flex-shrink-0">×</button>
+    </div>
+  );
+}
+
+// ── Modal de confirmation ─────────────────────────────────
+export function ConfirmModal({
+  title,
+  message,
+  sub,
+  icon = "⚠️",
+  confirmLabel = "Confirmer",
+  confirmColor = "red",
+  onConfirm,
+  onCancel,
+  loading = false,
+}) {
+  const iconBg = {
+    red:    "bg-red-50 border border-red-100",
+    amber:  "bg-amber-50 border border-amber-100",
+    green:  "bg-emerald-50 border border-emerald-100",
+    blue:   "bg-[#E6EAFF] border border-[#B3BFFF]",
+    gray:   "bg-gray-50 border border-gray-200",
+    purple: "bg-purple-50 border border-purple-100",
+  };
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+      style={{ background: "rgba(15,23,42,0.65)", backdropFilter: "blur(6px)" }}
+    >
+      <div
+        className="bg-white w-full max-w-sm rounded-2xl overflow-hidden"
+        style={{ boxShadow: "0 25px 60px rgba(0,0,0,0.25)" }}
+      >
+        <div className="p-6">
+          <div className="flex items-start gap-4 mb-5">
+            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl ${iconBg[confirmColor] || iconBg.red}`}>
+              {icon}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-gray-900 leading-snug">{title}</p>
+              {message && (
+                <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">{message}</p>
+              )}
+              {sub && (
+                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mt-2.5 leading-relaxed">
+                  ⚠️ {sub}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Btn color="gray" onClick={onCancel} sm>Annuler</Btn>
+            <Btn color={confirmColor} onClick={onConfirm} loading={loading} sm>
+              {confirmLabel}
+            </Btn>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

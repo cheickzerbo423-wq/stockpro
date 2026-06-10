@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useUtilisateurs } from "../hooks/useApi";
 import { utilisateursService, adminService } from "../services";
 import { useMutation } from "../hooks/useApi";
-import { Spinner, ErrorBox, Badge, Modal, Select, Input, Btn, PageHeader, Toast } from "../components/UI";
+import { Spinner, ErrorBox, Badge, Modal, Select, Input, Btn, PageHeader, Toast, ConfirmModal } from "../components/UI";
 
 const MODULES = [
   { key: "perm_vente",       label: "Ventes",       icon: "↗" },
@@ -40,8 +40,9 @@ export default function Utilisateurs() {
   const { data: users = [], loading, error, reload } = useUtilisateurs();
   const { mutate: create, loading: saving } = useMutation(utilisateursService.create);
   const { mutate: del } = useMutation(utilisateursService.delete);
-  const [showAdd,   setShowAdd]   = useState(false);
-  const [showReset, setShowReset] = useState(false);
+  const [showAdd,    setShowAdd]    = useState(false);
+  const [showReset,  setShowReset]  = useState(false);
+  const [delConfirm, setDelConfirm] = useState(null); // { id, login }
   const [form, setForm] = useState({
     login: "", mdp: "", categorie: "Vendeur",
     perm_vente: true, perm_appro: false, perm_articles: false,
@@ -61,10 +62,10 @@ export default function Utilisateurs() {
     } catch (err) { notify(err.message, "error"); }
   };
 
-  const handleDel = async (id, login) => {
-    if (!window.confirm(`Supprimer l'utilisateur ${login} ?`)) return;
-    try { await del(id); notify("Utilisateur supprimé."); reload(); }
-    catch (err) { notify(err.message, "error"); }
+  const handleDel = (id, login) => setDelConfirm({ id, login });
+  const confirmDel = async () => {
+    try { await del(delConfirm.id); notify("Utilisateur supprimé."); setDelConfirm(null); reload(); }
+    catch (err) { notify(err.message, "error"); setDelConfirm(null); }
   };
 
   const nbAdmins  = users.filter(u => u.categorie === "Admin").length;
@@ -146,6 +147,18 @@ export default function Utilisateurs() {
       {showReset && <ResetModal onClose={() => setShowReset(false)} notify={notify} />}
 
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
+
+      {delConfirm && (
+        <ConfirmModal
+          icon="👤"
+          title={`Supprimer « ${delConfirm.login} » ?`}
+          message="Cet utilisateur ne pourra plus se connecter. Cette action est irréversible."
+          confirmLabel="Supprimer"
+          confirmColor="red"
+          onConfirm={confirmDel}
+          onCancel={() => setDelConfirm(null)}
+        />
+      )}
     </div>
   );
 }

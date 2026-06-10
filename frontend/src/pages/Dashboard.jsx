@@ -46,7 +46,7 @@ function KpiCard({ icon, label, value, sub, color = "blue" }) {
           style={{ background: p.bg }}>
           {icon}
         </div>
-        <div className="text-lg sm:text-xl font-black text-gray-900 leading-tight tracking-tight break-words">
+        <div className="text-sm sm:text-base font-black text-gray-900 leading-tight tracking-tight break-words">
           {value}
         </div>
         <div className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-wide">{label}</div>

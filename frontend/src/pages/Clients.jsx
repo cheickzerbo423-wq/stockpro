@@ -26,7 +26,7 @@ const moisLabel = (m) => {
 function BilanCard({ label, value, color }) {
   return (
     <div className={`rounded-xl p-4 border text-center ${color}`}>
-      <div className="text-xl font-black">{value}</div>
+      <div className="text-sm font-black break-words leading-tight">{value}</div>
       <div className="text-xs font-bold uppercase mt-1 opacity-70">{label}</div>
     </div>
   );

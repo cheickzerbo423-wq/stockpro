@@ -388,7 +388,7 @@ export default function Achats() {
           { label: "Fournisseurs actifs",  value: fmtN(nbFournisseursActifs),color: "text-amber-600",   bg: "bg-amber-50 border-amber-100" },
         ].map((k) => (
           <div key={k.label} className={`rounded-2xl border p-3 md:p-4 ${k.bg}`}>
-            <div className={`text-base md:text-xl font-black ${k.color} truncate`}>{k.value}</div>
+            <div className={`text-sm font-black ${k.color} break-words leading-tight`}>{k.value}</div>
             <div className="text-xs font-semibold text-gray-500 mt-1 leading-tight">{k.label}</div>
           </div>
         ))}

@@ -523,7 +523,7 @@ export default function Guide() {
 
         <SectionTitle>Réinitialiser les données</SectionTitle>
         <div className="space-y-2">
-          <Step n="1">Cliquez sur l'icône <strong>↺</strong> (petite icône rouge, en haut à droite de la page Utilisateurs) pour ouvrir le panneau de réinitialisation.</Step>
+          <Step n="1">Cliquez sur le bouton rouge <strong>« Réinitialiser les données »</strong> (en haut à droite de la page Utilisateurs) pour ouvrir le panneau de réinitialisation.</Step>
           <Step n="2">Cochez les modules à effacer parmi : <em>Ventes, Factures, Approvisionnements, Clients &amp; Fournisseurs, Articles &amp; Stock, Gammes, Journal d'audit</em>.</Step>
           <Step n="3">Cliquez <strong>Continuer</strong>, tapez <code className="bg-red-100 text-red-700 px-1 rounded font-mono text-xs">REINITIALISER</code> dans le champ de confirmation.</Step>
           <Step n="4">Cliquez <strong>Réinitialiser définitivement</strong> pour exécuter l'opération.</Step>

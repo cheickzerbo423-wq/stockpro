@@ -79,11 +79,13 @@ export default function Utilisateurs() {
         action={
           <div className="flex items-center gap-2">
             <button onClick={() => setShowReset(true)} title="Réinitialiser les données"
-              className="w-9 h-9 flex items-center justify-center rounded-xl border border-red-200 text-red-400 bg-white hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+              className="h-9 flex items-center gap-1.5 px-3 rounded-xl border border-red-200 text-red-500 bg-white hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition text-xs font-bold whitespace-nowrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 flex-shrink-0">
                 <polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/>
                 <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/>
               </svg>
+              <span className="hidden sm:inline">Réinitialiser les données</span>
+              <span className="sm:hidden">Réinitialiser</span>
             </button>
             <Btn onClick={() => setShowAdd(true)}>+ Nouvel Utilisateur</Btn>
           </div>

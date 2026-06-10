@@ -514,6 +514,29 @@ pool.connect((err, client, release) => {
         )
         .then(() => console.log("✅ Migration images : articles.image_url + vue_stock mise à jour."))
         .catch((e) => console.error("⚠️  Migration images ignorée :", e.message))
+        // ── Migration : politique de mot de passe renforcée ──────────────────
+        // Ajoute la colonne must_change_password (BOOLEAN) sur utilisateurs et,
+        // lors de l'ajout initial uniquement, marque tous les comptes existants
+        // (hors SuperAdmin, dont le mot de passe respecte déjà la nouvelle
+        // politique) pour qu'ils soient forcés de définir un nouveau mot de
+        // passe conforme (8+ car., majuscule, minuscule, chiffre, spécial) à
+        // leur prochaine connexion.
+        .then(() =>
+          client.query(`
+            DO $$
+            BEGIN
+              IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name='utilisateurs' AND column_name='must_change_password'
+              ) THEN
+                ALTER TABLE utilisateurs ADD COLUMN must_change_password BOOLEAN DEFAULT FALSE NOT NULL;
+                UPDATE utilisateurs SET must_change_password = TRUE WHERE categorie != 'SuperAdmin';
+              END IF;
+            END $$;
+          `)
+        )
+        .then(() => console.log("✅ Colonne 'must_change_password' vérifiée + comptes existants marqués pour changement de mot de passe."))
+        .catch((e) => console.error("⚠️  Migration must_change_password ignorée :", e.message))
         .finally(() => release());
     });
 });

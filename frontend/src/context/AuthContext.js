@@ -38,6 +38,16 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  // Mettre à jour partiellement les infos de l'utilisateur connecté (ex: après
+  // un changement de mot de passe forcé) sans nécessiter une reconnexion.
+  const updateUser = (patch) => {
+    setUser((prev) => {
+      const next = { ...(prev || {}), ...patch };
+      localStorage.setItem("warigest_user", JSON.stringify(next));
+      return next;
+    });
+  };
+
   // Vérifier si l'utilisateur a accès à un module
   const canAccess = (module) => {
     if (!user) return false;
@@ -46,7 +56,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, canAccess }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, canAccess, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

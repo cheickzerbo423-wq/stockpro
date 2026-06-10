@@ -8,6 +8,7 @@
 // (categorie = 'SuperAdmin').
 const bcrypt = require("bcryptjs");
 const db     = require("../config/db");
+const { isPasswordValid, PASSWORD_MESSAGE } = require("../utils/passwordPolicy");
 
 const SLUG_RE = /[^a-z0-9]+/g;
 function slugify(nom) {
@@ -55,8 +56,8 @@ async function create(req, res) {
       return res.status(400).json({ message: "Le nom de l'entreprise est obligatoire." });
     if (!admin_login || !admin_mdp)
       return res.status(400).json({ message: "Login et mot de passe du premier administrateur sont obligatoires." });
-    if (admin_mdp.length < 4)
-      return res.status(400).json({ message: "Mot de passe trop court (4 caractères minimum)." });
+    if (!isPasswordValid(admin_mdp))
+      return res.status(400).json({ message: PASSWORD_MESSAGE });
 
     const typeAbo = TYPES_VALIDES.includes(abonnement_type) ? abonnement_type : "mensuel";
 

@@ -5,7 +5,8 @@
 import { useState } from "react";
 import { useSuperadminEntreprises, useMutation } from "../hooks/useApi";
 import { superadminService, authService } from "../services";
-import { Spinner, ErrorBox, Badge, Modal, Input, Btn, Toast, ConfirmModal } from "../components/UI";
+import { Spinner, ErrorBox, Badge, Modal, Input, Btn, Toast, ConfirmModal, PasswordRules } from "../components/UI";
+import { isPasswordValid, PASSWORD_HINT } from "../utils/passwordPolicy";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const fmtNombre = (n) => new Intl.NumberFormat("fr-FR").format(Math.round(Number(n) || 0));
@@ -57,8 +58,8 @@ export default function SuperAdmin() {
   const handleCreate = async () => {
     if (!form.nom.trim() || !form.admin_login.trim() || !form.admin_mdp)
       return notify("Nom, login et mot de passe sont obligatoires.", "error");
-    if (form.admin_mdp.length < 4)
-      return notify("Mot de passe trop court (4 caractères minimum).", "error");
+    if (!isPasswordValid(form.admin_mdp))
+      return notify(PASSWORD_HINT, "error");
     try {
       await create(form);
       notify(`Entreprise « ${form.nom.trim()} » créée avec succès.`);
@@ -480,7 +481,8 @@ function CreateModal({ form, setForm, onClose, onSubmit, loading }) {
           <Input label="Login *" value={form.admin_login}
             onChange={e => f("admin_login", e.target.value)} placeholder="ex: awa.admin" />
           <Input label="Mot de passe *" type="password" value={form.admin_mdp}
-            onChange={e => f("admin_mdp", e.target.value)} placeholder="4 caractères minimum" />
+            onChange={e => f("admin_mdp", e.target.value)} placeholder="8 caractères minimum" />
+          <PasswordRules value={form.admin_mdp} />
         </div>
 
         {/* Bloc abonnement */}
@@ -696,8 +698,8 @@ function PasswordModal({ onClose, notify }) {
   const handleSave = async () => {
     if (!mdpActuel || !nouveauMdp || !confirmation)
       return notify("Tous les champs sont obligatoires.", "error");
-    if (nouveauMdp.length < 4)
-      return notify("Le nouveau mot de passe doit contenir au moins 4 caractères.", "error");
+    if (!isPasswordValid(nouveauMdp))
+      return notify(PASSWORD_HINT, "error");
     if (nouveauMdp !== confirmation)
       return notify("La confirmation ne correspond pas.", "error");
     setLoading(true);
@@ -719,7 +721,8 @@ function PasswordModal({ onClose, notify }) {
         <Input label="Mot de passe actuel *" type="password" value={mdpActuel}
           onChange={e => setMdpActuel(e.target.value)} placeholder="Mot de passe en cours" />
         <Input label="Nouveau mot de passe *" type="password" value={nouveauMdp}
-          onChange={e => setNouveauMdp(e.target.value)} placeholder="4 caractères minimum" />
+          onChange={e => setNouveauMdp(e.target.value)} placeholder="8 caractères minimum" />
+        <PasswordRules value={nouveauMdp} />
         <Input label="Confirmer *" type="password" value={confirmation}
           onChange={e => setConfirmation(e.target.value)} placeholder="Retapez le nouveau mot de passe" />
       </div>

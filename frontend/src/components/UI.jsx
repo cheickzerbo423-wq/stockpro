@@ -535,3 +535,31 @@ export function SectionTitle({ children, action }) {
     </div>
   );
 }
+
+// ── Checklist de complexité du mot de passe ──────────────
+// Affiche en temps réel les règles imposées (8 car. min, majuscule,
+// minuscule, chiffre, caractère spécial) avec une coche verte/croix grise
+// selon que la règle est respectée par la valeur saisie.
+export function PasswordRules({ value }) {
+  const v = value || "";
+  const rules = [
+    { ok: v.length >= 8,                 label: "8 caractères minimum" },
+    { ok: /[A-Z]/.test(v),                label: "Une majuscule (A-Z)" },
+    { ok: /[a-z]/.test(v),                label: "Une minuscule (a-z)" },
+    { ok: /\d/.test(v),                   label: "Un chiffre (0-9)" },
+    { ok: /[^A-Za-z0-9\s]/.test(v),       label: "Un caractère spécial (! @ # $ % ...)" },
+  ];
+  return (
+    <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5 bg-gray-50 border border-gray-100 rounded-xl p-3">
+      {rules.map((r, i) => (
+        <div key={i} className={`flex items-center gap-1.5 text-[11px] font-medium transition-colors ${r.ok ? "text-emerald-600" : "text-gray-400"}`}>
+          <span className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold
+            ${r.ok ? "bg-emerald-100 text-emerald-600" : "bg-gray-200 text-gray-400"}`}>
+            {r.ok ? "✓" : "✕"}
+          </span>
+          {r.label}
+        </div>
+      ))}
+    </div>
+  );
+}

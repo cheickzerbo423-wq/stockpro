@@ -2,6 +2,7 @@
 const bcrypt = require("bcryptjs");
 const jwt    = require("jsonwebtoken");
 const db     = require("../config/db");
+const { isPasswordValid, PASSWORD_MESSAGE } = require("../utils/passwordPolicy");
 
 // POST /api/auth/login
 async function login(req, res) {
@@ -16,7 +17,7 @@ async function login(req, res) {
     const result = await db.query(
       `SELECT u.id, u.login, u.mdp_hash, u.categorie, u.entreprise_id,
               u.perm_vente, u.perm_appro, u.perm_articles,
-              u.perm_facturation, u.perm_clients, u.actif,
+              u.perm_facturation, u.perm_clients, u.actif, u.must_change_password,
               e.nom AS entreprise_nom, e.actif AS entreprise_actif
        FROM utilisateurs u
        LEFT JOIN entreprises e ON e.id = u.entreprise_id
@@ -73,6 +74,7 @@ async function login(req, res) {
         categorie:     user.categorie,
         entreprise_id: user.entreprise_id,
         entreprise_nom: user.entreprise_nom || null,
+        must_change_password: !!user.must_change_password,
         permissions: {
           vente:       user.perm_vente,
           appro:       user.perm_appro,
@@ -115,8 +117,8 @@ async function changePassword(req, res) {
     const { mdp_actuel, nouveau_mdp } = req.body;
     if (!mdp_actuel || !nouveau_mdp)
       return res.status(400).json({ message: "Mot de passe actuel et nouveau mot de passe requis." });
-    if (nouveau_mdp.length < 4)
-      return res.status(400).json({ message: "Le nouveau mot de passe doit contenir au moins 4 caractères." });
+    if (!isPasswordValid(nouveau_mdp))
+      return res.status(400).json({ message: PASSWORD_MESSAGE });
 
     const result = await db.query(`SELECT id, mdp_hash FROM utilisateurs WHERE id = $1`, [req.user.id]);
     const user = result.rows[0];
@@ -128,7 +130,7 @@ async function changePassword(req, res) {
       return res.status(401).json({ message: "Mot de passe actuel incorrect." });
 
     const hash = await bcrypt.hash(nouveau_mdp, 10);
-    await db.query(`UPDATE utilisateurs SET mdp_hash = $1 WHERE id = $2`, [hash, user.id]);
+    await db.query(`UPDATE utilisateurs SET mdp_hash = $1, must_change_password = FALSE WHERE id = $2`, [hash, user.id]);
 
     res.json({ message: "Mot de passe modifié avec succès." });
   } catch (err) {

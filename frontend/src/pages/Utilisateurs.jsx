@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useUtilisateurs } from "../hooks/useApi";
 import { utilisateursService, adminService } from "../services";
 import { useMutation } from "../hooks/useApi";
-import { Spinner, ErrorBox, Badge, Modal, Select, Input, Btn, PageHeader, Toast, ConfirmModal } from "../components/UI";
+import { Spinner, ErrorBox, Badge, Modal, Select, Input, Btn, PageHeader, Toast, ConfirmModal, PasswordRules } from "../components/UI";
+import { isPasswordValid, PASSWORD_HINT } from "../utils/passwordPolicy";
 
 const MODULES = [
   { key: "perm_vente",       label: "Ventes",       icon: "↗" },
@@ -53,6 +54,7 @@ export default function Utilisateurs() {
 
   const handleSave = async () => {
     if (!form.login || !form.mdp) return notify("Login et mot de passe requis.", "error");
+    if (!isPasswordValid(form.mdp)) return notify(PASSWORD_HINT, "error");
     try {
       await create(form);
       notify("Utilisateur créé !");
@@ -114,6 +116,9 @@ export default function Utilisateurs() {
           <div className="grid grid-cols-2 gap-3 mb-4">
             <Input label="Login *" value={form.login} onChange={(e) => setForm({ ...form, login: e.target.value })} placeholder="ex: marie" />
             <Input label="Mot de passe *" type="password" value={form.mdp} onChange={(e) => setForm({ ...form, mdp: e.target.value })} />
+            <div className="col-span-2 -mt-1">
+              <PasswordRules value={form.mdp} />
+            </div>
             <div className="col-span-2">
               <Select label="Rôle" value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })}>
                 <option>Admin</option><option>Gestionnaire</option><option>Vendeur</option>

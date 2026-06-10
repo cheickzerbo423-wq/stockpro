@@ -1,6 +1,7 @@
 // src/controllers/utilisateursController.js
 const bcrypt = require("bcryptjs");
 const db     = require("../config/db");
+const { isPasswordValid, PASSWORD_MESSAGE } = require("../utils/passwordPolicy");
 
 // NOTE MULTI-ENTREPRISES : ce contrôleur gère les utilisateurs d'UNE entreprise
 // (ceux que peut gérer un Admin "normal"). Le compte SuperAdmin (categorie =
@@ -31,8 +32,8 @@ async function create(req, res) {
 
     if (!login || !mdp)
       return res.status(400).json({ message: "Login et mot de passe obligatoires." });
-    if (mdp.length < 4)
-      return res.status(400).json({ message: "Mot de passe trop court (4 caractères minimum)." });
+    if (!isPasswordValid(mdp))
+      return res.status(400).json({ message: PASSWORD_MESSAGE });
     // Le rôle SuperAdmin ne peut pas être attribué via cette route — il est
     // réservé au compte plateforme unique géré par le contrôleur superadmin.
     if (categorie === "SuperAdmin")
@@ -78,8 +79,8 @@ async function update(req, res) {
 
     let mdpHash = null;
     if (mdp) {
-      if (mdp.length < 4)
-        return res.status(400).json({ message: "Mot de passe trop court." });
+      if (!isPasswordValid(mdp))
+        return res.status(400).json({ message: PASSWORD_MESSAGE });
       mdpHash = await bcrypt.hash(mdp, 10);
     }
 
@@ -93,6 +94,7 @@ async function update(req, res) {
          perm_facturation = COALESCE($6, perm_facturation),
          perm_clients     = COALESCE($7, perm_clients),
          actif            = COALESCE($8, actif),
+         must_change_password = CASE WHEN $1::text IS NOT NULL THEN FALSE ELSE must_change_password END,
          updated_at       = NOW()
        WHERE id = $9 AND entreprise_id = $10 AND categorie != 'SuperAdmin'
        RETURNING id, login, categorie, perm_vente, perm_appro, perm_articles,

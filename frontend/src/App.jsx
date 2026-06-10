@@ -16,6 +16,7 @@ import Guide        from "./pages/Guide";
 import { ConfirmModal } from "./components/UI";
 import Parametres   from "./pages/Parametres";
 import SuperAdmin   from "./pages/SuperAdmin";
+import ForcePasswordChange from "./pages/ForcePassword";
 
 // ── Logo SVG Wi — tracé vectoriel officiel (fichier .svg fourni) ──
 const WiLogo = ({ size = 36 }) => (
@@ -515,6 +516,10 @@ function PrivateRoute({ children, adminOnly = false, superAdminOnly = false }) {
     </div>
   );
   if (!user) return <Navigate to="/login" replace />;
+  // Politique de mot de passe renforcée : tant que l'utilisateur n'a pas
+  // défini un nouveau mot de passe conforme, on bloque l'accès à toute page
+  // (y compris le pilotage SuperAdmin) et on affiche l'écran dédié.
+  if (user.must_change_password) return <ForcePasswordChange />;
   // Le SuperAdmin (compte plateforme, entreprise_id = NULL) n'a accès qu'à
   // sa propre interface de pilotage : on le redirige systématiquement vers
   // /superadmin et on lui interdit les pages cloisonnées par entreprise

@@ -141,12 +141,54 @@ async function update(req, res) {
 
 async function remove(req, res) {
   try {
+    const { id } = req.params;
+    const entId = req.user.entreprise_id;
+
+    const contact = await db.query(
+      `SELECT * FROM clients_fournisseurs WHERE id = $1 AND entreprise_id = $2 AND actif = TRUE`,
+      [id, entId]
+    );
+    if (contact.rows.length === 0)
+      return res.status(404).json({ message: "Contact introuvable." });
+    const cf = contact.rows[0];
+
+    // Empêche la suppression d'un contact ayant un solde non soldé : sinon
+    // ses créances/dettes disparaissent silencieusement des totaux de la
+    // page Clients & Fournisseurs (cf.actif = TRUE est requis dans getAll),
+    // alors que les factures/achats correspondants existent toujours.
+    if (cf.type === "Clients") {
+      const r = await db.query(
+        `SELECT COALESCE(SUM(reste), 0)::bigint AS creances FROM factures
+         WHERE entreprise_id = $1 AND (client_id = $2 OR (client_id IS NULL AND UPPER(client_nom) = UPPER($3)))`,
+        [entId, id, cf.nom]
+      );
+      const creances = parseFloat(r.rows[0].creances);
+      if (creances > 0) {
+        return res.status(400).json({
+          message: `Impossible de supprimer "${cf.nom}" : il reste ${creances.toLocaleString("fr-FR")} FCFA de créances impayées. Réglez le solde avant de supprimer ce client.`,
+        });
+      }
+    } else {
+      const r = await db.query(
+        `SELECT COALESCE(SUM(prix_achat * quantite - montant_paye), 0)::bigint AS dettes FROM achats
+         WHERE entreprise_id = $1 AND (fournisseur_id = $2 OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER($3)))`,
+        [entId, id, cf.nom]
+      );
+      const dettes = parseFloat(r.rows[0].dettes);
+      if (dettes > 0) {
+        return res.status(400).json({
+          message: `Impossible de supprimer "${cf.nom}" : il reste ${dettes.toLocaleString("fr-FR")} FCFA de dettes impayées envers ce fournisseur. Réglez le solde avant de supprimer.`,
+        });
+      }
+    }
+
     await db.query(
       `UPDATE clients_fournisseurs SET actif = FALSE WHERE id = $1 AND entreprise_id = $2`,
-      [req.params.id, req.user.entreprise_id]
+      [id, entId]
     );
     res.json({ message: "Contact supprimé." });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Erreur serveur." });
   }
 }

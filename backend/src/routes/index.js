@@ -118,7 +118,7 @@ router.get("/dashboard", authenticate, async (req, res) => {
     // Cloisonnement multi-entreprises : $1 = année, $2 = entreprise courante.
     const entId = req.user.entreprise_id;
 
-    const [totaux, alertes, caAnnee, topClients, recentFactures] = await Promise.all([
+    const [totaux, alertes, caAnnee, topClients, recentFactures, creancesClients] = await Promise.all([
       db.query(`
         SELECT
           (SELECT COALESCE(SUM(montant_total),0) FROM lignes_vente WHERE annee = $1 AND entreprise_id = $2)   AS ca_total,
@@ -166,6 +166,20 @@ router.get("/dashboard", authenticate, async (req, res) => {
         SELECT code, client_nom, montant, montant_paye, reste, statut, date_facture
         FROM factures WHERE entreprise_id = $1 ORDER BY created_at DESC LIMIT 6
       `, [entId]),
+
+      // Créances clients : clients ayant une ou plusieurs factures impayées,
+      // avec le montant total restant dû — pour affichage en temps réel sur
+      // le tableau de bord (rechargé à chaque visite / clic "Actualiser").
+      db.query(`
+        SELECT client_nom,
+               COALESCE(SUM(reste), 0)::bigint AS total_du,
+               COUNT(*) AS nb_factures
+        FROM factures
+        WHERE entreprise_id = $1 AND statut = FALSE AND reste > 0 AND client_nom IS NOT NULL
+        GROUP BY client_nom
+        ORDER BY total_du DESC
+        LIMIT 10
+      `, [entId]),
     ]);
 
     res.json({
@@ -174,6 +188,7 @@ router.get("/dashboard", authenticate, async (req, res) => {
       ca_par_mois:      caAnnee.rows,
       top_clients:      topClients.rows,
       recent_factures:  recentFactures.rows,
+      creances_clients: creancesClients.rows,
     });
   } catch (err) {
     console.error(err);

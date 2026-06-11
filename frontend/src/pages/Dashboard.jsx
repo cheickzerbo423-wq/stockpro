@@ -89,7 +89,7 @@ export default function Dashboard() {
   if (error)   return <ErrorBox message={error} onRetry={reload} />;
   if (!data)   return null;
 
-  const { kpis, alertes_stock = [], ca_par_mois = [], top_clients = [], recent_factures = [] } = data;
+  const { kpis, alertes_stock = [], ca_par_mois = [], top_clients = [], recent_factures = [], creances_clients = [] } = data;
 
   const tauxRec = kpis.ca_facture > 0 ? Math.round((kpis.encaisse / kpis.ca_facture) * 100) : 0;
   const beneficeColor = parseFloat(kpis.benefice) >= 0 ? "#059669" : "#DC2626";
@@ -383,6 +383,48 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* ── Créances clients (factures impayées) ── */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5"
+        style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-4 rounded-full bg-red-500" />
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Clients à Recouvrer</h3>
+          </div>
+          {creances_clients.length > 0 && (
+            <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">
+              {creances_clients.length}
+            </span>
+          )}
+        </div>
+        {creances_clients.length === 0 ? (
+          <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3.5">
+            <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" className="w-4 h-4">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <div>
+              <div className="text-xs font-bold text-emerald-700">Aucune créance en cours</div>
+              <div className="text-[10px] text-emerald-500">Tous les clients sont à jour</div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-72 overflow-y-auto">
+            {creances_clients.map((c) => (
+              <div key={c.client_nom}
+                className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-red-100 bg-red-50">
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-gray-800 truncate">{c.client_nom}</div>
+                  <div className="text-[10px] text-gray-400">{c.nb_factures} facture{c.nb_factures > 1 ? "s" : ""} impayée{c.nb_factures > 1 ? "s" : ""}</div>
+                </div>
+                <div className="text-sm font-black text-red-600 flex-shrink-0">{fmt(c.total_du)}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Résumé bénéfice ── */}

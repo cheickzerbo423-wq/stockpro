@@ -85,7 +85,10 @@ export default function Factures() {
   const totalReste = factures.reduce((s, f) => s + parseFloat(f.reste || 0), 0);
   const nbReglees  = factures.filter(isReglée).length;
   const nbImpayees = factures.filter((f) => !isReglée(f)).length;
-  const tauxRegl   = factures.length ? Math.round((nbReglees / factures.length) * 100) : 0;
+  // Taux de recouvrement EN VALEUR (encaissé / facturé), pas en nombre de
+  // factures : un paiement partiel doit faire bouger l'indicateur même si
+  // aucune facture supplémentaire n'est totalement réglée.
+  const tauxRegl   = totalCA > 0 ? Math.round(((totalCA - totalReste) / totalCA) * 100) : 0;
 
   // Forcer le marquage réglée (pour factures bloquées : reste=0 mais statut=false)
   const handleMarquerReglee = async (f) => {

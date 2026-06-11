@@ -445,7 +445,7 @@ export default function Guide() {
             { label: "Total Dépenses",      desc: "Achats de stock cumulés sur la période", color: "red" },
             { label: "Marge Brute",         desc: "CA moins le coût des marchandises vendues (COGS)", color: "green" },
             { label: "Taux de marge",       desc: "Rentabilité en pourcentage",     color: "blue" },
-            { label: "Recouvrement",        desc: "Part des factures encaissées",   color: "green" },
+            { label: "Recouvrement",        desc: "Part du montant facturé déjà encaissé", color: "green" },
             { label: "Top 5 articles",      desc: "Produits les plus vendus",       color: "orange" },
           ].map(i => (
             <div key={i.label} className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">

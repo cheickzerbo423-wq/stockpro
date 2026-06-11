@@ -20,7 +20,7 @@ async function getRapport(req, res) {
     const fin   = req.query.fin   || now.toISOString().split("T")[0];
     const entId = req.user.entreprise_id;
 
-    const [ventes, achats, factures, graphVentes, graphAchats, topArticles, cogsRow] = await Promise.all([
+    const [ventes, achats, factures, graphVentes, graphAchats, topArticles, cogsRow, creancesClients] = await Promise.all([
       db.query(
         `SELECT
            COALESCE(SUM(montant_total), 0)            AS ca_total,
@@ -88,6 +88,21 @@ async function getRapport(req, res) {
          WHERE lv.entreprise_id = $3 AND lv.date_vente BETWEEN $1 AND $2`,
         [debut, fin, entId]
       ),
+
+      // Créances clients : factures de la période non réglées, regroupées par
+      // client, avec le montant total restant dû — pour la liste "Clients à
+      // recouvrer" affichée dans Rapports.jsx (et exportée en PDF).
+      db.query(
+        `SELECT client_nom,
+                COALESCE(SUM(reste), 0)::bigint AS total_du,
+                COUNT(*) AS nb_factures
+         FROM factures
+         WHERE entreprise_id = $3 AND date_facture BETWEEN $1 AND $2
+           AND statut = FALSE AND reste > 0 AND client_nom IS NOT NULL
+         GROUP BY client_nom
+         ORDER BY total_du DESC`,
+        [debut, fin, entId]
+      ),
     ]);
 
     const v    = ventes.rows[0];
@@ -105,6 +120,7 @@ async function getRapport(req, res) {
       factures:    { nb_total: parseInt(f.nb_total), nb_reglees: parseInt(f.nb_reglees), nb_impayees: parseInt(f.nb_impayees), montant_total: parseInt(f.montant_total), montant_encaisse: parseInt(f.montant_encaisse), montant_creances: parseInt(f.montant_creances) },
       graphique:   { ventes: graphVentes.rows, achats: graphAchats.rows },
       top_articles: topArticles.rows,
+      creances_clients: creancesClients.rows,
     });
   } catch (err) {
     console.error(err);
@@ -121,7 +137,7 @@ async function exportPDF(req, res) {
     const entId = req.user.entreprise_id;
 
     // Réutiliser la même logique de données
-    const [ventes, achats, factures, topArticles, cogsRow] = await Promise.all([
+    const [ventes, achats, factures, topArticles, cogsRow, creancesClients] = await Promise.all([
       db.query(
         `SELECT COALESCE(SUM(montant_total), 0) AS ca_total,
                 COUNT(DISTINCT facture_code) AS nb_factures,
@@ -163,6 +179,19 @@ async function exportPDF(req, res) {
          WHERE lv.entreprise_id = $3 AND lv.date_vente BETWEEN $1 AND $2`,
         [debut, fin, entId]
       ),
+      // Créances clients de la période — même calcul que /rapports (JSON),
+      // pour afficher la liste "Clients à recouvrer" dans le PDF.
+      db.query(
+        `SELECT client_nom,
+                COALESCE(SUM(reste), 0)::bigint AS total_du,
+                COUNT(*) AS nb_factures
+         FROM factures
+         WHERE entreprise_id = $3 AND date_facture BETWEEN $1 AND $2
+           AND statut = FALSE AND reste > 0 AND client_nom IS NOT NULL
+         GROUP BY client_nom
+         ORDER BY total_du DESC`,
+        [debut, fin, entId]
+      ),
     ]);
 
     const v       = ventes.rows[0];
@@ -171,6 +200,7 @@ async function exportPDF(req, res) {
     const cogs     = parseInt(cogsRow.rows[0]?.cogs || 0);
     // Coherent avec /rapports (JSON) et l'ecran Rapports.jsx : Benefice Net = CA - COGS
     const benefice = parseInt(v.ca_total) - cogs;
+    const creancesClientsRows = creancesClients.rows;
     const cfg      = await getEntrepriseConfig(entId);
     const logoBuf  = logoBuffer(cfg.logo);
     const money    = (n) => sep(n) + " " + (cfg.devise || "FCFA");
@@ -187,6 +217,7 @@ async function exportPDF(req, res) {
     renderer(doc, {
       v, a, f, benefice, cogs,
       topArticles: topArticles.rows,
+      creancesClients: creancesClientsRows,
       cfg, money, fmtN,
       debutStr: fmtDate(debut),
       finStr:   fmtDate(fin),

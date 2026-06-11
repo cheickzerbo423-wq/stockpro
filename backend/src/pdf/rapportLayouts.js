@@ -4,8 +4,8 @@
 //
 // Chaque fonction reçoit le document PDFKit déjà créé (taille A4, marges à 0)
 // et un contexte `ctx` :
-//   { v, a, f, benefice, cogs, topArticles, cfg, money, fmtN, debutStr, finStr,
-//     genStr, logoBuf, pal, PW, PH, M, INN }
+//   { v, a, f, benefice, cogs, topArticles, creancesClients, cfg, money, fmtN,
+//     debutStr, finStr, genStr, logoBuf, pal, PW, PH, M, INN }
 // "benefice" = CA - cogs (coherent avec /rapports JSON et l'ecran Rapports.jsx).
 // "a.total_achats" = depenses de stock de la periode (metrique distincte,
 // affichee uniquement dans la section APPROVISIONNEMENTS).
@@ -13,7 +13,7 @@
 
 // ─── 1. Classique ───────────────────────────────────────────────────────────
 function classic(doc, ctx) {
-  const { v, a, f, benefice, cogs, topArticles, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
+  const { v, a, f, benefice, cogs, topArticles, creancesClients, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
   const ACC = pal.primary, INK = "#111827", SUB = "#6B7280", LITE = "#D1D5DB";
   const hr = (y, w, c) => doc.moveTo(M, y).lineTo(M + INN, y).lineWidth(w).strokeColor(c).stroke();
 
@@ -88,6 +88,12 @@ function classic(doc, ctx) {
     topArticles.forEach((art, i) => row(`${i + 1}. ${art.libelle}`, money(art.ca) + "  /  " + fmtN(art.qte) + " u.", ACC));
   }
 
+  if (creancesClients && creancesClients.length > 0) {
+    section("CLIENTS A RECOUVRER");
+    creancesClients.slice(0, 6).forEach((c) =>
+      row(`${c.client_nom} (${fmtN(c.nb_factures)} facture${c.nb_factures > 1 ? "s" : ""})`, money(c.total_du), "#EF4444"));
+  }
+
   doc.moveDown(0.8);
   const benY = doc.y;
   const benColor = benefice >= 0 ? "#10B981" : "#EF4444";
@@ -104,7 +110,7 @@ function classic(doc, ctx) {
 
 // ─── 2. Moderne ─────────────────────────────────────────────────────────────
 function moderne(doc, ctx) {
-  const { v, a, f, benefice, cogs, topArticles, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
+  const { v, a, f, benefice, cogs, topArticles, creancesClients, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
   const ACC = pal.primary, INK = "#1F2937", SUB = "#9CA3AF", LINE = "#E5E7EB";
   const hr = (y, w, c) => doc.moveTo(M, y).lineTo(M + INN, y).lineWidth(w).strokeColor(c).stroke();
 
@@ -181,6 +187,13 @@ function moderne(doc, ctx) {
     topArticles.forEach((art, i) => row(`${i + 1}. ${art.libelle}`, money(art.ca) + "  /  " + fmtN(art.qte) + " u."));
   }
 
+  if (creancesClients && creancesClients.length > 0) {
+    doc.moveDown(0.6);
+    section("CLIENTS A RECOUVRER");
+    creancesClients.slice(0, 6).forEach((c) =>
+      row(`${c.client_nom} (${fmtN(c.nb_factures)} facture${c.nb_factures > 1 ? "s" : ""})`, money(c.total_du), "#EF4444"));
+  }
+
   const footerY = doc.page.maxY() - 15;
   doc.fillColor(SUB).fontSize(7).font("Helvetica")
      .text("Document genere automatiquement par WariGest", M, footerY, { width: INN, align: "center" });
@@ -188,7 +201,7 @@ function moderne(doc, ctx) {
 
 // ─── 3. Bloc Couleur ────────────────────────────────────────────────────────
 function bloc(doc, ctx) {
-  const { v, a, f, benefice, cogs, topArticles, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
+  const { v, a, f, benefice, cogs, topArticles, creancesClients, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
   const ACC = pal.primary, INK = "#111827", SUB = "#6B7280", TINT = pal.light;
   const hr = (y, w, c) => doc.moveTo(M, y).lineTo(M + INN, y).lineWidth(w).strokeColor(c).stroke();
 
@@ -271,6 +284,13 @@ function bloc(doc, ctx) {
     topArticles.forEach((art, i) => row(`${i + 1}. ${art.libelle}`, money(art.ca) + "  /  " + fmtN(art.qte) + " u.", ACC, i % 2 === 0));
   }
 
+  if (creancesClients && creancesClients.length > 0) {
+    doc.moveDown(0.6);
+    section("CLIENTS A RECOUVRER");
+    creancesClients.slice(0, 6).forEach((c, i) =>
+      row(`${c.client_nom} (${fmtN(c.nb_factures)} facture${c.nb_factures > 1 ? "s" : ""})`, money(c.total_du), "#EF4444", i % 2 === 0));
+  }
+
   doc.moveDown(0.8);
   const benY = doc.y;
   const benColor = benefice >= 0 ? "#10B981" : "#EF4444";
@@ -286,7 +306,7 @@ function bloc(doc, ctx) {
 
 // ─── 4. Élégant ─────────────────────────────────────────────────────────────
 function elegant(doc, ctx) {
-  const { v, a, f, benefice, cogs, topArticles, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
+  const { v, a, f, benefice, cogs, topArticles, creancesClients, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW, M, INN } = ctx;
   const ACC = pal.primary, INK = "#1F2937", SUB = "#6B7280", LINE = "#E5E7EB";
   const hr = (y, w, c) => doc.moveTo(M, y).lineTo(M + INN, y).lineWidth(w).strokeColor(c).stroke();
 
@@ -363,6 +383,13 @@ function elegant(doc, ctx) {
     topArticles.forEach((art, i) => row(`${i + 1}. ${art.libelle}`, money(art.ca) + "  /  " + fmtN(art.qte) + " u.", ACC));
   }
 
+  if (creancesClients && creancesClients.length > 0) {
+    doc.moveDown(0.5);
+    section("Clients a recouvrer");
+    creancesClients.slice(0, 6).forEach((c) =>
+      row(`${c.client_nom} (${fmtN(c.nb_factures)} facture${c.nb_factures > 1 ? "s" : ""})`, money(c.total_du), "#B91C1C"));
+  }
+
   doc.moveDown(1);
   const benY = doc.y;
   hr(benY, 0.6, ACC); hr(benY + 2, 0.6, ACC);
@@ -377,7 +404,7 @@ function elegant(doc, ctx) {
 
 // ─── 5. Compact ─────────────────────────────────────────────────────────────
 function compact(doc, ctx) {
-  const { v, a, f, benefice, cogs, topArticles, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW } = ctx;
+  const { v, a, f, benefice, cogs, topArticles, creancesClients, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PW } = ctx;
   const M = 30, INN = PW - M * 2;
   const ACC = pal.primary, INK = "#111827", SUB = "#6B7280", LINE = "#E5E7EB";
   const hr = (y, w, c) => doc.moveTo(M, y).lineTo(M + INN, y).lineWidth(w).strokeColor(c).stroke();
@@ -450,6 +477,12 @@ function compact(doc, ctx) {
   if (topArticles.length > 0) {
     section("TOP 5 ARTICLES VENDUS");
     topArticles.forEach((art, i) => row(`${i + 1}. ${art.libelle}`, money(art.ca) + "  /  " + fmtN(art.qte) + " u.", ACC));
+  }
+
+  if (creancesClients && creancesClients.length > 0) {
+    section("CLIENTS A RECOUVRER");
+    creancesClients.slice(0, 6).forEach((c) =>
+      row(`${c.client_nom} (${fmtN(c.nb_factures)} facture${c.nb_factures > 1 ? "s" : ""})`, money(c.total_du), "#EF4444"));
   }
 
   doc.moveDown(0.6);

@@ -86,6 +86,13 @@ async function previewPdf(req, res) {
         { code: "ART004", libelle: "Pack Decouverte",      ca: 150000, qte: 20 },
         { code: "ART005", libelle: "Accessoire C",         ca: 90000,  qte: 15 },
       ];
+      // Créances clients fictives — pour prévisualiser la section "Clients à
+      // recouvrer" ajoutée aux 5 layouts de rapport.
+      const creancesClients = [
+        { client_nom: "Client Demo SARL", total_du: 120000, nb_factures: 2 },
+        { client_nom: "Boutique Awa",     total_du: 85000,  nb_factures: 1 },
+        { client_nom: "Etablissements Koné", total_du: 65000, nb_factures: 1 },
+      ];
       const today  = new Date();
       const debut  = new Date(today.getFullYear(), today.getMonth(), 1);
       const fmtDate = (d) => d.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
@@ -94,7 +101,7 @@ async function previewPdf(req, res) {
       const doc = new PDFDoc({ margin: 0, size: "A4" });
       doc.pipe(res);
       renderer(doc, {
-        v, a, f, benefice, cogs, topArticles, cfg, money,
+        v, a, f, benefice, cogs, topArticles, creancesClients, cfg, money,
         fmtN: sep,
         debutStr: fmtDate(debut), finStr: fmtDate(today), genStr: fmtDate(today),
         logoBuf, pal: style.palette,

@@ -485,6 +485,29 @@ export default function Rapports() {
             </div>
           )}
 
+          {/* ── Clients à recouvrer ── */}
+          {data.creances_clients && data.creances_clients.length > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5">
+              <div className="flex items-center justify-between mb-4">
+                <SectionTitle>Clients à Recouvrer (période)</SectionTitle>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                  {data.creances_clients.length} client{data.creances_clients.length > 1 ? "s" : ""}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {data.creances_clients.map((c) => (
+                  <div key={c.client_nom} className="rounded-xl border border-red-100 bg-red-50 p-3">
+                    <div className="text-sm font-bold text-gray-800 truncate">{c.client_nom}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      {c.nb_factures} facture{c.nb_factures > 1 ? "s" : ""} impayée{c.nb_factures > 1 ? "s" : ""}
+                    </div>
+                    <div className="text-base font-black text-red-600 mt-1.5">{fmt(c.total_du)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* ── Synthèse bénéfice ── */}
           <div className={`rounded-2xl border p-6 flex items-center justify-between gap-4 ${
             data.benefice >= 0 ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"

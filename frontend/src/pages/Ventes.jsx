@@ -78,18 +78,29 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
       : articles;
   }, [articleQ, articles]);
 
+  // Stock disponible par code article — sert à plafonner les quantités du
+  // panier afin d'empêcher toute survente (vente au-delà du stock réel).
+  const stockMap = useMemo(
+    () => new Map(articles.map((a) => [a.code, parseInt(a.stock_restant) || 0])),
+    [articles]
+  );
+
   const addToCart = (art) => {
     const stock = parseInt(art.stock_restant) || 0;
     if (stock <= 0) return;
     setPanier((prev) => {
       const ex = prev.find((p) => p.code === art.code);
-      if (ex) return prev.map((p) => p.code === art.code ? { ...p, quantite: p.quantite + 1 } : p);
+      if (ex) {
+        if (ex.quantite >= stock) return prev; // stock maximum déjà atteint
+        return prev.map((p) => p.code === art.code ? { ...p, quantite: p.quantite + 1 } : p);
+      }
       return [...prev, { code: art.code, libelle: art.libelle, prix_vente: parseInt(art.prix_vente) || 0, quantite: 1, image_url: art.image_url || "" }];
     });
   };
 
   const setQty = (code, val) => {
-    const n = Math.max(1, parseInt(val) || 1);
+    const stock = stockMap.has(code) ? stockMap.get(code) : Infinity;
+    const n = Math.min(Math.max(1, parseInt(val) || 1), Math.max(stock, 1));
     setPanier((prev) => prev.map((p) => p.code === code ? { ...p, quantite: n } : p));
   };
 
@@ -99,6 +110,11 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
   };
 
   const remove = (code) => setPanier((prev) => prev.filter((p) => p.code !== code));
+
+  // Garde-fou final : si le stock a changé pendant que le panier était
+  // rempli (autre vente entre-temps), on bloque la validation plutôt que
+  // de laisser passer une survente.
+  const hasOverstock = panier.some((p) => p.quantite > (stockMap.get(p.code) ?? Infinity));
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-4"
@@ -235,17 +251,23 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                   const rupture = stock <= 0;
                   const stockLow = !rupture && stock <= (parseInt(a.stock_min) || 5);
                   const inCart  = panier.find((p) => p.code === a.code)?.quantite || 0;
+                  // Stock maximum déjà placé dans le panier : on bloque l'ajout
+                  // pour ne jamais dépasser le stock disponible (anti-survente).
+                  const atMax   = !rupture && inCart >= stock;
                   return (
                     <button
                       key={a.code}
-                      onClick={() => !rupture && addToCart(a)}
-                      disabled={rupture}
+                      onClick={() => !rupture && !atMax && addToCart(a)}
+                      disabled={rupture || atMax}
+                      title={atMax ? `Stock maximum atteint (${stock})` : undefined}
                       className={`relative rounded-2xl border p-2.5 text-left transition-all duration-150 flex flex-col
                         ${rupture
                           ? "opacity-35 cursor-not-allowed border-gray-100 bg-white"
-                          : inCart > 0
-                            ? "border-[#0023FF] bg-[#F0F3FF] shadow-md"
-                            : "border-gray-100 bg-white hover:border-[#B3BFFF] hover:bg-[#F7F8FF] hover:shadow-sm"}`}
+                          : atMax
+                            ? "opacity-60 cursor-not-allowed border-[#0023FF] bg-[#F0F3FF] shadow-md"
+                            : inCart > 0
+                              ? "border-[#0023FF] bg-[#F0F3FF] shadow-md"
+                              : "border-gray-100 bg-white hover:border-[#B3BFFF] hover:bg-[#F7F8FF] hover:shadow-sm"}`}
                     >
                       {/* Badge quantité panier */}
                       {inCart > 0 && (
@@ -265,16 +287,16 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                         <div className="text-xs font-bold text-gray-800 leading-tight mb-1.5 line-clamp-2">{a.libelle}</div>
                         <div className="mt-auto">
                           <div className="text-sm font-black text-[#0023FF]">{fmtN(a.prix_vente)}<span className="text-[10px] font-normal text-gray-400 ml-0.5">F</span></div>
-                          <div className={`text-[10px] font-bold mt-0.5 ${rupture ? "text-red-500" : stockLow ? "text-amber-500" : "text-emerald-500"}`}>
-                            {rupture ? "Rupture" : `Stock : ${stock}`}
+                          <div className={`text-[10px] font-bold mt-0.5 ${rupture ? "text-red-500" : atMax ? "text-amber-600" : stockLow ? "text-amber-500" : "text-emerald-500"}`}>
+                            {rupture ? "Rupture" : atMax ? `Stock max atteint (${stock})` : `Stock : ${stock}`}
                           </div>
                         </div>
                       </div>
                       {/* Bouton + */}
                       {!rupture && (
                         <div className={`absolute bottom-2.5 right-2.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black transition
-                          ${inCart > 0 ? "bg-[#0023FF] text-white" : "bg-gray-100 text-gray-500"}`}>
-                          +
+                          ${atMax ? "bg-gray-200 text-gray-400" : inCart > 0 ? "bg-[#0023FF] text-white" : "bg-gray-100 text-gray-500"}`}>
+                          {atMax ? "✓" : "+"}
                         </div>
                       )}
                     </button>
@@ -320,11 +342,12 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                       <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
                         <button onClick={() => setQty(p.code, p.quantite - 1)}
                           className="w-6 h-6 rounded-md bg-white shadow-sm text-gray-600 font-bold text-sm hover:text-[#0023FF] flex items-center justify-center">−</button>
-                        <input type="number" min="1" value={p.quantite}
+                        <input type="number" min="1" max={stockMap.get(p.code) ?? undefined} value={p.quantite}
                           onChange={(e) => setQty(p.code, e.target.value)}
                           className="w-9 text-center text-sm font-bold bg-transparent border-0 focus:outline-none" />
                         <button onClick={() => setQty(p.code, p.quantite + 1)}
-                          className="w-6 h-6 rounded-md bg-[#0023FF] text-white font-bold text-sm flex items-center justify-center">+</button>
+                          disabled={p.quantite >= (stockMap.get(p.code) ?? Infinity)}
+                          className="w-6 h-6 rounded-md bg-[#0023FF] text-white font-bold text-sm flex items-center justify-center disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed">+</button>
                       </div>
                       {/* Prix unitaire */}
                       <input type="number" min="0" value={p.prix_vente}
@@ -333,6 +356,11 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                         title="Prix unitaire" />
                       <span className="text-sm font-black text-[#0023FF] shrink-0 w-20 text-right">{fmt(p.prix_vente * p.quantite)}</span>
                     </div>
+                    {p.quantite >= (stockMap.get(p.code) ?? Infinity) && (
+                      <div className="text-[10px] font-bold text-amber-600 mt-1">
+                        ⚠ Stock maximum disponible atteint ({stockMap.get(p.code) ?? 0})
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -373,14 +401,21 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
         <div className="px-4 py-3 border-t border-gray-100 flex gap-2 flex-shrink-0 bg-white">
           <Btn color="gray" onClick={onClose} className="flex-1">Annuler</Btn>
           <button
-            disabled={saving || panier.length === 0 || !client}
+            disabled={saving || panier.length === 0 || !client || hasOverstock}
             onClick={() => onSave({ client, clientId, datev, paye, panier })}
+            title={hasOverstock ? "Quantité supérieure au stock disponible — corrigez le panier." : undefined}
             className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition shadow-sm
-              ${panier.length === 0 || !client
+              ${panier.length === 0 || !client || hasOverstock
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                 : "bg-emerald-500 text-white hover:bg-emerald-600"}`}
           >
-            {saving ? "Enregistrement…" : panier.length > 0 ? `✓ Valider (${panier.length} art.)` : "Valider"}
+            {saving
+              ? "Enregistrement…"
+              : hasOverstock
+                ? "⚠ Stock insuffisant"
+                : panier.length > 0
+                  ? `✓ Valider (${panier.length} art.)`
+                  : "Valider"}
           </button>
         </div>
       </div>
@@ -452,6 +487,16 @@ export default function Ventes() {
   const handleSave = async ({ client, clientId, datev, paye, panier }) => {
     if (!client)              { notify("Sélectionnez un client.", "error"); return; }
     if (panier.length === 0)  { notify("Le panier est vide.", "error"); return; }
+    // Garde-fou final anti-survente : revérifie le stock disponible (données
+    // les plus récentes connues du frontend) avant d'envoyer la vente.
+    for (const p of panier) {
+      const art = artMap.get(p.code);
+      const stockDispo = art ? (parseInt(art.stock_restant) || 0) : 0;
+      if (p.quantite > stockDispo) {
+        notify(`Stock insuffisant pour "${p.libelle}" (disponible : ${stockDispo}).`, "error");
+        return;
+      }
+    }
     try {
       const result = await createVente({
         client_id:    clientId || null,

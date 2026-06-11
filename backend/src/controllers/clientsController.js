@@ -4,6 +4,28 @@ const db = require("../config/db");
 async function getAll(req, res) {
   try {
     const { type, search } = req.query;
+    const entId = req.user.entreprise_id;
+
+    // Auto-réparation : certains approvisionnements (ex. "Stock initial" saisi
+    // en texte libre, sans sélection dans la liste des fournisseurs) ne sont
+    // rattachés à aucun fournisseur_id et ne correspondent à aucune fiche
+    // fournisseur existante. Sans cela, leurs montants restent invisibles dans
+    // l'onglet Fournisseurs (aucune ligne ne les agrège). On crée ici, de façon
+    // idempotente, une fiche fournisseur pour chaque nom orphelin trouvé dans
+    // achats — leurs totaux apparaîtront ensuite normalement dans la liste.
+    await db.query(`
+      INSERT INTO clients_fournisseurs (nom, type, contact, email, ville, adresse, entreprise_id)
+      SELECT DISTINCT UPPER(TRIM(a.fournisseur_nom)), 'Fournisseurs', '', '', '', '', $1
+      FROM achats a
+      WHERE a.entreprise_id = $1
+        AND a.fournisseur_id IS NULL
+        AND COALESCE(TRIM(a.fournisseur_nom), '') <> ''
+        AND NOT EXISTS (
+          SELECT 1 FROM clients_fournisseurs cf
+          WHERE cf.entreprise_id = $1 AND UPPER(cf.nom) = UPPER(TRIM(a.fournisseur_nom))
+        )
+    `, [entId]);
+
     // Cloisonnement multi-entreprises : $1 = entreprise courante, référencé à
     // la fois dans le WHERE principal et dans chaque sous-requête corrélée
     // (les colonnes "entreprise_id" de factures/achats portent la même valeur
@@ -20,32 +42,32 @@ async function getAll(req, res) {
         COALESCE((
           SELECT COUNT(code)::bigint FROM factures
           WHERE entreprise_id = $1 AND (client_id = cf.id
-             OR (client_id IS NULL AND UPPER(client_nom) = cf.nom))
+             OR (client_id IS NULL AND UPPER(client_nom) = UPPER(cf.nom)))
         ), 0) AS nb_transactions,
 
         COALESCE((
           SELECT SUM(montant)::bigint FROM factures
           WHERE entreprise_id = $1 AND (client_id = cf.id
-             OR (client_id IS NULL AND UPPER(client_nom) = cf.nom))
+             OR (client_id IS NULL AND UPPER(client_nom) = UPPER(cf.nom)))
         ), 0) AS total_ca,
 
         COALESCE((
           SELECT SUM(montant_paye)::bigint FROM factures
           WHERE entreprise_id = $1 AND (client_id = cf.id
-             OR (client_id IS NULL AND UPPER(client_nom) = cf.nom))
+             OR (client_id IS NULL AND UPPER(client_nom) = UPPER(cf.nom)))
         ), 0) AS total_encaisse,
 
         COALESCE((
           SELECT SUM(reste)::bigint FROM factures
           WHERE entreprise_id = $1 AND (client_id = cf.id
-             OR (client_id IS NULL AND UPPER(client_nom) = cf.nom))
+             OR (client_id IS NULL AND UPPER(client_nom) = UPPER(cf.nom)))
         ), 0) AS total_creances,
 
         /* ── Agrégats fournisseurs ─────────────────────── */
         COALESCE((
           SELECT COUNT(id)::bigint FROM achats
           WHERE entreprise_id = $1 AND (fournisseur_id = cf.id
-             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = cf.nom))
+             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER(cf.nom)))
         ), 0) AS nb_achats,
 
         /* total_achats recalculé dynamiquement (prix_achat * quantite) — la
@@ -56,19 +78,19 @@ async function getAll(req, res) {
         COALESCE((
           SELECT SUM(prix_achat * quantite)::bigint FROM achats
           WHERE entreprise_id = $1 AND (fournisseur_id = cf.id
-             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = cf.nom))
+             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER(cf.nom)))
         ), 0) AS total_achats,
 
         COALESCE((
           SELECT SUM(montant_paye)::bigint FROM achats
           WHERE entreprise_id = $1 AND (fournisseur_id = cf.id
-             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = cf.nom))
+             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER(cf.nom)))
         ), 0) AS total_paye,
 
         COALESCE((
           SELECT SUM(prix_achat * quantite - montant_paye)::bigint FROM achats
           WHERE entreprise_id = $1 AND (fournisseur_id = cf.id
-             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = cf.nom))
+             OR (fournisseur_id IS NULL AND UPPER(fournisseur_nom) = UPPER(cf.nom)))
         ), 0) AS total_dettes
 
       FROM clients_fournisseurs cf

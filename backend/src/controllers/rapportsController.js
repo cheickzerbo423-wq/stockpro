@@ -12,6 +12,51 @@ const fmtN = (n) => sep(n);
 const fmtDate = (d) =>
   d ? new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }) : "";
 
+/* ─── Graphique "Évolution CA vs Dépenses" ───────────────────────
+   Regrouper par date exacte donne autant de points que de jours avec
+   au moins une vente/achat : sur une période longue (trimestre, année)
+   où peu de jours ont des mouvements, le graphique n'affiche qu'un seul
+   point et Recharts peut ramer s'il y a beaucoup de jours distincts.
+   On choisit donc la granularité selon l'étendue de la période, puis on
+   génère la série complète (avec des 0 pour les périodes sans donnée)
+   afin d'obtenir une vraie courbe d'évolution lisible et performante. */
+function graphGranularite(debut, fin) {
+  const days = Math.round((new Date(fin) - new Date(debut)) / 86400000);
+  if (days <= 31)   return "jour";
+  if (days <= 1100) return "mois";
+  return "annee";
+}
+
+function graphTruncExpr(col, granularite) {
+  if (granularite === "jour")  return `${col}::text`;
+  if (granularite === "mois")  return `TO_CHAR(${col}, 'YYYY-MM')`;
+  return `TO_CHAR(${col}, 'YYYY')`;
+}
+
+function graphPeriodes(debut, fin, granularite) {
+  const labels = [];
+  const end = new Date(fin);
+  if (granularite === "jour") {
+    let d = new Date(debut);
+    while (d <= end) {
+      labels.push(d.toISOString().split("T")[0]);
+      d.setDate(d.getDate() + 1);
+    }
+  } else if (granularite === "mois") {
+    let d = new Date(debut);
+    d = new Date(d.getFullYear(), d.getMonth(), 1);
+    while (d <= end) {
+      labels.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+      d.setMonth(d.getMonth() + 1);
+    }
+  } else {
+    const yDebut = new Date(debut).getFullYear();
+    const yFin   = end.getFullYear();
+    for (let y = yDebut; y <= yFin; y++) labels.push(String(y));
+  }
+  return labels;
+}
+
 /* ─── GET /rapports?debut=&fin= ───────────────────────────────── */
 async function getRapport(req, res) {
   try {
@@ -19,6 +64,7 @@ async function getRapport(req, res) {
     const debut = req.query.debut || `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-01`;
     const fin   = req.query.fin   || now.toISOString().split("T")[0];
     const entId = req.user.entreprise_id;
+    const granularite = graphGranularite(debut, fin);
 
     const [ventes, achats, factures, graphVentes, graphAchats, topArticles, cogsRow, creancesClients] = await Promise.all([
       db.query(
@@ -59,16 +105,16 @@ async function getRapport(req, res) {
       ),
 
       db.query(
-        `SELECT date_vente::text AS jour, SUM(montant_total)::bigint AS ca
+        `SELECT ${graphTruncExpr("date_vente", granularite)} AS periode, SUM(montant_total)::bigint AS ca
          FROM lignes_vente WHERE entreprise_id = $3 AND date_vente BETWEEN $1 AND $2
-         GROUP BY date_vente ORDER BY date_vente`,
+         GROUP BY 1 ORDER BY 1`,
         [debut, fin, entId]
       ),
 
       db.query(
-        `SELECT date_achat::text AS jour, SUM(prix_achat * quantite)::bigint AS total
+        `SELECT ${graphTruncExpr("date_achat", granularite)} AS periode, SUM(prix_achat * quantite)::bigint AS total
          FROM achats WHERE entreprise_id = $3 AND date_achat BETWEEN $1 AND $2
-         GROUP BY date_achat ORDER BY date_achat`,
+         GROUP BY 1 ORDER BY 1`,
         [debut, fin, entId]
       ),
 
@@ -110,6 +156,19 @@ async function getRapport(req, res) {
     const f    = factures.rows[0];
     const cogs = parseInt(cogsRow.rows[0]?.cogs || 0);
 
+    // Série complète (avec 0 sur les périodes sans mouvement) pour le
+    // graphique "Évolution CA vs Dépenses".
+    const periodes  = graphPeriodes(debut, fin, granularite);
+    const ventesMap = {};
+    graphVentes.rows.forEach((r) => { ventesMap[r.periode] = parseInt(r.ca) || 0; });
+    const achatsMap = {};
+    graphAchats.rows.forEach((r) => { achatsMap[r.periode] = parseInt(r.total) || 0; });
+    const graphSerie = periodes.map((p) => ({
+      periode: p,
+      ca: ventesMap[p] || 0,
+      depenses: achatsMap[p] || 0,
+    }));
+
     res.json({
       periode:     { debut, fin },
       ventes:      { ca_total: parseInt(v.ca_total), nb_factures: parseInt(v.nb_factures), nb_lignes: parseInt(v.nb_lignes), qte_totale: parseInt(v.qte_totale) },
@@ -118,7 +177,7 @@ async function getRapport(req, res) {
       // marge_brute = CA - coût des ventes (≠ CA - total achats stock)
       benefice:    parseInt(v.ca_total) - cogs,
       factures:    { nb_total: parseInt(f.nb_total), nb_reglees: parseInt(f.nb_reglees), nb_impayees: parseInt(f.nb_impayees), montant_total: parseInt(f.montant_total), montant_encaisse: parseInt(f.montant_encaisse), montant_creances: parseInt(f.montant_creances) },
-      graphique:   { ventes: graphVentes.rows, achats: graphAchats.rows },
+      graphique:   { granularite, serie: graphSerie },
       top_articles: topArticles.rows,
       creances_clients: creancesClients.rows,
     });

@@ -92,14 +92,14 @@ function ProgressBar({ label, value, max, color, pct: forcedPct }) {
 }
 
 // ── Tooltip graph ────────────────────────────────────────────────────
-const GraphTooltip = ({ active, payload, label }) => {
+const GraphTooltip = ({ active, payload, label, formatLabel }) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-gray-900 text-white rounded-xl px-3 py-2 text-xs shadow-lg">
-      <div className="font-bold mb-1 text-gray-300">{label}</div>
+      <div className="font-bold mb-1 text-gray-300">{formatLabel ? formatLabel(label) : label}</div>
       {payload.map((p) => (
         <div key={p.dataKey} style={{ color: p.color }}>
-          {p.name} : <strong>{fmt(p.value)}</strong>
+          {p.name === "ca" ? "Chiffre d'Affaires" : "Dépenses"} : <strong>{fmt(p.value)}</strong>
         </div>
       ))}
     </div>
@@ -146,17 +146,20 @@ export default function Rapports() {
     finally { setExportLoading(false); }
   };
 
-  // Données graphique CA vs Dépenses
-  const graphData = (() => {
-    if (!data) return [];
-    const map = {};
-    data.graphique.ventes.forEach((r) => { map[r.jour] = { jour: r.jour, ca: r.ca, achats: 0 }; });
-    data.graphique.achats.forEach((r) => {
-      if (map[r.jour]) map[r.jour].achats = r.total;
-      else map[r.jour] = { jour: r.jour, ca: 0, achats: r.total };
-    });
-    return Object.values(map).sort((a, b) => a.jour.localeCompare(b.jour));
-  })();
+  // Données graphique CA vs Dépenses — déjà agrégées et complétées (avec des
+  // 0 sur les périodes sans mouvement) côté backend, selon la granularité
+  // adaptée à l'étendue de la période (jour / mois / année).
+  const graphData = data?.graphique?.serie || [];
+  const graphGranularite = data?.graphique?.granularite || "jour";
+
+  // Formatage des libellés de l'axe X selon la granularité :
+  // "2026-06-11" → "06-11", "2026-06" → "06/2026", "2026" → "2026"
+  const formatPeriodeLabel = (p) => {
+    if (!p) return "";
+    if (graphGranularite === "jour")  return p.slice(5);
+    if (graphGranularite === "mois")  { const [y, m] = p.split("-"); return `${m}/${y}`; }
+    return p;
+  };
 
   // Données camembert factures
   const pieData = data ? [
@@ -164,7 +167,7 @@ export default function Rapports() {
     { name: "Créances",  value: data.factures.montant_creances,  color: "#ef4444" },
   ].filter(d => d.value > 0) : [];
 
-  // Cohérent avec le KPI "Bénéfice Net" (data.benefice = CA - COGS), et non
+  // Cohérent avec le KPI "Marge Brute" (data.benefice = CA - COGS), et non
   // CA - total achats stock (qui mélange achats de période et ventes de stock
   // ancien, et donnait un % incohérent avec le montant affiché juste au-dessus).
   const tauxMarge = data && data.ventes.ca_total > 0
@@ -272,7 +275,7 @@ export default function Rapports() {
               accent={{ text: "text-red-600", badge: "bg-red-100 text-red-700" }}
             />
             <KpiCard
-              icon="💰" label="Bénéfice Net"
+              icon="💰" label="Marge Brute"
               value={fmt(data.benefice)}
               sub={`Marge ${tauxMarge}%`}
               accent={{
@@ -298,14 +301,14 @@ export default function Rapports() {
                 <LineChart data={graphData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                   <XAxis
-                    dataKey="jour" tick={{ fontSize: 10, fill: "#94a3b8" }}
-                    tickFormatter={(d) => d?.slice(5)} axisLine={false} tickLine={false}
+                    dataKey="periode" tick={{ fontSize: 10, fill: "#94a3b8" }}
+                    tickFormatter={formatPeriodeLabel} axisLine={false} tickLine={false}
                   />
                   <YAxis
                     tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false}
                     tickFormatter={(v) => v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : v >= 1000 ? (v / 1000).toFixed(0) + "k" : v}
                   />
-                  <Tooltip content={<GraphTooltip />} />
+                  <Tooltip content={<GraphTooltip formatLabel={formatPeriodeLabel} />} />
                   <Legend
                     formatter={(n) => (
                       <span className="text-xs text-gray-600 font-medium">
@@ -313,8 +316,8 @@ export default function Rapports() {
                       </span>
                     )}
                   />
-                  <Line type="monotone" dataKey="ca"     name="ca"     stroke="#0023FF" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
-                  <Line type="monotone" dataKey="achats" name="achats" stroke="#ef4444" strokeWidth={2}   dot={false} strokeDasharray="5 3" activeDot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="ca"       name="ca"       stroke="#0023FF" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="depenses" name="depenses" stroke="#ef4444" strokeWidth={2}   dot={false} strokeDasharray="5 3" activeDot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -363,13 +366,13 @@ export default function Rapports() {
                 </div>
               </div>
               <StatRow label="CA brut"              value={fmt(data.ventes.ca_total)} color="text-[#0023FF]" />
-              {/* Coût des ventes (COGS) : seule valeur dont CA brut - ce coût = Marge nette ;
+              {/* Coût des ventes (COGS) : seule valeur dont CA brut - ce coût = Marge brute ;
                   ne pas confondre avec "Total Dépenses" (achats de stock de la période,
                   affiché plus haut) qui peut différer si le stock acheté n'est pas
                   entièrement revendu sur la période. */}
               <StatRow label="Coût des ventes"      value={fmt(data.cogs)}            color="text-red-500" />
               <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
-                <span className="text-xs font-bold text-gray-500">Marge nette</span>
+                <span className="text-xs font-bold text-gray-500">Marge brute</span>
                 <span className={`text-base font-black ${data.benefice >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                   {fmt(data.benefice)}
                 </span>
@@ -508,13 +511,13 @@ export default function Rapports() {
             </div>
           )}
 
-          {/* ── Synthèse bénéfice ── */}
+          {/* ── Synthèse marge ── */}
           <div className={`rounded-2xl border p-6 flex items-center justify-between gap-4 ${
             data.benefice >= 0 ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"
           }`}>
             <div>
               <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
-                Bénéfice net de la période
+                Marge brute de la période
               </div>
               <div className={`text-3xl font-black ${data.benefice >= 0 ? "text-emerald-700" : "text-red-700"}`}>
                 {fmt(data.benefice)}

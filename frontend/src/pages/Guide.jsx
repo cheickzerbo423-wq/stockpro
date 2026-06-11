@@ -152,8 +152,8 @@ export default function Guide() {
         <SectionTitle>Indicateurs principaux</SectionTitle>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: "Chiffre d'Affaires", desc: "Cumul des ventes de l'année en cours, avec le total des dépenses en sous-titre", color: "blue" },
-            { label: "Bénéfice Net",       desc: "CA moins les dépenses, avec le taux de marge en pourcentage",                  color: "green" },
+            { label: "Chiffre d'Affaires", desc: "Cumul des ventes de l'année en cours, avec le total des achats de stock en sous-titre", color: "blue" },
+            { label: "Marge Brute",        desc: "Chiffre d'affaires moins le coût des marchandises vendues (COGS), avec le taux de marge en pourcentage", color: "green" },
             { label: "Valeur du Stock",    desc: "Valeur totale du stock actuel et nombre d'articles actifs",                    color: "orange" },
             { label: "Factures Émises",    desc: "Nombre total de factures, dont impayées et montant restant à recouvrer",       color: "red" },
           ].map(i => (
@@ -175,7 +175,7 @@ export default function Guide() {
           <Step n="1">Le graphique <strong>Évolution du CA</strong> retrace le chiffre d'affaires mois par mois sur l'année en cours.</Step>
           <Step n="2">Le bloc <strong>Top Clients</strong> classe les meilleurs clients de l'année par chiffre d'affaires, avec une barre de progression pour chacun.</Step>
           <Step n="3">Le graphique en barres <strong>CA par Client</strong> visualise la répartition du chiffre d'affaires entre les meilleurs clients.</Step>
-          <Step n="4">La carte <strong>Résumé bénéfice</strong> reprend en un coup d'œil le bénéfice net de l'année, le CA et les dépenses.</Step>
+          <Step n="4">La carte <strong>Marge brute</strong> reprend en un coup d'œil la marge brute de l'année, le CA et le coût des ventes.</Step>
         </div>
 
         <SectionTitle>Alertes de stock & dernières factures</SectionTitle>
@@ -442,8 +442,8 @@ export default function Guide() {
         <div className="grid grid-cols-2 gap-2">
           {[
             { label: "Chiffre d'Affaires", desc: "Toutes les ventes de la période", color: "orange" },
-            { label: "Total Dépenses",      desc: "Achats fournisseurs cumulés",    color: "red" },
-            { label: "Bénéfice Net",        desc: "CA moins les dépenses",          color: "green" },
+            { label: "Total Dépenses",      desc: "Achats de stock cumulés sur la période", color: "red" },
+            { label: "Marge Brute",         desc: "CA moins le coût des marchandises vendues (COGS)", color: "green" },
             { label: "Taux de marge",       desc: "Rentabilité en pourcentage",     color: "blue" },
             { label: "Recouvrement",        desc: "Part des factures encaissées",   color: "green" },
             { label: "Top 5 articles",      desc: "Produits les plus vendus",       color: "orange" },

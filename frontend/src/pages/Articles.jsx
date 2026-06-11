@@ -121,18 +121,34 @@ export default function Articles() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const validate = () => {
+  const validate = (codeOverride) => {
     const errs = {};
-    if (!form.code.trim())    errs.code    = "Code requis";
+    const codeVal = codeOverride !== undefined ? codeOverride : form.code;
+    if (!codeVal.trim())     errs.code    = "Code requis";
     if (!form.libelle.trim()) errs.libelle = "Libellé requis";
     setFormErr(errs);
     return Object.keys(errs).length === 0;
   };
 
   const handleSave = async () => {
-    if (!validate()) return;
+    // Le code auto-généré arrive après un court débounce (400ms) suivi d'un
+    // appel réseau : si l'utilisateur clique sur "Enregistrer" juste après
+    // avoir saisi le libellé, form.code peut encore être vide à ce moment-là.
+    // On le génère ici de façon synchrone (avant validation) pour éviter le
+    // faux message "Code requis" alors que l'enregistrement va réussir.
+    let codeToUse = form.code;
+    if (!codeToUse.trim() && form.libelle.trim()) {
+      setLoadingCode(true);
+      try {
+        const { code } = await articlesService.generateCode(form.libelle);
+        codeToUse = code;
+        setForm((f) => ({ ...f, code }));
+      } catch { /* silencieux : la validation détectera le code manquant */ }
+      finally { setLoadingCode(false); }
+    }
+    if (!validate(codeToUse)) return;
     try {
-      await createArticle({ ...form });
+      await createArticle({ ...form, code: codeToUse });
       notify("Article créé avec succès !");
       setShowAdd(false);
       setForm({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5", stock_initial: "", image_url: "" });
@@ -364,7 +380,9 @@ export default function Articles() {
                 {delConfirm.libelle}
               </p>
               <p className="text-xs text-gray-400 mt-2 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                ⚠️ Impossible si l'article a des ventes ou des achats associés.
+                ⚠️ L'article sera archivé : il disparaîtra du catalogue, des ventes
+                et des approvisionnements, mais son historique (ventes, achats,
+                rapports) restera intact et inchangé.
               </p>
             </div>
           </div>

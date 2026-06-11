@@ -77,7 +77,7 @@ export default function Utilisateurs() {
     <div>
       <PageHeader
         title="Gestion des Utilisateurs"
-        sub={`${nbActifs} utilisateur${nbActifs > 1 ? "s" : ""} — ${nbAdmins} admin${nbAdmins > 1 ? "s" : ""}`}
+        sub={loading ? "Chargement…" : `${nbActifs} utilisateur${nbActifs > 1 ? "s" : ""} — ${nbAdmins} admin${nbAdmins > 1 ? "s" : ""}`}
         action={
           <div className="flex items-center gap-2">
             <button onClick={() => setShowReset(true)} title="Réinitialiser les données"

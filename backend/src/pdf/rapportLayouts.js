@@ -38,7 +38,7 @@ function classic(doc, ctx) {
   const kpis = [
     { label: "Chiffre d'Affaires", value: money(v.ca_total),     color: ACC },
     { label: "Cout des ventes",    value: money(cogs),           color: "#EF4444" },
-    { label: "Benefice Net",       value: money(benefice),       color: benefice >= 0 ? "#10B981" : "#EF4444" },
+    { label: "Marge Brute",        value: money(benefice),       color: benefice >= 0 ? "#10B981" : "#EF4444" },
     { label: "Factures Emises",    value: fmtN(f.nb_total),      color: "#3B82F6" },
   ];
   kpis.forEach((k, i) => {
@@ -98,7 +98,7 @@ function classic(doc, ctx) {
   const benY = doc.y;
   const benColor = benefice >= 0 ? "#10B981" : "#EF4444";
   doc.moveTo(M, benY).lineTo(M + INN, benY).lineWidth(1).strokeColor(LITE).stroke();
-  doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("BENEFICE NET DE LA PERIODE", M, benY + 8);
+  doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("MARGE BRUTE DE LA PERIODE", M, benY + 8);
   doc.fontSize(22).fillColor(benColor).font("Helvetica-Bold").text(money(benefice), M, benY + 20);
   doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("CA : " + money(v.ca_total) + "   -   Cout des ventes : " + money(cogs), M, benY + 47);
   doc.moveTo(M, benY + 58).lineTo(M + INN, benY + 58).lineWidth(0.5).strokeColor(LITE).stroke();
@@ -134,7 +134,7 @@ function moderne(doc, ctx) {
   const kpis = [
     { label: "Chiffre d'affaires", value: money(v.ca_total) },
     { label: "Cout des ventes",    value: money(cogs) },
-    { label: "Benefice net",       value: money(benefice), color: benefice >= 0 ? "#10B981" : "#EF4444" },
+    { label: "Marge brute",        value: money(benefice), color: benefice >= 0 ? "#10B981" : "#EF4444" },
     { label: "Factures emises",    value: fmtN(f.nb_total) },
   ];
   const kw = INN / 4;
@@ -232,7 +232,7 @@ function bloc(doc, ctx) {
   const kpis = [
     { label: "Chiffre d'Affaires", value: money(v.ca_total),     color: ACC },
     { label: "Cout des ventes",    value: money(cogs),           color: "#EF4444" },
-    { label: "Benefice Net",       value: money(benefice),       color: benefice >= 0 ? "#10B981" : "#EF4444" },
+    { label: "Marge Brute",        value: money(benefice),       color: benefice >= 0 ? "#10B981" : "#EF4444" },
     { label: "Factures Emises",    value: fmtN(f.nb_total),      color: "#3B82F6" },
   ];
   kpis.forEach((k, i) => {
@@ -295,7 +295,7 @@ function bloc(doc, ctx) {
   const benY = doc.y;
   const benColor = benefice >= 0 ? "#10B981" : "#EF4444";
   doc.roundedRect(M, benY, INN, 60, 6).fillAndStroke(TINT, ACC);
-  doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("BENEFICE NET DE LA PERIODE", M + 12, benY + 10);
+  doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("MARGE BRUTE DE LA PERIODE", M + 12, benY + 10);
   doc.fontSize(22).fillColor(benColor).font("Helvetica-Bold").text(money(benefice), M + 12, benY + 22);
   doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("CA : " + money(v.ca_total) + "   -   Cout des ventes : " + money(cogs), M + 12, benY + 46);
 
@@ -329,7 +329,7 @@ function elegant(doc, ctx) {
   const kpis = [
     { label: "Chiffre d'affaires", value: money(v.ca_total) },
     { label: "Cout des ventes",    value: money(cogs) },
-    { label: "Benefice net",       value: money(benefice), color: benefice >= 0 ? "#15803D" : "#B91C1C" },
+    { label: "Marge brute",        value: money(benefice), color: benefice >= 0 ? "#15803D" : "#B91C1C" },
     { label: "Factures",           value: fmtN(f.nb_total) },
   ];
   const kw = INN / 4;
@@ -394,7 +394,7 @@ function elegant(doc, ctx) {
   const benY = doc.y;
   hr(benY, 0.6, ACC); hr(benY + 2, 0.6, ACC);
   const benColor = benefice >= 0 ? "#15803D" : "#B91C1C";
-  doc.fontSize(8.5).fillColor(SUB).font("Times-Italic").text("Benefice net de la periode", M, benY + 12, { width: INN, align: "center" });
+  doc.fontSize(8.5).fillColor(SUB).font("Times-Italic").text("Marge brute de la periode", M, benY + 12, { width: INN, align: "center" });
   doc.fontSize(20).fillColor(benColor).font("Times-Bold").text(money(benefice), M, benY + 26, { width: INN, align: "center" });
 
   const footerY = doc.page.maxY() - 15;
@@ -428,7 +428,7 @@ function compact(doc, ctx) {
   const kpis = [
     { label: "CA",            value: money(v.ca_total) },
     { label: "Cout ventes",   value: money(cogs) },
-    { label: "Benefice",      value: money(benefice), color: benefice >= 0 ? "#10B981" : "#EF4444" },
+    { label: "Marge brute",   value: money(benefice), color: benefice >= 0 ? "#10B981" : "#EF4444" },
     { label: "Factures",      value: fmtN(f.nb_total) },
   ];
   const kw = INN / 4;
@@ -489,7 +489,7 @@ function compact(doc, ctx) {
   const benY = doc.y;
   const benColor = benefice >= 0 ? "#10B981" : "#EF4444";
   hr(benY, 0.8, INK);
-  doc.fontSize(7).fillColor(SUB).font("Helvetica").text("BENEFICE NET DE LA PERIODE", M, benY + 6);
+  doc.fontSize(7).fillColor(SUB).font("Helvetica").text("MARGE BRUTE DE LA PERIODE", M, benY + 6);
   doc.fontSize(15).fillColor(benColor).font("Helvetica-Bold").text(money(benefice), M, benY + 16, { width: INN, align: "right" });
 
   const footerY = doc.page.maxY() - 14;

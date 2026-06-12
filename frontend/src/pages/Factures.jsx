@@ -292,7 +292,7 @@ export default function Factures() {
                 {(detail.lignes || []).map((l, i) => (
                   <tr key={i} className={`border-t border-gray-100 ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
                     <td className="px-4 py-3 font-medium text-gray-800">{l.libelle}</td>
-                    <td className="px-3 py-3 text-center text-gray-600">{l.quantite}</td>
+                    <td className="px-3 py-3 text-center text-gray-600">{Number(l.quantite)}</td>
                     <td className="px-4 py-3 text-right text-gray-600">{fmt(l.prix_vente)}</td>
                     <td className="px-4 py-3 text-right font-bold text-gray-900">{fmt(l.montant_total)}</td>
                   </tr>

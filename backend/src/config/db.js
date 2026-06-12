@@ -551,6 +551,38 @@ pool.connect((err, client, release) => {
         )
         .then(() => console.log("✅ Colonnes 'facture_style/recu_style/rapport_style' vérifiées (catalogue de styles PDF)."))
         .catch((e) => console.error("⚠️  Migration styles PDF ignorée :", e.message))
+        // ── Migration : contrainte CHECK clients_fournisseurs.type ───────────
+        // Sur certaines bases existantes, cette contrainte n'autorisait que
+        // les valeurs singulières ('Client','Fournisseur','Les deux'). Le code
+        // (auto-réparation des fournisseurs orphelins, filtres ?type=...)
+        // utilise désormais aussi les valeurs plurielles 'Clients'/'Fournisseurs'.
+        // Une INSERT avec une valeur non autorisée par l'ancienne contrainte
+        // provoquait une erreur 500 sur GET /api/clients. On recrée la
+        // contrainte pour autoriser toutes les valeurs utilisées.
+        .then(() =>
+          client.query(`
+            DO $$
+            DECLARE r RECORD;
+            BEGIN
+              FOR r IN
+                SELECT con.conname
+                FROM pg_constraint con
+                JOIN pg_class t ON t.oid = con.conrelid
+                WHERE t.relname = 'clients_fournisseurs'
+                  AND con.contype = 'c'
+                  AND pg_get_constraintdef(con.oid) ILIKE '%type%'
+              LOOP
+                EXECUTE format('ALTER TABLE clients_fournisseurs DROP CONSTRAINT IF EXISTS %I', r.conname);
+              END LOOP;
+
+              ALTER TABLE clients_fournisseurs
+                ADD CONSTRAINT clients_fournisseurs_type_check
+                CHECK (type IN ('Client','Fournisseur','Les deux','Clients','Fournisseurs'));
+            END $$;
+          `)
+        )
+        .then(() => console.log("✅ Contrainte clients_fournisseurs.type mise à jour (valeurs plurielles autorisées)."))
+        .catch((e) => console.error("⚠️  Migration contrainte type clients_fournisseurs ignorée :", e.message))
         .finally(() => release());
     });
 });

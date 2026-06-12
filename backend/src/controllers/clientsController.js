@@ -13,18 +13,25 @@ async function getAll(req, res) {
     // l'onglet Fournisseurs (aucune ligne ne les agrège). On crée ici, de façon
     // idempotente, une fiche fournisseur pour chaque nom orphelin trouvé dans
     // achats — leurs totaux apparaîtront ensuite normalement dans la liste.
-    await db.query(`
-      INSERT INTO clients_fournisseurs (nom, type, contact, email, ville, adresse, entreprise_id)
-      SELECT DISTINCT UPPER(TRIM(a.fournisseur_nom)), 'Fournisseurs', '', '', '', '', $1
-      FROM achats a
-      WHERE a.entreprise_id = $1
-        AND a.fournisseur_id IS NULL
-        AND COALESCE(TRIM(a.fournisseur_nom), '') <> ''
-        AND NOT EXISTS (
-          SELECT 1 FROM clients_fournisseurs cf
-          WHERE cf.entreprise_id = $1 AND UPPER(cf.nom) = UPPER(TRIM(a.fournisseur_nom))
-        )
-    `, [entId]);
+    // Cette auto-réparation est une "best effort" : si elle échoue pour une
+    // raison quelconque (contrainte de schéma inattendue, etc.), on ne doit
+    // surtout pas faire échouer tout l'affichage de la liste Clients/Fournisseurs.
+    try {
+      await db.query(`
+        INSERT INTO clients_fournisseurs (nom, type, contact, email, ville, adresse, entreprise_id)
+        SELECT DISTINCT UPPER(TRIM(a.fournisseur_nom)), 'Fournisseurs', '', '', '', '', $1
+        FROM achats a
+        WHERE a.entreprise_id = $1
+          AND a.fournisseur_id IS NULL
+          AND COALESCE(TRIM(a.fournisseur_nom), '') <> ''
+          AND NOT EXISTS (
+            SELECT 1 FROM clients_fournisseurs cf
+            WHERE cf.entreprise_id = $1 AND UPPER(cf.nom) = UPPER(TRIM(a.fournisseur_nom))
+          )
+      `, [entId]);
+    } catch (repairErr) {
+      console.error("⚠️  Auto-réparation fournisseurs orphelins ignorée :", repairErr.message);
+    }
 
     // Cloisonnement multi-entreprises : $1 = entreprise courante, référencé à
     // la fois dans le WHERE principal et dans chaque sous-requête corrélée

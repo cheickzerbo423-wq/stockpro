@@ -583,6 +583,13 @@ pool.connect((err, client, release) => {
         )
         .then(() => console.log("✅ Contrainte clients_fournisseurs.type mise à jour (valeurs plurielles autorisées)."))
         .catch((e) => console.error("⚠️  Migration contrainte type clients_fournisseurs ignorée :", e.message))
+        .then(() =>
+          client.query(`
+            ALTER TABLE factures ADD COLUMN IF NOT EXISTS client_adresse TEXT;
+          `)
+        )
+        .then(() => console.log("✅ Colonne 'client_adresse' vérifiée sur factures (adresse client pour facture/reçu)."))
+        .catch((e) => console.error("⚠️  Migration client_adresse ignorée :", e.message))
         .finally(() => release());
     });
 });

@@ -264,6 +264,9 @@ export default function Factures() {
             <div>
               <div className="text-xs text-gray-400 uppercase font-bold mb-1">Client</div>
               <div className="text-lg font-black text-gray-900">{selected.client_nom}</div>
+              {(detail.client_adresse || selected.client_adresse) && (
+                <div className="text-sm text-gray-500 mt-0.5">{detail.client_adresse || selected.client_adresse}</div>
+              )}
               <div className="text-sm text-gray-500 mt-0.5">{fmtDate(selected.date_facture)}</div>
             </div>
             <div className="text-right">

@@ -27,6 +27,7 @@ function sampleFacture() {
     f: {
       code: "FAC-DEMO-0001",
       client_nom: "Client Demo SARL",
+      client_adresse: "Cocody, Riviera Faya, Abidjan",
       date_facture: new Date(),
       statut: true,
       montant,

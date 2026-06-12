@@ -230,7 +230,7 @@ export default function Dashboard() {
           style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-4 rounded-full bg-purple-600" />
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">CA Clients — {annee}</h3>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Encaissé par Client — {annee}</h3>
           </div>
           {top_clients.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-14 gap-3">
@@ -244,7 +244,7 @@ export default function Dashboard() {
                   tickFormatter={(v) => v.split(" ")[0].slice(0, 8)} />
                 <YAxis tick={{ fontSize:9, fill:"#94a3b8", fontWeight:600 }} axisLine={false} tickLine={false} tickFormatter={fmtK} />
                 <Tooltip content={<ChartTip />} />
-                <Bar dataKey="ca" name="CA" fill="#7C3AED" radius={[6,6,0,0]} activeBar={{ fill:"#6D28D9" }} />
+                <Bar dataKey="encaisse" name="Encaissé" fill="#7C3AED" radius={[6,6,0,0]} activeBar={{ fill:"#6D28D9" }} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -270,6 +270,7 @@ export default function Dashboard() {
             <div className="space-y-3">
               {top_clients.map((c, i) => {
                 const medals = ["🥇","🥈","🥉"];
+                const resteDu = Math.max(0, (c.ca || 0) - (c.encaisse || 0));
                 return (
                   <div key={c.client_nom}>
                     <div className="flex items-center justify-between text-xs mb-1 gap-2">
@@ -277,9 +278,14 @@ export default function Dashboard() {
                         <span className="text-sm flex-shrink-0">{medals[i] ?? `${i+1}.`}</span>
                         <span className="font-semibold text-gray-700 truncate">{c.client_nom}</span>
                       </div>
-                      <span className="font-bold text-gray-900 flex-shrink-0">{fmt(c.ca)}</span>
+                      <span className="font-bold text-gray-900 flex-shrink-0">{fmt(c.encaisse)}</span>
                     </div>
-                    <ProgBar value={c.ca} max={top_clients[0].ca} color="#7C3AED" />
+                    <ProgBar value={c.encaisse} max={top_clients[0].encaisse} color="#7C3AED" />
+                    {resteDu > 0 && (
+                      <p className="text-[10px] text-amber-600 font-medium mt-0.5">
+                        + {fmt(resteDu)} en attente de règlement
+                      </p>
+                    )}
                   </div>
                 );
               })}

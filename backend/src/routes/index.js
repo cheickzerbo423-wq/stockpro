@@ -156,10 +156,17 @@ router.get("/dashboard", authenticate, async (req, res) => {
         ORDER BY TO_CHAR(date_vente, 'YYYY-MM')
       `, [annee, entId]),
 
+      // Top clients : classés par montant réellement ENCAISSÉ (et non par
+      // chiffre d'affaires facturé). Un client qui a beaucoup acheté mais
+      // n'a encore rien réglé (crédit non soldé) ne doit pas apparaître
+      // comme "meilleur client" — sa performance se juge sur ce qu'il a payé.
       db.query(`
-        SELECT UPPER(client_nom) AS client_nom, SUM(montant_total)::bigint AS ca, COUNT(DISTINCT facture_code) AS nb_factures
-        FROM lignes_vente WHERE annee = $1 AND entreprise_id = $2
-        GROUP BY UPPER(client_nom) ORDER BY ca DESC LIMIT 5
+        SELECT UPPER(client_nom) AS client_nom,
+               SUM(montant)::bigint      AS ca,
+               SUM(montant_paye)::bigint AS encaisse,
+               COUNT(*) AS nb_factures
+        FROM factures WHERE EXTRACT(YEAR FROM date_facture) = $1 AND entreprise_id = $2
+        GROUP BY UPPER(client_nom) ORDER BY encaisse DESC LIMIT 5
       `, [annee, entId]),
 
       db.query(`

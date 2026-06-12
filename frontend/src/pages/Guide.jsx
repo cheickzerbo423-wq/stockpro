@@ -173,8 +173,8 @@ export default function Guide() {
         <SectionTitle>Graphiques et analyses</SectionTitle>
         <div className="space-y-2">
           <Step n="1">Le graphique <strong>Évolution du CA</strong> retrace le chiffre d'affaires mois par mois sur l'année en cours.</Step>
-          <Step n="2">Le bloc <strong>Top Clients</strong> classe les meilleurs clients de l'année par chiffre d'affaires, avec une barre de progression pour chacun.</Step>
-          <Step n="3">Le graphique en barres <strong>CA par Client</strong> visualise la répartition du chiffre d'affaires entre les meilleurs clients.</Step>
+          <Step n="2">Le bloc <strong>Top Clients</strong> classe les meilleurs clients de l'année par montant réellement <strong>encaissé</strong> (et non par chiffre d'affaires facturé) : un client qui a beaucoup acheté à crédit mais n'a pas encore réglé n'apparaît pas comme "meilleur client" tant qu'il n'a pas payé. Le reste à payer éventuel est affiché sous chaque client.</Step>
+          <Step n="3">Le graphique en barres <strong>Encaissé par Client</strong> visualise la répartition des montants encaissés entre les meilleurs clients.</Step>
           <Step n="4">La carte <strong>Marge brute</strong> reprend en un coup d'œil la marge brute de l'année, le CA et le coût des ventes.</Step>
         </div>
 

@@ -585,11 +585,16 @@ pool.connect((err, client, release) => {
         .catch((e) => console.error("⚠️  Migration contrainte type clients_fournisseurs ignorée :", e.message))
         .then(() =>
           client.query(`
-            ALTER TABLE factures ADD COLUMN IF NOT EXISTS client_adresse TEXT;
+            UPDATE clients_fournisseurs SET adresse = '' WHERE adresse IS NULL;
           `)
         )
-        .then(() => console.log("✅ Colonne 'client_adresse' vérifiée sur factures (adresse client pour facture/reçu)."))
-        .catch((e) => console.error("⚠️  Migration client_adresse ignorée :", e.message))
+        .then(() =>
+          client.query(`
+            ALTER TABLE clients_fournisseurs ALTER COLUMN adresse SET NOT NULL;
+          `)
+        )
+        .then(() => console.log("✅ Colonne 'adresse' rendue obligatoire sur clients_fournisseurs."))
+        .catch((e) => console.error("⚠️  Migration adresse NOT NULL ignorée :", e.message))
         .finally(() => release());
     });
 });

@@ -47,15 +47,13 @@ async function getAll(req, res) {
 async function create(req, res) {
   const client = await db.connect();
   try {
-    const { client_id, client_nom, client_adresse, date_vente, montant_paye, articles } = req.body;
+    const { client_id, client_nom, date_vente, montant_paye, articles } = req.body;
     const entId = req.user.entreprise_id;
 
     if (!articles || articles.length === 0)
       return res.status(400).json({ message: "Le panier est vide." });
     if (!client_nom)
       return res.status(400).json({ message: "Client obligatoire." });
-    if (!client_adresse || !client_adresse.trim())
-      return res.status(400).json({ message: "Adresse du client obligatoire." });
 
     await client.query("BEGIN");
 
@@ -86,10 +84,10 @@ async function create(req, res) {
     // jamais leur fournir de valeur explicite (Postgres rejette avec
     // "column ... can only be updated to DEFAULT"). On les omet, la base les calcule.
     const factResult = await client.query(
-      `INSERT INTO factures (code, date_facture, montant, montant_paye, monnaie_rendue, client_id, client_nom, client_adresse, user_id, entreprise_id)
-       VALUES ($1, $2, $3::numeric, $4::numeric, $5::numeric, $6, $7, $8, $9, $10)
+      `INSERT INTO factures (code, date_facture, montant, montant_paye, monnaie_rendue, client_id, client_nom, user_id, entreprise_id)
+       VALUES ($1, $2, $3::numeric, $4::numeric, $5::numeric, $6, $7, $8, $9)
        RETURNING *`,
-      [factCode, date, parseFloat(total), paye, parseFloat(monnaie), client_id || null, client_nom, client_adresse.trim(), req.user?.id || null, entId]
+      [factCode, date, parseFloat(total), paye, parseFloat(monnaie), client_id || null, client_nom, req.user?.id || null, entId]
     );
 
     // Créer les lignes de vente

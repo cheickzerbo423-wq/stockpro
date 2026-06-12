@@ -18,8 +18,7 @@ const classic = {
     const LINE_H = 16;
     const extraH = parseFloat(f.reste) > 0 ? 16 : 0;
     const logoH  = logoBuf ? 46 : 0;
-    const adrH   = f.client_adresse ? 12 : 0;
-    return 290 + logoH + lignes.length * LINE_H + extraH + adrH;
+    return 290 + logoH + lignes.length * LINE_H + extraH;
   },
   draw(doc, ctx) {
     const { f, lignes, cfg, money, dateStr, logoBuf, pal, W, M, INNER } = ctx;
@@ -54,7 +53,6 @@ const classic = {
     };
     infoLine("Date :", dateStr);
     infoLine("Client :", f.client_nom);
-    if (f.client_adresse) infoLine("Adresse :", f.client_adresse);
 
     y += 3; hrW(y, 0.5, LITE); y += 8;
 
@@ -116,8 +114,7 @@ const moderne = {
     const { lignes, logoBuf, f } = ctx;
     const extraH = parseFloat(f.reste) > 0 ? 14 : 0;
     const logoH  = logoBuf ? 40 : 0;
-    const adrH   = f.client_adresse ? 12 : 0;
-    return 250 + logoH + lignes.length * 15 + extraH + adrH;
+    return 250 + logoH + lignes.length * 15 + extraH;
   },
   draw(doc, ctx) {
     const { f, lignes, cfg, money, dateStr, logoBuf, pal, W, M, INNER } = ctx;
@@ -141,13 +138,7 @@ const moderne = {
 
     doc.fontSize(7).fillColor(SUB).font("Helvetica").text("Client", M, y);
     doc.fontSize(8.5).fillColor(INK).font("Helvetica-Bold").text(f.client_nom, M, y + 10, { width: INNER });
-    y += 22;
-    if (f.client_adresse) {
-      doc.fontSize(7).fillColor(SUB).font("Helvetica").text(f.client_adresse, M, y, { width: INNER });
-      y += 12;
-    } else {
-      y += 6;
-    }
+    y += 28;
 
     lignes.forEach((l) => {
       doc.fontSize(7.5).fillColor(INK).font("Helvetica").text(l.libelle, M, y, { width: INNER - 60 });
@@ -190,8 +181,7 @@ const bloc = {
     const { lignes, logoBuf, f } = ctx;
     const extraH = parseFloat(f.reste) > 0 ? 16 : 0;
     const logoH  = logoBuf ? 44 : 0;
-    const adrH   = f.client_adresse ? 12 : 0;
-    return 290 + logoH + lignes.length * 16 + extraH + adrH;
+    return 290 + logoH + lignes.length * 16 + extraH;
   },
   draw(doc, ctx) {
     const { f, lignes, cfg, money, dateStr, logoBuf, pal, W, M, INNER } = ctx;
@@ -223,7 +213,6 @@ const bloc = {
       y += 12;
     };
     infoLine("Client :", f.client_nom);
-    if (f.client_adresse) infoLine("Adresse :", f.client_adresse);
 
     y += 3;
     doc.rect(M, y, INNER, 16).fill(TINT);
@@ -280,8 +269,7 @@ const elegant = {
     const { lignes, logoBuf, f } = ctx;
     const extraH = parseFloat(f.reste) > 0 ? 14 : 0;
     const logoH  = logoBuf ? 44 : 0;
-    const adrH   = f.client_adresse ? 12 : 0;
-    return 295 + logoH + lignes.length * 17 + extraH + adrH;
+    return 295 + logoH + lignes.length * 17 + extraH;
   },
   draw(doc, ctx) {
     const { f, lignes, cfg, money, dateStr, logoBuf, pal, W, M, INNER } = ctx;
@@ -311,13 +299,7 @@ const elegant = {
 
     doc.fontSize(7.5).fillColor(SUB).font("Times-Italic").text("Recu de", M, y);
     doc.fontSize(9.5).fillColor(INK).font("Times-Bold").text(f.client_nom, M, y + 10, { width: INNER });
-    y += 22;
-    if (f.client_adresse) {
-      doc.fontSize(7.5).fillColor(SUB).font("Times-Roman").text(f.client_adresse, M, y, { width: INNER });
-      y += 12;
-    } else {
-      y += 4;
-    }
+    y += 26;
 
     hr(y, 0.4, LINE); y += 8;
 
@@ -365,8 +347,7 @@ const compact = {
     const { lignes, logoBuf, f } = ctx;
     const extraH = parseFloat(f.reste) > 0 ? 12 : 0;
     const logoH  = logoBuf ? 36 : 0;
-    const adrH   = f.client_adresse ? 9 : 0;
-    return 230 + logoH + lignes.length * 13 + extraH + adrH;
+    return 230 + logoH + lignes.length * 13 + extraH;
   },
   draw(doc, ctx) {
     const { f, lignes, cfg, money, dateStr, logoBuf, pal, W, M, INNER } = ctx;
@@ -390,13 +371,7 @@ const compact = {
     doc.fontSize(8).fillColor(DARK).font("Helvetica-Bold").text("RECU N° " + f.code, 0, y, { width: W, align: "center" });
     y += 10;
     doc.fontSize(6.5).fillColor(GREY).font("Helvetica").text(dateStr + "  -  " + f.client_nom, 0, y, { width: W, align: "center" });
-    y += 9;
-    if (f.client_adresse) {
-      doc.fontSize(6).fillColor(GREY).font("Helvetica").text(f.client_adresse, 0, y, { width: W, align: "center" });
-      y += 9;
-    } else {
-      y += 1;
-    }
+    y += 10;
 
     hrW(y, 0.5, LITE); y += 5;
 
@@ -457,8 +432,7 @@ const sidebar = {
     const { lignes, logoBuf, f } = ctx;
     const extraH = parseFloat(f.reste) > 0 ? 13 : 0;
     const logoH  = logoBuf ? 42 : 0;
-    const adrH   = f.client_adresse ? 12 : 0;
-    return 300 + logoH + lignes.length * 16 + extraH + adrH;
+    return 300 + logoH + lignes.length * 16 + extraH;
   },
   draw(doc, ctx) {
     const { f, lignes, cfg, money, dateStr, logoBuf, pal, M, INNER } = ctx;
@@ -494,13 +468,7 @@ const sidebar = {
     doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("Client", CX, y, { width: CW });
     y += 10;
     doc.fontSize(9).fillColor(INK).font("Helvetica-Bold").text(f.client_nom, CX, y, { width: CW });
-    y += 14;
-    if (f.client_adresse) {
-      doc.fontSize(7).fillColor(SUB).font("Helvetica").text(f.client_adresse, CX, y, { width: CW });
-      y += 12;
-    } else {
-      y += 2;
-    }
+    y += 16;
 
     dashed(y); y += 8;
 

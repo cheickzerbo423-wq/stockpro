@@ -42,13 +42,10 @@ function classic(doc, ctx) {
 
   doc.fontSize(7.5).fillColor(SUB).font("Helvetica-Bold").text("FACTURE A :", M, 144);
   doc.fontSize(13).fillColor(INK).font("Helvetica-Bold").text(f.client_nom, M, 157, { width: 260 });
-  if (f.client_adresse) {
-    doc.fontSize(8.5).fillColor(SUB).font("Helvetica").text(f.client_adresse, M, 176, { width: 260 });
-  }
 
-  hr(204, 0.5, LITE);
+  hr(190, 0.5, LITE);
 
-  const TY = 212, RH = 26;
+  const TY = 198, RH = 26;
   const C1x = M,       C1w = 240;
   const C2x = M + 240, C2w = 50;
   const C3x = M + 290, C3w = 115;
@@ -133,11 +130,7 @@ function moderne(doc, ctx) {
   doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("FACTURE A", M, y);
   y += 12;
   doc.fontSize(12).fillColor(INK).font("Helvetica-Bold").text(f.client_nom, M, y);
-  y += 14;
-  if (f.client_adresse) {
-    doc.fontSize(8).fillColor(SUB).font("Helvetica").text(f.client_adresse, M, y, { width: INN });
-  }
-  y += 18;
+  y += 28;
 
   const C1x = M, C1w = 260, C2x = M + 260, C2w = 50, C3x = M + 310, C3w = 110, C4x = M + 420, C4w = INN - 420;
   doc.fontSize(7.5).fillColor(SUB).font("Helvetica");
@@ -214,13 +207,10 @@ function bloc(doc, ctx) {
   let y = bandH + 24;
 
   const paid = !!f.statut;
-  const blocBoxH = f.client_adresse ? 60 : 46;
+  const blocBoxH = 46;
   doc.roundedRect(M, y, INN, blocBoxH, 6).fill(TINT);
   doc.fontSize(7.5).fillColor(SUB).font("Helvetica-Bold").text("FACTURE A", M + 14, y + 10);
   doc.fontSize(12).fillColor(INK).font("Helvetica-Bold").text(f.client_nom, M + 14, y + 22, { width: 300 });
-  if (f.client_adresse) {
-    doc.fontSize(8).fillColor(SUB).font("Helvetica").text(f.client_adresse, M + 14, y + 38, { width: 300 });
-  }
   doc.fontSize(9).fillColor(paid ? "#16A34A" : "#DC2626").font("Helvetica-Bold")
      .text(paid ? "REGLEE" : "IMPAYEE", M, y + 18, { width: INN - 14, align: "right" });
   y += blocBoxH + 24;
@@ -298,12 +288,9 @@ function elegant(doc, ctx) {
   const paid = !!f.statut;
   doc.fontSize(9).fillColor(SUB).font("Times-Italic").text("Facture adressee a", M, y);
   doc.fontSize(13).fillColor(INK).font("Times-Bold").text(f.client_nom, M, y + 13);
-  if (f.client_adresse) {
-    doc.fontSize(8.5).fillColor(SUB).font("Times-Roman").text(f.client_adresse, M, y + 29, { width: INN });
-  }
   doc.fontSize(9).fillColor(paid ? "#16A34A" : "#DC2626").font("Times-Bold")
      .text(paid ? "Reglee" : "Impayee", M, y + 2, { width: INN, align: "right" });
-  y += f.client_adresse ? 56 : 42;
+  y += 42;
 
   hr(y, 0.4, LINE);
   y += 10;
@@ -379,13 +366,7 @@ function compact(doc, ctx) {
 
   doc.fontSize(8).fillColor(SUB).font("Helvetica-Bold").text("Client : ", M, y, { continued: true })
      .fillColor(INK).font("Helvetica-Bold").text(f.client_nom);
-  y += 11;
-  if (f.client_adresse) {
-    doc.fontSize(7).fillColor(SUB).font("Helvetica").text(f.client_adresse, M, y, { width: INN });
-    y += 10;
-  } else {
-    y += 5;
-  }
+  y += 16;
 
   const C1x = M, C1w = 260, C2x = M + 260, C2w = 44, C3x = M + 304, C3w = 100, C4x = M + 404, C4w = INN - 404;
   doc.fontSize(7.5).fillColor(SUB).font("Helvetica-Bold");
@@ -497,13 +478,10 @@ function sidebar(doc, ctx) {
   // ── Zone principale ──────────────────────────────────────────────────
   doc.fontSize(7.5).fillColor(SUB).font("Helvetica-Bold").text("FACTURE A :", CX, 44);
   doc.fontSize(15).fillColor(INK).font("Helvetica-Bold").text(f.client_nom, CX, 58, { width: CW });
-  if (f.client_adresse) {
-    doc.fontSize(8.5).fillColor(SUB).font("Helvetica").text(f.client_adresse, CX, 78, { width: CW });
-  }
 
-  hr(100, 1, ACC);
+  hr(94, 1, ACC);
 
-  const TY = 116, RH = 24;
+  const TY = 110, RH = 24;
   const C2w = 40, C3w = 70, C4w = 70, C1w = CW - C2w - C3w - C4w;
   const C1x = CX, C2x = CX + C1w, C3x = C2x + C2w, C4x = C3x + C3w;
 

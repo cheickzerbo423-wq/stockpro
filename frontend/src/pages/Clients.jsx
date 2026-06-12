@@ -378,6 +378,7 @@ export default function Clients() {
   const handleSave = async () => {
     if (!form.nom.trim())     return notify("Le nom est requis.", "error");
     if (!form.contact.trim()) return notify("Le numéro de téléphone est requis.", "error");
+    if (isClient && !form.adresse.trim()) return notify("L'adresse est requise.", "error");
     try {
       await create({ ...form, type: tab });
       notify(`${isClient ? "Client" : "Fournisseur"} ajouté !`);
@@ -395,6 +396,7 @@ export default function Clients() {
   const handleUpdate = async () => {
     if (!editForm.nom.trim())     return notify("Le nom est requis.", "error");
     if (!editForm.contact.trim()) return notify("Le numéro de téléphone est requis.", "error");
+    if (editContact.type === "Clients" && !editForm.adresse.trim()) return notify("L'adresse est requise.", "error");
     try {
       await update(editContact.id, editForm);
       notify("Informations mises à jour !");
@@ -593,7 +595,7 @@ export default function Clients() {
               onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
             <Input label="Ville" value={editForm.ville}
               onChange={(e) => setEditForm({ ...editForm, ville: e.target.value })} />
-            <Input label="Adresse" value={editForm.adresse}
+            <Input label={editContact.type === "Clients" ? "Adresse *" : "Adresse"} value={editForm.adresse}
               onChange={(e) => setEditForm({ ...editForm, adresse: e.target.value })} />
           </div>
           <div className="flex justify-end gap-2 mt-5">
@@ -613,7 +615,7 @@ export default function Clients() {
             <Input label="Contact (téléphone) *" value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} placeholder="225 00 00 00 00" />
             <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             <Input label="Ville" value={form.ville} onChange={(e) => setForm({ ...form, ville: e.target.value })} />
-            <Input label="Adresse" value={form.adresse} onChange={(e) => setForm({ ...form, adresse: e.target.value })} />
+            <Input label={isClient ? "Adresse *" : "Adresse"} value={form.adresse} onChange={(e) => setForm({ ...form, adresse: e.target.value })} />
           </div>
           <div className="flex justify-end gap-2 mt-5">
             <Btn color="gray" onClick={() => setShowAdd(false)}>Annuler</Btn>

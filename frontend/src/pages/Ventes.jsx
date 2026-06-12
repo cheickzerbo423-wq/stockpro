@@ -34,7 +34,7 @@ function MiniForm({ title, icon, onSave, onCancel, saving }) {
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF]" />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Adresse</label>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Adresse *</label>
             <input value={adresse} onChange={(e) => setAdresse(e.target.value)}
               placeholder="Adresse du client…"
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF]" />
@@ -46,7 +46,7 @@ function MiniForm({ title, icon, onSave, onCancel, saving }) {
             Annuler
           </button>
           <button
-            disabled={!nom.trim() || !contact.trim() || saving}
+            disabled={!nom.trim() || !contact.trim() || !adresse.trim() || saving}
             onClick={() => onSave({ nom: nom.trim(), contact, adresse: adresse.trim() })}
             className="flex-1 py-2 rounded-xl bg-[#0023FF] text-white text-sm font-bold hover:bg-[#0023FF] transition disabled:opacity-40">
             {saving ? "Enregistrement…" : "Enregistrer"}
@@ -66,7 +66,6 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
   const [clientOpen, setClientOpen] = useState(false);
   const [showNewClient, setShowNewClient] = useState(false);
   const [savingClient, setSavingClient]   = useState(false);
-  const [adresse, setAdresse]     = useState("");
   const [datev, setDatev]         = useState(today());
   const [panier, setPanier]       = useState([]);
   const [paye, setPaye]           = useState("");
@@ -184,7 +183,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                     ? <div className="px-4 py-3 text-xs text-gray-400 text-center">Aucun client trouvé</div>
                     : clientsFiltres.map((c) => (
                       <button key={c.id} onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => { setClient(c.nom); setClientId(c.id); setClientQ(c.nom); setClientOpen(false); setAdresse(c.adresse || ""); }}
+                        onClick={() => { setClient(c.nom); setClientId(c.id); setClientQ(c.nom); setClientOpen(false); }}
                         className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[#E6EAFF] hover:text-[#0019CC] transition flex items-center gap-2
                           ${client === c.nom ? "bg-[#E6EAFF] text-[#0019CC] font-semibold" : "text-gray-700"}`}>
                         <span className="w-6 h-6 rounded-full bg-[#E6EAFF] text-[#0023FF] text-xs font-bold flex items-center justify-center flex-shrink-0">
@@ -208,19 +207,12 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                       // la saisie brute de l'utilisateur.
                       const nomAffiche = created?.nom || nom.toUpperCase();
                       setClient(nomAffiche); setClientId(created?.id || ""); setClientQ(nomAffiche);
-                      setAdresse(created?.adresse || adresseClient || "");
                       setShowNewClient(false);
                     } finally { setSavingClient(false); }
                   }} />
               )}
             </div>
             <Input label="Date *" type="date" value={datev} onChange={(e) => setDatev(e.target.value)} />
-          </div>
-
-          {/* Adresse du client */}
-          <div className="px-4 pb-2">
-            <Input label="Adresse du client *" value={adresse} onChange={(e) => setAdresse(e.target.value)}
-              placeholder="Adresse de livraison / facturation…" />
           </div>
 
           {/* ── Catalogue articles ── */}
@@ -416,11 +408,11 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
         <div className="px-4 py-3 border-t border-gray-100 flex gap-2 flex-shrink-0 bg-white">
           <Btn color="gray" onClick={onClose} className="flex-1">Annuler</Btn>
           <button
-            disabled={saving || panier.length === 0 || !client || !adresse.trim() || hasOverstock}
-            onClick={() => onSave({ client, clientId, adresse, datev, paye, panier })}
-            title={hasOverstock ? "Quantité supérieure au stock disponible — corrigez le panier." : !adresse.trim() ? "Saisissez l'adresse du client." : undefined}
+            disabled={saving || panier.length === 0 || !client || hasOverstock}
+            onClick={() => onSave({ client, clientId, datev, paye, panier })}
+            title={hasOverstock ? "Quantité supérieure au stock disponible — corrigez le panier." : undefined}
             className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition shadow-sm
-              ${panier.length === 0 || !client || !adresse.trim() || hasOverstock
+              ${panier.length === 0 || !client || hasOverstock
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                 : "bg-emerald-500 text-white hover:bg-emerald-600"}`}
           >
@@ -499,9 +491,8 @@ export default function Ventes() {
   const sortState = { key: sortKey, dir: sortDir };
   const artMap = useMemo(() => new Map(articles.map(a => [a.code, a])), [articles]);
 
-  const handleSave = async ({ client, clientId, adresse, datev, paye, panier }) => {
+  const handleSave = async ({ client, clientId, datev, paye, panier }) => {
     if (!client)              { notify("Sélectionnez un client.", "error"); return; }
-    if (!adresse || !adresse.trim()) { notify("Saisissez l'adresse du client.", "error"); return; }
     if (panier.length === 0)  { notify("Le panier est vide.", "error"); return; }
     // Garde-fou final anti-survente : revérifie le stock disponible (données
     // les plus récentes connues du frontend) avant d'envoyer la vente.
@@ -517,7 +508,6 @@ export default function Ventes() {
       const result = await createVente({
         client_id:      clientId || null,
         client_nom:     client,
-        client_adresse: adresse.trim(),
         date_vente:   datev,
         montant_paye: paye !== "" ? +paye : panier.reduce((s, p) => s + p.prix_vente * p.quantite, 0),
         articles:     panier.map((p) => ({ code: p.code, quantite: p.quantite, prix_vente: p.prix_vente })),
@@ -775,9 +765,6 @@ export default function Ventes() {
             <div>
               <div className="text-xs text-gray-400 uppercase font-bold mb-1">Client</div>
               <div className="text-lg font-black text-gray-900">{factureDetail.client_nom}</div>
-              {factureDetail.client_adresse && (
-                <div className="text-sm text-gray-500 mt-0.5">{factureDetail.client_adresse}</div>
-              )}
               <div className="text-sm text-gray-500 mt-0.5">{fmtDate(factureDetail.date_facture)}</div>
             </div>
             <div className="text-right">

@@ -117,6 +117,8 @@ async function create(req, res) {
     const { nom, type, contact, email, ville, adresse } = req.body;
     if (!nom || !type)
       return res.status(400).json({ message: "Nom et type sont obligatoires." });
+    if ((type === "Clients" || type === "Client" || type === "Les deux") && !(adresse || "").trim())
+      return res.status(400).json({ message: "L'adresse est obligatoire pour l'enregistrement d'un client." });
     const result = await db.query(
       `INSERT INTO clients_fournisseurs (nom, type, contact, email, ville, adresse, entreprise_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
@@ -131,6 +133,16 @@ async function create(req, res) {
 async function update(req, res) {
   try {
     const { nom, contact, email, ville, adresse } = req.body;
+
+    const existing = await db.query(
+      `SELECT type FROM clients_fournisseurs WHERE id = $1 AND entreprise_id = $2`,
+      [req.params.id, req.user.entreprise_id]
+    );
+    if (!existing.rows[0]) return res.status(404).json({ message: "Introuvable." });
+    const isClientType = ["Clients", "Client", "Les deux"].includes(existing.rows[0].type);
+    if (isClientType && adresse !== undefined && !(adresse || "").trim())
+      return res.status(400).json({ message: "L'adresse est obligatoire pour un client." });
+
     const result = await db.query(
       `UPDATE clients_fournisseurs
        SET nom = COALESCE($1, nom), contact = COALESCE($2, contact),

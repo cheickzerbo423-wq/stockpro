@@ -299,23 +299,6 @@ export default function Guide() {
           En mode <strong>Crédit</strong>, la dette fournisseur est enregistrée et visible dans le tableau. Vous pouvez la solder plus tard via le bouton <strong>Payer</strong>.
         </Tip>
 
-        <SectionTitle>📷 Scanner une facture — pré-remplissage automatique</SectionTitle>
-        <p className="text-xs text-gray-500 leading-relaxed">
-          Plutôt que de ressaisir une facture papier ligne par ligne, vous pouvez la <strong>photographier</strong> : le système la lit
-          automatiquement (reconnaissance de texte) et pré-remplit le formulaire d'approvisionnement pour vous.
-        </p>
-        <div className="space-y-2 mt-2">
-          <Step n="1">Dans le modal d'approvisionnement, cliquez sur <strong>📷 Scanner une facture</strong>.</Step>
-          <Step n="2">Prenez une photo ou sélectionnez une image de la facture papier.</Step>
-          <Step n="3">L'image est automatiquement compressée puis analysée par le serveur (reconnaissance optique de caractères).</Step>
-          <Step n="4">Le fournisseur, la date et les lignes (libellé, quantité, prix d'achat) détectés viennent <strong>pré-remplir</strong> le formulaire.</Step>
-          <Step n="5">Relisez et corrigez chaque champ si nécessaire, puis cliquez <strong>Enregistrer</strong> comme pour une saisie manuelle.</Step>
-        </div>
-
-        <Tip icon="🛡️" color="green">
-          La lecture automatique est une <strong>aide à la saisie</strong> : rien n'est jamais enregistré sans validation. Vous gardez toujours la main pour vérifier et corriger avant d'enregistrer.
-        </Tip>
-
         <SectionTitle>Payer une dette fournisseur</SectionTitle>
         <div className="space-y-2">
           <Step n="1">Repérez la ligne avec le statut <Badge color="orange">Crédit</Badge> dans le tableau.</Step>

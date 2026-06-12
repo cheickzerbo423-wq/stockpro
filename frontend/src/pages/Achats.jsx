@@ -187,8 +187,6 @@ export default function Achats() {
   const [payAmount, setPayAmount] = useState("");
   const [toast, setToast]       = useState(null);
   const [searchTable, setSearchTable] = useState("");
-  const [scanning, setScanning] = useState(false);
-  const fileInputRef = useRef(null);
 
   /* ── Formulaire multi-lignes ── */
   const emptyLigne = () => ({ id: Date.now() + Math.random(), article_code: "", libelle: "", quantite: "", prix_achat: "" });
@@ -224,77 +222,6 @@ export default function Achats() {
     setFournisseurQ("");
     setDateAchat(today());
     setMontantPaye("");
-  };
-
-  /* ── Scan de facture (OCR) : photo → texte → proposition de remplissage ──
-     L'image est redimensionnée/compressée côté client (le serveur reste léger
-     et rapide), puis analysée par le backend (Tesseract OCR). Le résultat
-     PRÉ-REMPLIT le formulaire ci-dessous pour vérification — rien n'est jamais
-     enregistré automatiquement, l'utilisateur garde la main sur "Enregistrer". */
-  const resizeImageBase64 = (file, maxDim = 1600, quality = 0.82) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error("Lecture du fichier impossible."));
-      reader.onload = () => {
-        const img = new Image();
-        img.onerror = () => reject(new Error("Image illisible."));
-        img.onload = () => {
-          let { width, height } = img;
-          if (width > maxDim || height > maxDim) {
-            const ratio = Math.min(maxDim / width, maxDim / height);
-            width = Math.round(width * ratio);
-            height = Math.round(height * ratio);
-          }
-          const canvas = document.createElement("canvas");
-          canvas.width = width;
-          canvas.height = height;
-          canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL("image/jpeg", quality));
-        };
-        img.src = reader.result;
-      };
-      reader.readAsDataURL(file);
-    });
-
-  const handleScanFile = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // permet de reprendre la même photo si besoin
-    if (!file) return;
-    if (!file.type.startsWith("image/"))
-      return notify("Sélectionnez une photo de la facture (image).", "error");
-
-    setScanning(true);
-    try {
-      const base64 = await resizeImageBase64(file);
-      const r = await achatsService.scanFacture(base64);
-
-      resetModal();
-      if (r.fournisseur_nom) {
-        setFournisseurNom(r.fournisseur_nom);
-        setFournisseurQ(r.fournisseur_nom);
-        const connu = fournisseurs.find((f) => f.nom.toLowerCase() === r.fournisseur_nom.toLowerCase());
-        if (connu) setFournisseurId(connu.id);
-      }
-      if (r.date_achat) setDateAchat(r.date_achat);
-      if (r.lignes?.length > 0) {
-        setLignes(r.lignes.map((l) => ({
-          id: Date.now() + Math.random(),
-          article_code: "",
-          libelle: l.libelle || "",
-          quantite: l.quantite ? String(l.quantite) : "",
-          prix_achat: l.prix_achat ? String(l.prix_achat) : "",
-        })));
-      }
-      setShowAdd(true);
-      notify(
-        `📷 ${r.message || "Facture analysée."} Chaque article doit être associé à un produit du catalogue.`,
-        r.lignes?.length > 0 ? "success" : "info"
-      );
-    } catch (err) {
-      notify(err.response?.data?.message || err.message || "Erreur lors de l'analyse de la facture.", "error");
-    } finally {
-      setScanning(false);
-    }
   };
 
   /* ── Enregistrement multi-produits ── */
@@ -402,24 +329,11 @@ export default function Achats() {
         sub={`${nbAchats} ligne(s) · Total dépensé : ${fmt(totalDepenses)}`}
         action={
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Btn color="orange-light" icon="📷" loading={scanning} onClick={() => fileInputRef.current?.click()}
-              className="w-full sm:w-auto">
-              {scanning ? "Analyse en cours…" : "Scanner une facture"}
-            </Btn>
             <Btn onClick={() => { resetModal(); setShowAdd(true); }} className="w-full sm:w-auto">
               + Nouvel Approvisionnement
             </Btn>
           </div>
         }
-      />
-      {/* Capture photo masquée — déclenchée par le bouton "Scanner une facture" */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleScanFile}
       />
 
       {/* KPIs */}

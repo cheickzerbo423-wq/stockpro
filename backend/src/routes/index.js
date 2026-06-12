@@ -46,7 +46,6 @@ router.get ("/ventes/stats", authenticate, ventesCtrl.stats);
 // ACHATS / APPROVISIONNEMENTS
 // ============================================================
 router.get   ("/achats",              authenticate, authorize("appro"), achatsCtrl.getAll);
-router.post  ("/achats/scanner-facture", authenticate, authorize("appro"), achatsCtrl.scanFacture);
 router.post  ("/achats",              authenticate, authorize("appro"), audit("ACHAT", "achats"), achatsCtrl.create);
 router.put   ("/achats/:id/paiement", authenticate, authorize("appro"), audit("PAIEMENT", "achats"), achatsCtrl.updatePaiement);
 router.delete("/achats/:id",          authenticate, authorize("appro"), audit("SUPPRESSION", "achats"), achatsCtrl.remove);

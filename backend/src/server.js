@@ -54,9 +54,9 @@ app.use(cors({
   credentials: false,
 }));
 
-// Limite relevée à 12 Mo pour accepter les photos de factures (envoyées en base64
-// depuis le scanner d'approvisionnement — une photo encodée prend ~33% de plus que le binaire).
-app.use(express.json({ limit: "12mb" }));
+// Limite à 2 Mo : suffisant pour le logo d'entreprise (envoyé en base64,
+// redimensionné à 320px côté client avant envoi).
+app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // Log de toutes les requêtes (utile pour déboguer Railway)

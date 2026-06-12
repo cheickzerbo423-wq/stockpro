@@ -195,9 +195,8 @@ function PdfPreviewModal({ docType, docLabel, style, onClose }) {
   );
 }
 
-// Redimensionne et compresse une image côté client avant envoi (même logique
-// que le scan de facture dans Achats.jsx) — garde le PNG pour préserver la
-// transparence des logos, limite la taille à 320px de côté.
+// Redimensionne et compresse une image côté client avant envoi — garde le PNG
+// pour préserver la transparence des logos, limite la taille à 320px de côté.
 const resizeLogoBase64 = (file, maxDim = 320) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();

@@ -497,4 +497,128 @@ function compact(doc, ctx) {
      .text("Document genere automatiquement par WariGest - Logiciel de gestion & facturation", M, footerY, { width: INN, align: "center" });
 }
 
-module.exports = { classic, moderne, bloc, elegant, compact };
+// ─── 6. Latéral ─────────────────────────────────────────────────────────────
+// Bandeau lateral colore sur toute la hauteur (identite + indicateurs cles
+// empiles verticalement), zone principale a droite pour le detail par
+// sections. Disposition en deux colonnes : structurellement differente des
+// 5 layouts precedents, tous en flux vertical pleine largeur.
+function sidebar(doc, ctx) {
+  const { v, a, f, benefice, cogs, topArticles, creancesClients, cfg, money, fmtN, debutStr, finStr, genStr, logoBuf, pal, PH, M, INN } = ctx;
+  const ACC = pal.primary, INK = "#111827", SUB = "#6B7280", LITE = "#D1D5DB";
+  const SBW = 180;
+  const CX = SBW + 28, CW = (M + INN) - CX;
+  const hr = (y, w, c) => doc.moveTo(CX, y).lineTo(CX + CW, y).lineWidth(w).strokeColor(c).stroke();
+
+  doc.rect(0, 0, SBW, PH).fill(ACC);
+
+  let sy = 32;
+  if (logoBuf) {
+    try {
+      doc.roundedRect(20, sy, 44, 44, 8).fill("#FFFFFF");
+      doc.image(logoBuf, 25, sy + 5, { fit: [34, 34] });
+      sy += 56;
+    } catch (e) { /* logo ignore */ }
+  }
+  doc.fontSize(13).fillColor("#FFFFFF").font("Helvetica-Bold").text(cfg.nom, 20, sy, { width: SBW - 36 });
+  sy += doc.heightOfString(cfg.nom, { width: SBW - 36 }) + 4;
+  doc.opacity(0.85).fontSize(7.5).fillColor("#FFFFFF").font("Helvetica");
+  if (cfg.adresse)   { doc.text(cfg.adresse, 20, sy, { width: SBW - 36 }); sy += 11; }
+  if (cfg.telephone) { doc.text("Tel : " + cfg.telephone, 20, sy, { width: SBW - 36 }); sy += 11; }
+  doc.opacity(1);
+
+  sy += 14;
+  doc.opacity(0.4).moveTo(20, sy).lineTo(SBW - 20, sy).lineWidth(0.5).strokeColor("#FFFFFF").stroke();
+  doc.opacity(1);
+  sy += 14;
+
+  doc.fontSize(15).fillColor("#FFFFFF").font("Helvetica-Bold").text("RAPPORT FINANCIER", 20, sy, { width: SBW - 36 });
+  sy += doc.heightOfString("RAPPORT FINANCIER", { width: SBW - 36 }) + 6;
+  doc.opacity(0.85).fontSize(7.5).fillColor("#FFFFFF").font("Helvetica").text(`${debutStr}\n${finStr}`, 20, sy, { width: SBW - 36 });
+  sy += 26;
+  doc.fontSize(6.5).fillColor("#FFFFFF").font("Helvetica").text("Genere le " + genStr, 20, sy, { width: SBW - 36 });
+  doc.opacity(1);
+  sy += 22;
+
+  doc.opacity(0.4).moveTo(20, sy).lineTo(SBW - 20, sy).lineWidth(0.5).strokeColor("#FFFFFF").stroke();
+  doc.opacity(1);
+  sy += 14;
+
+  const kpis = [
+    { label: "CHIFFRE D'AFFAIRES", value: money(v.ca_total) },
+    { label: "COUT DES VENTES",    value: money(cogs) },
+    { label: "MARGE BRUTE",        value: money(benefice) },
+    { label: "FACTURES EMISES",    value: fmtN(f.nb_total) },
+  ];
+  kpis.forEach((k) => {
+    doc.opacity(0.75).fontSize(7).fillColor("#FFFFFF").font("Helvetica-Bold").text(k.label, 20, sy, { width: SBW - 36 });
+    sy += 11;
+    doc.opacity(1).fontSize(14).fillColor("#FFFFFF").font("Helvetica-Bold").text(k.value, 20, sy, { width: SBW - 36 });
+    sy += 24;
+  });
+
+  // ── Zone principale ──────────────────────────────────────────────────
+  let y = 36;
+  doc.fontSize(9).fillColor(SUB).font("Helvetica").text("Periode analysee", CX, y, { width: CW });
+  y += 12;
+  doc.fontSize(11).fillColor(INK).font("Helvetica-Bold").text(`${debutStr}  -  ${finStr}`, CX, y, { width: CW });
+  y += 22;
+  hr(y, 1, ACC); y += 16;
+  doc.y = y;
+
+  const section = (title) => {
+    const sy2 = doc.y;
+    doc.fontSize(9).fillColor(INK).font("Helvetica-Bold").text(title, CX, sy2);
+    doc.moveTo(CX, sy2 + 13).lineTo(CX + CW, sy2 + 13).lineWidth(1.2).strokeColor(ACC).stroke();
+    doc.y = sy2 + 20;
+  };
+  const row = (label, value, color) => {
+    const ry = doc.y;
+    doc.fontSize(8.5).fillColor(SUB).font("Helvetica").text(label, CX + 4, ry);
+    doc.fillColor(color || INK).font("Helvetica-Bold").text(value, CX, ry, { width: CW, align: "right" });
+    doc.moveTo(CX, ry + 15).lineTo(CX + CW, ry + 15).lineWidth(0.3).strokeColor(LITE).stroke();
+    doc.y = ry + 15;
+  };
+
+  section("VENTES");
+  row("Chiffre d'affaires", money(v.ca_total), ACC);
+  row("Nombre de factures", fmtN(v.nb_factures));
+  row("Quantites vendues",  fmtN(v.qte_totale) + " unites");
+
+  section("APPROVISIONNEMENTS");
+  row("Nombre d'achats",     fmtN(a.nb_achats));
+  row("Total depenses",      money(a.total_achats), "#EF4444");
+  row("Montant paye",        money(a.total_paye),   "#10B981");
+  row("Dettes fournisseurs", money(a.total_dettes), parseInt(a.total_dettes) > 0 ? "#EF4444" : SUB);
+
+  section("RECOUVREMENT FACTURES");
+  row("Total facture",      money(f.montant_total));
+  row("Montant encaisse",   money(f.montant_encaisse), "#10B981");
+  row("Creances restantes", money(f.montant_creances), parseInt(f.montant_creances) > 0 ? "#EF4444" : SUB);
+  row("Factures reglees",   fmtN(f.nb_reglees), "#10B981");
+  row("Factures impayees",  fmtN(f.nb_impayees), parseInt(f.nb_impayees) > 0 ? "#EF4444" : SUB);
+
+  if (topArticles.length > 0) {
+    section("TOP 5 ARTICLES VENDUS");
+    topArticles.forEach((art, i) => row(`${i + 1}. ${art.libelle}`, money(art.ca) + "  /  " + fmtN(art.qte) + " u.", ACC));
+  }
+
+  if (creancesClients && creancesClients.length > 0) {
+    section("CLIENTS A RECOUVRER");
+    creancesClients.slice(0, 6).forEach((c) =>
+      row(`${c.client_nom} (${fmtN(c.nb_factures)} facture${c.nb_factures > 1 ? "s" : ""})`, money(c.total_du), "#EF4444"));
+  }
+
+  doc.moveDown(0.8);
+  const benY = doc.y;
+  const benColor = benefice >= 0 ? "#10B981" : "#EF4444";
+  doc.moveTo(CX, benY).lineTo(CX + CW, benY).lineWidth(1).strokeColor(LITE).stroke();
+  doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("MARGE BRUTE DE LA PERIODE", CX, benY + 8);
+  doc.fontSize(18).fillColor(benColor).font("Helvetica-Bold").text(money(benefice), CX, benY + 20, { width: CW, align: "right" });
+  doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("CA : " + money(v.ca_total) + "   -   Cout des ventes : " + money(cogs), CX, benY + 41, { width: CW });
+
+  const footerY = PH - 15;
+  doc.fillColor(SUB).fontSize(7).font("Helvetica")
+     .text("Document genere automatiquement par WariGest - Logiciel de gestion & facturation", CX, footerY, { width: CW, align: "left" });
+}
+
+module.exports = { classic, moderne, bloc, elegant, compact, sidebar };

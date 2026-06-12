@@ -1,6 +1,6 @@
 // src/controllers/previewController.js
 // Génère un PDF d'EXEMPLE (données fictives) pour prévisualiser un style du
-// catalogue (5 mises en page x 5 palettes — voir utils/pdfStyles.js) avant
+// catalogue (6 mises en page x 5 palettes — voir utils/pdfStyles.js) avant
 // que l'utilisateur ne l'enregistre dans Paramètres. Utilise les mêmes
 // renderers que les vrais documents (facturesLayouts / recuLayouts /
 // rapportLayouts), avec les coordonnées réelles de l'entreprise (logo, nom,

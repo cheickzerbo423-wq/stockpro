@@ -538,8 +538,8 @@ pool.connect((err, client, release) => {
         .then(() => console.log("✅ Colonne 'must_change_password' vérifiée + comptes existants marqués pour changement de mot de passe."))
         .catch((e) => console.error("⚠️  Migration must_change_password ignorée :", e.message))
         // ── Migration : styles de documents PDF (factures/reçus/rapports) ────
-        // Chaque entreprise peut choisir, parmi un catalogue de styles (5 mises
-        // en page × 5 palettes de couleurs = 25 combinaisons), l'apparence de
+        // Chaque entreprise peut choisir, parmi un catalogue de styles (6 mises
+        // en page × 5 palettes de couleurs = 30 combinaisons), l'apparence de
         // ses factures, reçus et rapports financiers PDF. Valeur par défaut
         // "classic-bleu" = design historique avec la couleur d'accent existante.
         .then(() =>

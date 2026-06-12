@@ -410,4 +410,102 @@ function compact(doc, ctx) {
   doc.fontSize(6.5).fillColor(SUB).font("Helvetica-Oblique").text(msg, M, footY + 5, { width: INN, align: "center" });
 }
 
-module.exports = { classic, moderne, bloc, elegant, compact };
+// ─── 6. Latéral ─────────────────────────────────────────────────────────────
+// Bandeau latéral coloré sur toute la hauteur (identité, statut, récapitulatif
+// des totaux) + zone principale à droite pour le client et le détail des
+// articles. Disposition en deux colonnes : structurellement différente des
+// 5 layouts précédents, tous en flux vertical pleine largeur.
+function sidebar(doc, ctx) {
+  const { f, lignes, cfg, money, dateStr, logoBuf, pal, PH, M, INN } = ctx;
+  const ACC = pal.primary, INK = "#111827", SUB = "#6B7280", LITE = "#D1D5DB";
+  const SBW = 168; // largeur du bandeau lateral
+  const CX = SBW + 28, CW = M + INN - CX; // zone principale (jusqu'a M+INN = PW-M)
+  const hr = (y, w, col) => doc.moveTo(CX, y).lineTo(CX + CW, y).lineWidth(w).strokeColor(col).stroke();
+
+  // Bandeau lateral colore sur toute la hauteur
+  doc.rect(0, 0, SBW, PH).fill(ACC);
+
+  let sy = 36;
+  if (logoBuf) {
+    try {
+      doc.roundedRect(20, sy, 46, 46, 8).fill("#FFFFFF");
+      doc.image(logoBuf, 25, sy + 5, { fit: [36, 36] });
+      sy += 58;
+    } catch (e) { /* logo ignore */ }
+  }
+  doc.fontSize(13).fillColor("#FFFFFF").font("Helvetica-Bold").text(cfg.nom, 20, sy, { width: SBW - 36 });
+  sy += doc.heightOfString(cfg.nom, { width: SBW - 36 }) + 6;
+  doc.fillColor("#FFFFFF").opacity(0.85).fontSize(7.5).font("Helvetica");
+  if (cfg.adresse)   { doc.text(cfg.adresse, 20, sy, { width: SBW - 36 }); sy += doc.heightOfString(cfg.adresse, { width: SBW - 36 }) + 2; }
+  if (cfg.telephone) { doc.text("Tel : " + cfg.telephone, 20, sy, { width: SBW - 36 }); sy += 12; }
+  if (cfg.email)     { doc.text(cfg.email, 20, sy, { width: SBW - 36 }); sy += 12; }
+  doc.opacity(1);
+
+  sy += 16;
+  doc.opacity(0.4).moveTo(20, sy).lineTo(SBW - 20, sy).lineWidth(0.5).strokeColor("#FFFFFF").stroke();
+  doc.opacity(1);
+  sy += 14;
+
+  doc.fontSize(22).fillColor("#FFFFFF").font("Helvetica-Bold").text("FACTURE", 20, sy, { width: SBW - 36 });
+  sy += 28;
+  doc.fontSize(8.5).fillColor("#FFFFFF").font("Helvetica-Bold").text(f.code, 20, sy, { width: SBW - 36 });
+  sy += 12;
+  doc.opacity(0.85).fontSize(8).fillColor("#FFFFFF").font("Helvetica").text(dateStr, 20, sy, { width: SBW - 36 });
+  doc.opacity(1);
+  sy += 22;
+
+  const paid = !!f.statut;
+  doc.roundedRect(20, sy, SBW - 40, 20, 4).fill(paid ? "#16A34A" : "#DC2626");
+  doc.fontSize(8.5).fillColor("#FFFFFF").font("Helvetica-Bold").text(paid ? "REGLEE" : "IMPAYEE", 20, sy + 5, { width: SBW - 40, align: "center" });
+  sy += 36;
+
+  doc.opacity(0.4).moveTo(20, sy).lineTo(SBW - 20, sy).lineWidth(0.5).strokeColor("#FFFFFF").stroke();
+  doc.opacity(1);
+  sy += 14;
+
+  const sLine = (lbl, val, big) => {
+    doc.opacity(0.75).fontSize(7.5).fillColor("#FFFFFF").font("Helvetica").text(lbl, 20, sy, { width: SBW - 36 });
+    sy += 11;
+    doc.opacity(1).fontSize(big ? 15 : 10).fillColor("#FFFFFF").font("Helvetica-Bold").text(val, 20, sy, { width: SBW - 36 });
+    sy += big ? 22 : 16;
+  };
+  sLine("SOUS-TOTAL", money(f.montant));
+  sLine("ENCAISSE", money(f.montant_paye));
+  if (parseFloat(f.reste) > 0) sLine("RESTE A PAYER", money(f.reste));
+  sLine("TOTAL", money(f.montant), true);
+
+  // ── Zone principale ──────────────────────────────────────────────────
+  doc.fontSize(7.5).fillColor(SUB).font("Helvetica-Bold").text("FACTURE A :", CX, 44);
+  doc.fontSize(15).fillColor(INK).font("Helvetica-Bold").text(f.client_nom, CX, 58, { width: CW });
+
+  hr(94, 1, ACC);
+
+  const TY = 110, RH = 24;
+  const C2w = 40, C3w = 70, C4w = 70, C1w = CW - C2w - C3w - C4w;
+  const C1x = CX, C2x = CX + C1w, C3x = C2x + C2w, C4x = C3x + C3w;
+
+  doc.fontSize(8).fillColor(SUB).font("Helvetica-Bold");
+  doc.text("DESIGNATION", C1x, TY + 9, { width: C1w });
+  doc.text("QTE",         C2x, TY + 9, { width: C2w, align: "center" });
+  doc.text("PRIX UNIT.",  C3x, TY + 9, { width: C3w, align: "right" });
+  doc.text("MONTANT",     C4x, TY + 9, { width: C4w, align: "right" });
+  hr(TY + RH, 1, INK);
+
+  let ry = TY + RH;
+  lignes.forEach((l) => {
+    ry += 4;
+    doc.fontSize(9.5).fillColor(INK).font("Helvetica").text(l.libelle, C1x, ry, { width: C1w - 8 });
+    doc.text(String(parseFloat(l.quantite) || 0), C2x, ry, { width: C2w, align: "center" });
+    doc.fillColor(SUB).text(money(l.prix_vente), C3x, ry, { width: C3w, align: "right" });
+    doc.fillColor(INK).font("Helvetica-Bold").text(money(l.montant_total), C4x, ry, { width: C4w, align: "right" });
+    ry += 22;
+    hr(ry, 0.3, LITE);
+  });
+
+  const footY = PH - 40;
+  const msg = cfg.pied_de_page || "Merci pour votre confiance. Ce document tient lieu de facture officielle.";
+  doc.fontSize(7.5).fillColor(SUB).font("Helvetica-Oblique").text(msg, CX, footY, { width: CW, align: "left" });
+  doc.fontSize(7).fillColor(ACC).font("Helvetica-Bold").text("WariGest", CX, footY + 14, { width: CW, align: "left" });
+}
+
+module.exports = { classic, moderne, bloc, elegant, compact, sidebar };

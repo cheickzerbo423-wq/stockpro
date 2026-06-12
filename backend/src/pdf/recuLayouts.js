@@ -423,4 +423,96 @@ const compact = {
   },
 };
 
-module.exports = { classic, moderne, bloc, elegant, compact };
+// ─── 6. Latéral ─────────────────────────────────────────────────────────────
+// Bandeau vertical colore sur le bord gauche (type "talon de billet"),
+// separateurs en pointilles, encadre TOTAL. Disposition structurellement
+// differente des 5 precedentes (toutes centrees, sans bandeau ni pointilles).
+const sidebar = {
+  height(ctx) {
+    const { lignes, logoBuf, f } = ctx;
+    const extraH = parseFloat(f.reste) > 0 ? 13 : 0;
+    const logoH  = logoBuf ? 42 : 0;
+    return 300 + logoH + lignes.length * 16 + extraH;
+  },
+  draw(doc, ctx) {
+    const { f, lignes, cfg, money, dateStr, logoBuf, pal, M, INNER } = ctx;
+    const ACC = pal.primary, INK = "#111827", SUB = "#6B7280", LITE = "#D1D5DB";
+    const BAND = 8;
+    const CX = M + BAND + 4, CW = INNER - BAND - 4;
+    const dashed = (yy) => {
+      doc.dash(2, { space: 2 }).moveTo(CX, yy).lineTo(CX + CW, yy).lineWidth(0.7).strokeColor(LITE).stroke();
+      doc.undash();
+    };
+
+    // Bandeau vertical colore sur toute la hauteur de la page
+    doc.rect(0, 0, BAND, doc.page.height).fill(ACC);
+
+    let y = 14;
+    if (logoBuf) {
+      try { doc.image(logoBuf, CX, y, { fit: [34, 34] }); y += 42; } catch (e) { /* logo ignore */ }
+    }
+
+    doc.fontSize(11).fillColor(INK).font("Helvetica-Bold").text(cfg.nom, CX, y, { width: CW });
+    y += 14;
+    doc.fontSize(7).fillColor(SUB).font("Helvetica");
+    if (cfg.adresse)   { doc.text(cfg.adresse,              CX, y, { width: CW }); y += 10; }
+    if (cfg.telephone) { doc.text("Tel : " + cfg.telephone, CX, y, { width: CW }); y += 10; }
+
+    y += 4; dashed(y); y += 10;
+
+    doc.fontSize(9.5).fillColor(ACC).font("Helvetica-Bold").text("RECU DE PAIEMENT", CX, y, { width: CW });
+    y += 13;
+    doc.fontSize(7).fillColor(SUB).font("Helvetica").text("Ref : " + f.code + "   " + dateStr, CX, y, { width: CW });
+    y += 14;
+
+    doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("Client", CX, y, { width: CW });
+    y += 10;
+    doc.fontSize(9).fillColor(INK).font("Helvetica-Bold").text(f.client_nom, CX, y, { width: CW });
+    y += 16;
+
+    dashed(y); y += 8;
+
+    doc.fontSize(7).fillColor(SUB).font("Helvetica-Bold");
+    doc.text("ARTICLE", CX,           y, { width: CW - 70 });
+    doc.text("QTE",     CX + CW - 70, y, { width: 20, align: "center" });
+    doc.text("TOTAL",   CX + CW - 50, y, { width: 50, align: "right" });
+    y += 12;
+
+    lignes.forEach((l) => {
+      const lib = l.libelle.length > 18 ? l.libelle.slice(0, 17) + "." : l.libelle;
+      doc.fontSize(7.5).fillColor(INK).font("Helvetica").text(lib, CX, y, { width: CW - 70 });
+      doc.fillColor(SUB).text(String(parseFloat(l.quantite) || 0), CX + CW - 70, y, { width: 20, align: "center" });
+      doc.fillColor(INK).font("Helvetica-Bold").text(money(l.montant_total), CX + CW - 50, y, { width: 50, align: "right" });
+      y += 16;
+    });
+
+    y += 4; dashed(y); y += 8;
+
+    const totLn = (lbl, val, col) => {
+      doc.fontSize(8).fillColor(SUB).font("Helvetica").text(lbl, CX, y, { width: CW });
+      doc.fillColor(col || INK).font("Helvetica-Bold").text(val, CX, y, { width: CW, align: "right" });
+      y += 13;
+    };
+    totLn("Montant encaisse", money(f.montant_paye), "#15803D");
+    if (parseFloat(f.reste) > 0) totLn("Reste a payer", money(f.reste), "#DC2626");
+    y += 4;
+
+    doc.roundedRect(CX, y, CW, 28, 5).lineWidth(1).strokeColor(ACC).stroke();
+    doc.fontSize(9).fillColor(INK).font("Helvetica-Bold").text("TOTAL", CX + 8, y + 9);
+    doc.fontSize(13).fillColor(ACC).font("Helvetica-Bold").text(money(f.montant), CX, y + 7, { width: CW - 8, align: "right" });
+    y += 38;
+
+    const paid = !!f.statut;
+    const sCol = paid ? "#16A34A" : "#DC2626";
+    const sLbl = paid ? "FACTURE REGLEE" : "RESTE A PAYER";
+    doc.fontSize(8).fillColor(sCol).font("Helvetica-Bold").text(sLbl, CX, y, { width: CW, align: "center" });
+    y += 16;
+
+    doc.fontSize(7).fillColor(SUB).font("Helvetica-Oblique")
+       .text(cfg.pied_de_page || "Merci pour votre confiance !", CX, y, { width: CW, align: "center" });
+    y += 11;
+    doc.fontSize(6.5).fillColor(ACC).font("Helvetica-Bold").text("Edite par WariGest", CX, y, { width: CW, align: "center" });
+  },
+};
+
+module.exports = { classic, moderne, bloc, elegant, compact, sidebar };

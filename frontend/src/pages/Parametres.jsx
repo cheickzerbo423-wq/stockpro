@@ -76,6 +76,25 @@ function StyleThumb({ layoutId, pal }) {
           ))}
         </div>
       );
+    case "sidebar":
+      return (
+        <div className="relative w-full h-full bg-white flex">
+          <div className="h-full" style={{ width: "30%", background: ACC }}>
+            <div className="w-3/5 h-1.5 rounded-sm bg-white/85 mx-auto mt-2.5" />
+            <div className="w-2/5 h-1 rounded-sm bg-white/60 mx-auto mt-1.5" />
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="w-3/5 h-1.5 rounded-sm bg-white/70 mx-auto" style={{ marginTop: i === 0 ? "10px" : "6px" }} />
+            ))}
+          </div>
+          <div className="flex-1 p-2 flex flex-col gap-1.5">
+            <div className="w-2/3 h-2 rounded-sm bg-gray-300" />
+            <div className="w-full h-px bg-gray-200 mt-1" style={{ background: ACC, height: 1.5 }} />
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="w-full h-1.5 rounded-sm" style={{ background: i % 2 ? LIGHT : "#F3F4F6" }} />
+            ))}
+          </div>
+        </div>
+      );
     case "classic":
     default:
       return (
@@ -93,7 +112,7 @@ function StyleThumb({ layoutId, pal }) {
   }
 }
 
-// ── Galerie de sélection des 25 styles (5 layouts × 5 palettes) ───────────
+// ── Galerie de sélection des 30 styles (6 layouts × 5 palettes) ───────────
 function StyleGallery({ catalog, palettes, value, onChange, onPreview }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 max-h-[24rem] overflow-y-auto p-1 -m-1">

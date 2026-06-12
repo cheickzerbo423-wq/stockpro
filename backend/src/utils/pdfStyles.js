@@ -2,7 +2,7 @@
 // Catalogue des styles de documents PDF (factures, reçus, rapports financiers).
 //
 // Un "style" = une mise en page (layout) + une palette de couleurs.
-// 5 mises en page distinctes × 5 palettes = 25 combinaisons, chacune avec un
+// 6 mises en page distinctes × 5 palettes = 30 combinaisons, chacune avec un
 // identifiant stable ("layout-palette", ex: "moderne-emeraude") stocké dans
 // entreprise_config.facture_style / recu_style / rapport_style.
 //
@@ -60,12 +60,16 @@ const LAYOUTS = {
     id: "compact", label: "Compact",
     desc: "Mise en page dense et économe, idéale pour imprimer beaucoup d'informations.",
   },
+  sidebar: {
+    id: "sidebar", label: "Latéral",
+    desc: "Bandeau latéral coloré regroupant l'identité et les totaux, zone principale dédiée au détail. Disposition en deux colonnes, radicalement différente des autres.",
+  },
 };
 
-const LAYOUT_ORDER = ["classic", "moderne", "bloc", "elegant", "compact"];
+const LAYOUT_ORDER = ["classic", "moderne", "bloc", "elegant", "compact", "sidebar"];
 const PALETTE_ORDER = ["bleu", "emeraude", "ambre", "violet", "graphite"];
 
-// ─── Catalogue complet (25 styles) ─────────────────────────────────────────
+// ─── Catalogue complet (30 styles) ─────────────────────────────────────────
 const STYLE_CATALOG = [];
 LAYOUT_ORDER.forEach((layoutId) => {
   PALETTE_ORDER.forEach((paletteId) => {

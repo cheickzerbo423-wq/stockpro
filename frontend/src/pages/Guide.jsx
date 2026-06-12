@@ -586,10 +586,10 @@ export default function Guide() {
           Tant qu'aucune information n'est renseignée, WariGest applique des valeurs par défaut neutres — vous pouvez donc personnaliser progressivement, à votre rythme.
         </Tip>
 
-        <SectionTitle>🎨 Styles des documents PDF — catalogue de 25 modèles</SectionTitle>
+        <SectionTitle>🎨 Styles des documents PDF — catalogue de 30 modèles</SectionTitle>
         <p className="text-xs text-gray-500 leading-relaxed">
           En bas de la page Paramètres, la carte <strong>Styles des documents PDF</strong> propose un catalogue de
-          <strong> 25 styles</strong> — 5 mises en page (Classique, Moderne, Bloc, Élégant, Compact) déclinées en
+          <strong> 30 styles</strong> — 6 mises en page (Classique, Moderne, Bloc, Élégant, Compact, Latéral) déclinées en
           5 palettes de couleurs (Bleu, Émeraude, Ambre, Violet, Graphite) — pour habiller vos <strong>factures</strong>,
           vos <strong>reçus</strong> et vos <strong>rapports financiers</strong>.
         </p>
@@ -603,7 +603,7 @@ export default function Guide() {
           Chaque type de document (factures, reçus, rapports) a son <strong>propre style</strong>, indépendant des deux autres — vous pouvez par exemple choisir un style "Élégant Violet" pour les factures et "Compact Graphite" pour les reçus.
         </Tip>
         <Tip icon="🖌️" color="blue">
-          Par défaut, le style <strong>Classique Bleu</strong> est appliqué. Avec 25 combinaisons disponibles, chaque entreprise peut trouver un rendu adapté à son identité visuelle.
+          Par défaut, le style <strong>Classique Bleu</strong> est appliqué. Avec 30 combinaisons disponibles, chaque entreprise peut trouver un rendu adapté à son identité visuelle.
         </Tip>
       </Section>
 

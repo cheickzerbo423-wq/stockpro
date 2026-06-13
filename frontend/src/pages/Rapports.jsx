@@ -5,10 +5,7 @@ import {
   LineChart, Line, CartesianGrid, Legend, PieChart, Pie, Cell,
 } from "recharts";
 import { rapportsService } from "../services";
-import { fmt, fmtN, Spinner, ErrorBox, Btn, PageHeader, Toast, tauxMarge } from "../components/UI";
-
-// ── Utilitaires date ────────────────────────────────────────────────
-const today = () => new Date().toISOString().split("T")[0];
+import { fmt, fmtN, today, Spinner, ErrorBox, Btn, PageHeader, Toast, tauxMarge } from "../components/UI";
 
 function getPeriode(type) {
   const now = new Date();

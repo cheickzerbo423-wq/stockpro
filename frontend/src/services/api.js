@@ -32,6 +32,26 @@ api.interceptors.response.use(
       localStorage.removeItem("warigest_token");
       localStorage.removeItem("warigest_user");
       window.location.href = "/login";
+      return Promise.reject(error);
+    }
+    // Changement de mot de passe imposé : le serveur bloque désormais (403)
+    // toute route (sauf /auth/me et /auth/password) tant que
+    // must_change_password = true, même si ce flag n'était pas encore connu
+    // au moment du login (ex: politique changée en base entre deux requêtes,
+    // ou flag chargé après coup). On met à jour l'utilisateur en local et on
+    // recharge l'app : PrivateRoute affichera alors l'écran de changement de
+    // mot de passe obligatoire (cf. App.jsx).
+    if (error.response?.status === 403 && error.response?.data?.must_change_password && !isLoginRequest) {
+      try {
+        const saved = JSON.parse(localStorage.getItem("warigest_user") || "null");
+        if (saved && !saved.must_change_password) {
+          localStorage.setItem("warigest_user", JSON.stringify({ ...saved, must_change_password: true }));
+          window.location.reload();
+        }
+      } catch {
+        // Si la lecture/écriture échoue, on laisse simplement l'erreur
+        // remonter normalement (pas de blocage de l'app).
+      }
     }
     return Promise.reject(error);
   }

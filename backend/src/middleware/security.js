@@ -41,7 +41,13 @@ const attempts = new Map(); // ip -> { count, resetAt }
 
 function loginRateLimiter(req, res, next) {
   const now = Date.now();
-  const ip  = req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown";
+  // Avec `trust proxy = 1` (server.js), Express dérive req.ip de
+  // X-Forwarded-For de façon fiable (1 seul hop de proxy, celui de Railway).
+  // Ne JAMAIS retomber sur req.headers["x-forwarded-for"] directement : cet
+  // en-tête est entièrement contrôlé par le client et permettrait à un
+  // attaquant de changer de "clé" à chaque tentative pour contourner la
+  // limite (en-tête falsifié, valeur différente à chaque requête).
+  const ip = req.ip || req.socket?.remoteAddress || "unknown";
 
   // Nettoyage opportuniste des entrées expirées pour éviter une fuite mémoire
   // sur un serveur de longue durée (pas de tâche planifiée nécessaire).

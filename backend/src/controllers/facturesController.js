@@ -25,6 +25,11 @@ async function getAll(req, res) {
     }
     if (annee)  { q += ` AND EXTRACT(YEAR FROM f.date_facture) = $${idx++}`; params.push(annee); }
     q += ` GROUP BY f.code, f.entreprise_id ORDER BY f.code ASC`;
+    // Garde-fou : limite haute pour éviter une réponse démesurée lorsque
+    // l'historique des factures grossit avec le temps (le frontend affiche
+    // la liste complète sans pagination ; au-delà de 5000 lignes, filtrer
+    // par mois/année/statut via les paramètres existants).
+    q += ` LIMIT 5000`;
     const result = await db.query(q, params);
     res.json(result.rows);
   } catch (err) {

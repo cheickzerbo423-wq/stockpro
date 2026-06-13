@@ -103,7 +103,10 @@ async function create(req, res) {
 // PUT /api/superadmin/entreprises/:id — renommer une entreprise
 async function update(req, res) {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id);
+    if (isNaN(id))
+      return res.status(400).json({ message: "Identifiant d'entreprise invalide." });
+
     const { nom } = req.body;
     if (!nom || !nom.trim())
       return res.status(400).json({ message: "Le nom de l'entreprise est obligatoire." });
@@ -123,7 +126,10 @@ async function update(req, res) {
 // PUT /api/superadmin/entreprises/:id/abonnement — gérer l'abonnement
 async function updateAbonnement(req, res) {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id);
+    if (isNaN(id))
+      return res.status(400).json({ message: "Identifiant d'entreprise invalide." });
+
     const { abonnement_type, abonnement_debut, abonnement_fin } = req.body;
 
     if (abonnement_type && !TYPES_VALIDES.includes(abonnement_type))
@@ -154,11 +160,14 @@ async function updateAbonnement(req, res) {
 // PUT /api/superadmin/entreprises/:id/statut — activer ou suspendre une entreprise
 async function toggleStatut(req, res) {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id);
+    if (isNaN(id))
+      return res.status(400).json({ message: "Identifiant d'entreprise invalide." });
+
     const { actif } = req.body;
     if (typeof actif !== "boolean")
       return res.status(400).json({ message: "Le champ 'actif' (booléen) est requis." });
-    if (parseInt(id) === 1 && actif === false)
+    if (id === 1 && actif === false)
       return res.status(400).json({ message: "L'entreprise par défaut ne peut pas être suspendue." });
 
     const result = await db.query(
@@ -188,9 +197,12 @@ async function remove(req, res) {
     await client.query("BEGIN");
 
     // 1) Désamorcer les références croisées (FK nullable)
+    // Note : "gammes" / articles.gamme_code appartiennent à une fonctionnalité
+    // non finalisée (gammesController.js n'est pas branché dans routes/index.js,
+    // la table "gammes" et la colonne "gamme_code" n'existent pas en base) —
+    // toute référence à ces objets ferait échouer la transaction de suppression.
     await client.query(`UPDATE factures  SET client_id = NULL      WHERE entreprise_id = $1`, [id]);
     await client.query(`UPDATE achats    SET fournisseur_id = NULL WHERE entreprise_id = $1`, [id]);
-    await client.query(`UPDATE articles  SET gamme_code = NULL     WHERE entreprise_id = $1`, [id]);
     await client.query(`UPDATE audit_log SET user_id = NULL        WHERE entreprise_id = $1`, [id]);
 
     // 2) Supprimer les données métier (ordre : enfants avant parents)
@@ -199,7 +211,6 @@ async function remove(req, res) {
     await client.query(`DELETE FROM achats               WHERE entreprise_id = $1`, [id]);
     await client.query(`DELETE FROM clients_fournisseurs WHERE entreprise_id = $1`, [id]);
     await client.query(`DELETE FROM articles             WHERE entreprise_id = $1`, [id]);
-    await client.query(`DELETE FROM gammes               WHERE entreprise_id = $1`, [id]);
     await client.query(`DELETE FROM audit_log            WHERE entreprise_id = $1`, [id]);
     await client.query(`DELETE FROM entreprise_config    WHERE entreprise_id = $1`, [id]);
 
@@ -214,7 +225,7 @@ async function remove(req, res) {
   } catch (err) {
     await client.query("ROLLBACK");
     console.error("superadmin remove error:", err);
-    res.status(500).json({ message: "Erreur lors de la suppression : " + err.message });
+    res.status(500).json({ message: "Erreur lors de la suppression de l'entreprise." });
   } finally {
     client.release();
   }

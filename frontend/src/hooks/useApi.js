@@ -1,6 +1,6 @@
 // src/hooks/useApi.js
 // Hook générique pour les appels API avec état loading/error/data
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 
 // Hook de base : exécute une fonction async et gère les états
 export function useApi(fetchFn, deps = []) {
@@ -8,20 +8,31 @@ export function useApi(fetchFn, deps = []) {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
 
+  // Réf "vivante" : true tant que le composant est monté ET que ces deps
+  // sont toujours les deps courantes. Évite tout setState après démontage
+  // (avertissement React) ou après un changement de filtre qui aurait
+  // déclenché un appel plus récent (la réponse de l'ancien appel, plus
+  // lente, ne doit pas écraser celle du nouveau).
+  const aliveRef = useRef(true);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const result = await fetchFn();
-      setData(result);
+      if (aliveRef.current) setData(result);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Erreur réseau");
+      if (aliveRef.current) setError(err.response?.data?.message || err.message || "Erreur réseau");
     } finally {
-      setLoading(false);
+      if (aliveRef.current) setLoading(false);
     }
   }, deps); // eslint-disable-line
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    aliveRef.current = true;
+    load();
+    return () => { aliveRef.current = false; };
+  }, [load]);
 
   return { data, loading, error, reload: load, setData };
 }

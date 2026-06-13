@@ -31,9 +31,8 @@ async function getConfig(req, res) {
 // PUT /api/entreprise — réservé aux administrateurs (de leur propre entreprise)
 async function updateConfig(req, res) {
   try {
-    if (req.user.categorie !== "Admin")
-      return res.status(403).json({ message: "Réservé aux administrateurs." });
-
+    // Accès réservé aux admins : appliqué via le middleware adminOnly sur la
+    // route (routes/index.js), comme pour les autres routes admin-only.
     const { nom, adresse, telephone, email, devise, couleur, logo, pied_de_page,
             facture_style, recu_style, rapport_style } = req.body;
 
@@ -43,8 +42,30 @@ async function updateConfig(req, res) {
     if (logo && typeof logo === "string" && logo.length > MAX_LOGO_LEN)
       return res.status(400).json({ message: "Logo trop volumineux (2 Mo maximum)." });
 
-    if (logo && typeof logo === "string" && !/^data:image\/(png|jpe?g|webp);base64,/i.test(logo.trim()))
-      return res.status(400).json({ message: "Format de logo invalide. Utilisez une image PNG, JPEG ou WebP." });
+    if (logo && typeof logo === "string") {
+      const match = logo.trim().match(/^data:image\/(png|jpe?g|webp);base64,(.+)$/is);
+      if (!match)
+        return res.status(400).json({ message: "Format de logo invalide. Utilisez une image PNG, JPEG ou WebP." });
+
+      // Le préfixe MIME déclaré n'est qu'une annonce du client : on vérifie
+      // aussi la "signature" binaire réelle (magic bytes) du contenu décodé,
+      // pour éviter de stocker un blob arbitraire (PDF, script, etc.) sous
+      // couvert d'un en-tête "data:image/...".
+      let bytes;
+      try {
+        bytes = Buffer.from(match[2], "base64");
+      } catch {
+        return res.status(400).json({ message: "Contenu du logo invalide (base64 illisible)." });
+      }
+      if (!bytes.length)
+        return res.status(400).json({ message: "Contenu du logo vide." });
+
+      const isPng  = bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A]));
+      const isJpeg = bytes.length >= 3 && bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF;
+      const isWebp = bytes.length >= 12 && bytes.subarray(0, 4).toString("ascii") === "RIFF" && bytes.subarray(8, 12).toString("ascii") === "WEBP";
+      if (!isPng && !isJpeg && !isWebp)
+        return res.status(400).json({ message: "Le contenu du logo ne correspond pas à une image PNG, JPEG ou WebP valide." });
+    }
 
     // Styles de documents PDF : on ignore silencieusement toute valeur
     // inconnue et on retombe sur le style par défaut (catalogue pdfStyles.js).

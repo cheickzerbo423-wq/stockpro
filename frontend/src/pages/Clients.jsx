@@ -6,14 +6,12 @@ import {
 import { useClients, useMutation, useSortableData } from "../hooks/useApi";
 import { clientsService, achatsService } from "../services";
 import {
-  fmt, fmtN, Spinner, ErrorBox, Modal, Input, Btn,
+  fmt, fmtN, fmtDate, Spinner, ErrorBox, Modal, Input, Btn,
   PageHeader, DataTable, TR, TD, Toast, Badge, SearchBox, ConfirmModal,
+  isFactureReglee,
 } from "../components/UI";
 
 // ── Helpers ──────────────────────────────────────────────────────────
-const fmtDate = (d) =>
-  d ? new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" }) : "—";
-
 const MOIS_COURTS = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
 const moisLabel = (m) => {
   if (!m) return m;
@@ -242,7 +240,9 @@ function FichePanel({ bilan, onClose, onPay }) {
                           <td className="px-3 py-2.5 text-emerald-600 font-semibold">{fmt(t.montant_paye)}</td>
                           <td className="px-3 py-2.5 text-red-600 font-semibold">{parseFloat(t.reste) > 0 ? fmt(t.reste) : <span className="text-gray-300">—</span>}</td>
                           <td className="px-3 py-2.5">
-                            <Badge color={t.statut ? "emerald" : "orange"}>{t.statut ? "Réglée" : "En cours"}</Badge>
+                            {isFactureReglee(t.statut, t.reste)
+                              ? <Badge color="emerald">Réglée</Badge>
+                              : <Badge color="orange">En cours</Badge>}
                           </td>
                         </tr>
                       ))
@@ -258,10 +258,12 @@ function FichePanel({ bilan, onClose, onPay }) {
                             {parseFloat(t.reste) > 0 ? fmt(t.reste) : <span className="text-gray-300">—</span>}
                           </td>
                           <td className="px-3 py-2.5">
-                            <Badge color={t.statut ? "emerald" : "orange"}>{t.statut ? "Payé" : "Crédit"}</Badge>
+                            {isFactureReglee(t.statut, t.reste)
+                              ? <Badge color="emerald">Payé</Badge>
+                              : <Badge color="orange">Crédit</Badge>}
                           </td>
                           <td className="px-3 py-2.5">
-                            {!t.statut && (
+                            {!isFactureReglee(t.statut, t.reste) && (
                               <button
                                 onClick={() => onPay(t)}
                                 className="text-xs text-white px-2 py-1 rounded-lg font-bold transition-colors whitespace-nowrap"

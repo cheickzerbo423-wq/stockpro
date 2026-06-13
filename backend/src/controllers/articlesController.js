@@ -21,6 +21,11 @@ async function getAll(req, res) {
       params.push(`%${search}%`);
     }
     query += ` ORDER BY libelle`;
+    // Garde-fou : limite haute pour éviter une réponse démesurée si le
+    // catalogue d'articles devient très volumineux (le frontend affiche
+    // la liste complète sans pagination ; 2000 articles couvre largement
+    // les besoins d'une PME et reste léger à transférer/afficher).
+    query += ` LIMIT 2000`;
     const result = await db.query(query, params);
     res.json(result.rows);
   } catch (err) {
@@ -100,6 +105,14 @@ async function create(req, res) {
     res.status(201).json(stockMaj.rows[0] || article);
   } catch (err) {
     await client.query("ROLLBACK");
+    // 23505 = violation de contrainte unique (PK composite code+entreprise_id).
+    // Le contrôle d'existence ci-dessus n'est qu'une vérification "optimiste" :
+    // deux créations concurrentes avec le même code peuvent passer ce contrôle
+    // simultanément (génération de code suggérée identique pour les deux). La
+    // contrainte d'unicité en base est le filet de sécurité final — on la
+    // traduit ici en 409 explicite plutôt qu'en erreur 500 générique.
+    if (err.code === "23505")
+      return res.status(409).json({ message: `Le code article "${req.body.code}" existe déjà.` });
     console.error(err);
     res.status(500).json({ message: "Erreur lors de la création de l'article." });
   } finally {

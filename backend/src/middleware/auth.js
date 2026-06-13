@@ -22,11 +22,17 @@ async function authenticate(req, res, next) {
     // — ces valeurs ne doivent PAS rester figées telles qu'au moment du login,
     // sinon un retrait de permission ou une rétrogradation par un Admin ne
     // prendrait effet qu'à l'expiration du token (jusqu'à 8h).
+    // LEFT JOIN entreprises : une seule requête au lieu de deux séquentielles
+    // pour récupérer en même temps le statut actif de l'entreprise (NULL si
+    // entreprise_id est NULL, càd compte SuperAdmin plateforme).
     const check = await db.query(
-      `SELECT id, entreprise_id, categorie,
-              perm_vente, perm_appro, perm_articles, perm_facturation, perm_clients,
-              must_change_password
-       FROM utilisateurs WHERE id = $1 AND actif = TRUE`,
+      `SELECT u.id, u.entreprise_id, u.categorie,
+              u.perm_vente, u.perm_appro, u.perm_articles, u.perm_facturation, u.perm_clients,
+              u.must_change_password,
+              e.actif AS entreprise_actif
+       FROM utilisateurs u
+       LEFT JOIN entreprises e ON e.id = u.entreprise_id
+       WHERE u.id = $1 AND u.actif = TRUE`,
       [decoded.id]
     );
     if (check.rows.length === 0) {
@@ -39,12 +45,8 @@ async function authenticate(req, res, next) {
     // monde sauf le SuperAdmin, dont entreprise_id = NULL), on vérifie que
     // cette entreprise est toujours active. Une entreprise suspendue par le
     // SuperAdmin coupe immédiatement l'accès de tous ses utilisateurs.
-    const entrepriseId = row.entreprise_id;
-    if (entrepriseId !== null && entrepriseId !== undefined) {
-      const ent = await db.query("SELECT actif FROM entreprises WHERE id = $1", [entrepriseId]);
-      if (ent.rows.length === 0 || ent.rows[0].actif === false) {
-        return res.status(403).json({ message: "Votre espace entreprise est suspendu. Contactez l'administrateur de la plateforme." });
-      }
+    if (row.entreprise_id !== null && row.entreprise_id !== undefined && row.entreprise_actif === false) {
+      return res.status(403).json({ message: "Votre espace entreprise est suspendu. Contactez l'administrateur de la plateforme." });
     }
 
     // Fusionne le payload du token (id, login...) avec les valeurs à jour

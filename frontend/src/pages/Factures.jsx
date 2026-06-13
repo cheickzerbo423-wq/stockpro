@@ -328,7 +328,7 @@ export default function Factures() {
 
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mt-5 pt-4 border-t border-gray-100">
             <div className="flex gap-2">
-              {!selected.statut && (
+              {!isReglée(selected) && (
                 <Btn color="orange" onClick={() => { setPayModal(selected); setPayAmount(String(selected.reste)); setSelected(null); setDetail(null); }}>
                   Enregistrer paiement
                 </Btn>

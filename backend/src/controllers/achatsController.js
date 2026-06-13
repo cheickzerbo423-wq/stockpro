@@ -25,6 +25,11 @@ async function getAll(req, res) {
     if (mois)        { q += ` AND mois = $${idx++}`;                params.push(mois); }
     if (annee)       { q += ` AND annee = $${idx++}`;               params.push(annee); }
     q += ` ORDER BY date_achat ASC, id ASC`;
+    // Garde-fou : limite haute pour éviter une réponse démesurée lorsque
+    // l'historique des achats grossit avec le temps (le frontend affiche
+    // la liste complète sans pagination ; au-delà de 5000 lignes, filtrer
+    // par mois/année via les paramètres existants).
+    q += ` LIMIT 5000`;
     const result = await db.query(q, params);
     res.json(result.rows);
   } catch (err) {
@@ -117,11 +122,33 @@ async function create(req, res) {
 }
 
 // DELETE /api/achats/:id
+// Garde-fou stock : un approvisionnement déjà (en partie) vendu ne doit pas
+// pouvoir être supprimé si cela ferait passer le stock restant de l'article
+// en négatif (incohérence avec les ventes déjà enregistrées).
 async function remove(req, res) {
   try {
+    const entId = req.user.entreprise_id;
+    const achat = await db.query(
+      `SELECT article_code, quantite FROM achats WHERE id = $1 AND entreprise_id = $2`,
+      [req.params.id, entId]
+    );
+    if (!achat.rows[0]) return res.status(404).json({ message: "Achat introuvable." });
+    const { article_code, quantite } = achat.rows[0];
+
+    const stock = await db.query(
+      `SELECT stock_restant FROM vue_stock WHERE code = $1 AND entreprise_id = $2`,
+      [article_code, entId]
+    );
+    const stockRestant = stock.rows[0]?.stock_restant ?? 0;
+    if (stockRestant - quantite < 0) {
+      return res.status(409).json({
+        message: `Impossible de supprimer cet approvisionnement : le stock de l'article "${article_code}" deviendrait négatif (une partie de cette quantité a déjà été vendue).`,
+      });
+    }
+
     const result = await db.query(
       `DELETE FROM achats WHERE id = $1 AND entreprise_id = $2 RETURNING id`,
-      [req.params.id, req.user.entreprise_id]
+      [req.params.id, entId]
     );
     if (!result.rows[0])
       return res.status(404).json({ message: "Achat introuvable." });
@@ -133,6 +160,7 @@ async function remove(req, res) {
 
 // PUT /api/achats/:id/paiement
 async function updatePaiement(req, res) {
+  const client = await db.connect();
   try {
     const { id } = req.params;
     const { montant_paye } = req.body;
@@ -140,16 +168,31 @@ async function updatePaiement(req, res) {
     if (montant_paye === undefined || isNaN(parseFloat(montant_paye)))
       return res.status(400).json({ message: "Montant payé invalide." });
 
-    const achat = await db.query(
-      `SELECT prix_achat * quantite AS montant_total, montant_paye FROM achats WHERE id = $1 AND entreprise_id = $2`, [id, entId]
-    );
-    if (!achat.rows[0]) return res.status(404).json({ message: "Achat introuvable." });
-    if (parseFloat(montant_paye) > parseFloat(achat.rows[0].montant_total))
-      return res.status(400).json({ message: "Le montant payé dépasse le montant total." });
-    if (parseFloat(montant_paye) < parseFloat(achat.rows[0].montant_paye))
-      return res.status(400).json({ message: "Le montant payé ne peut pas diminuer." });
+    await client.query("BEGIN");
 
-    const result = await db.query(
+    // SELECT ... FOR UPDATE : verrouille la ligne pour la durée de la
+    // transaction, afin de sérialiser deux mises à jour de paiement
+    // concurrentes sur le même achat (évite une lecture-puis-écriture
+    // basée sur une valeur "montant_paye" déjà obsolète).
+    const achat = await client.query(
+      `SELECT prix_achat * quantite AS montant_total, montant_paye
+       FROM achats WHERE id = $1 AND entreprise_id = $2 FOR UPDATE`,
+      [id, entId]
+    );
+    if (!achat.rows[0]) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ message: "Achat introuvable." });
+    }
+    if (parseFloat(montant_paye) > parseFloat(achat.rows[0].montant_total)) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ message: "Le montant payé dépasse le montant total." });
+    }
+    if (parseFloat(montant_paye) < parseFloat(achat.rows[0].montant_paye)) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ message: "Le montant payé ne peut pas diminuer." });
+    }
+
+    const result = await client.query(
       `UPDATE achats SET montant_paye = $1 WHERE id = $2 AND entreprise_id = $3
        RETURNING id, article_code, libelle, fournisseur_id, fournisseur_nom,
                  prix_achat, quantite, date_achat, user_id, mois, annee, montant_paye,
@@ -158,11 +201,15 @@ async function updatePaiement(req, res) {
                  (montant_paye >= prix_achat * quantite) AS statut`,
       [parseFloat(montant_paye), id, entId]
     );
+    await client.query("COMMIT");
     if (!result.rows[0]) return res.status(404).json({ message: "Achat introuvable." });
     res.json(result.rows[0]);
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error(err);
     res.status(500).json({ message: "Erreur lors de la mise à jour du paiement." });
+  } finally {
+    client.release();
   }
 }
 

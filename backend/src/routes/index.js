@@ -86,7 +86,7 @@ router.post("/admin/reset", authenticate, adminOnly, usersCtrl.resetData);
 // vérifié dans le contrôleur comme pour /utilisateurs)
 // ============================================================
 router.get("/entreprise", authenticate, entrepriseCtrl.getConfig);
-router.put("/entreprise", authenticate, audit("MODIFICATION", "entreprise_config"), entrepriseCtrl.updateConfig);
+router.put("/entreprise", authenticate, adminOnly, audit("MODIFICATION", "entreprise_config"), entrepriseCtrl.updateConfig);
 router.get("/entreprise/pdf-styles", authenticate, entrepriseCtrl.getPdfStyles);
 router.get("/entreprise/pdf-preview", authenticate, previewCtrl.previewPdf);
 

@@ -827,7 +827,7 @@ export default function Ventes() {
 
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mt-5 pt-4 border-t border-gray-100">
             <div className="flex gap-2">
-              {!factureDetail.statut && (
+              {!isFactureReglee(factureDetail.statut, factureDetail.reste) && (
                 <Btn color="orange" onClick={() => {
                   setPayModal({ facture_code: factureDetail.code, montant_paye: factureDetail.montant_paye, reste: factureDetail.reste });
                   setPayAmount(String(factureDetail.reste));

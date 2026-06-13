@@ -504,8 +504,8 @@ function Layout({ children }) {
 }
 
 // ── Route privée ──────────────────────────────────────────
-function PrivateRoute({ children, adminOnly = false, superAdminOnly = false }) {
-  const { user, loading } = useAuth();
+function PrivateRoute({ children, adminOnly = false, superAdminOnly = false, module = null }) {
+  const { user, loading, canAccess } = useAuth();
   if (loading) return (
     <div className="flex items-center justify-center h-screen" style={{ background: "#F4F6F9" }}>
       <div className="flex flex-col items-center gap-4">
@@ -529,6 +529,10 @@ function PrivateRoute({ children, adminOnly = false, superAdminOnly = false }) {
   }
   if (superAdminOnly) return <Navigate to="/" replace />;
   if (adminOnly && user.categorie !== "Admin") return <Navigate to="/" replace />;
+  // Protection par permission de module : un Vendeur sans la permission
+  // correspondante (ex. perm_articles = false) ne doit pas pouvoir accéder à
+  // la page directement via son URL, même si elle est masquée dans le menu.
+  if (module && !canAccess(module)) return <Navigate to="/" replace />;
   return children;
 }
 
@@ -540,11 +544,11 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/"            element={<PrivateRoute><Layout><Dashboard    /></Layout></PrivateRoute>} />
-          <Route path="/articles"    element={<PrivateRoute><Layout><Articles     /></Layout></PrivateRoute>} />
-          <Route path="/ventes"      element={<PrivateRoute><Layout><Ventes       /></Layout></PrivateRoute>} />
-          <Route path="/achats"      element={<PrivateRoute><Layout><Achats       /></Layout></PrivateRoute>} />
-          <Route path="/clients"     element={<PrivateRoute><Layout><Clients      /></Layout></PrivateRoute>} />
-          <Route path="/factures"    element={<PrivateRoute><Layout><Factures     /></Layout></PrivateRoute>} />
+          <Route path="/articles"    element={<PrivateRoute module="articles"><Layout><Articles     /></Layout></PrivateRoute>} />
+          <Route path="/ventes"      element={<PrivateRoute module="vente"><Layout><Ventes       /></Layout></PrivateRoute>} />
+          <Route path="/achats"      element={<PrivateRoute module="appro"><Layout><Achats       /></Layout></PrivateRoute>} />
+          <Route path="/clients"     element={<PrivateRoute module="clients"><Layout><Clients      /></Layout></PrivateRoute>} />
+          <Route path="/factures"    element={<PrivateRoute module="facturation"><Layout><Factures     /></Layout></PrivateRoute>} />
           <Route path="/rapports"    element={<PrivateRoute><Layout><Rapports     /></Layout></PrivateRoute>} />
           <Route path="/guide"       element={<PrivateRoute><Layout><Guide        /></Layout></PrivateRoute>} />
           <Route path="/utilisateurs" element={<PrivateRoute adminOnly><Layout><Utilisateurs /></Layout></PrivateRoute>} />

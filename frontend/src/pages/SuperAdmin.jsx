@@ -5,13 +5,11 @@
 import { useState } from "react";
 import { useSuperadminEntreprises, useMutation } from "../hooks/useApi";
 import { superadminService, authService } from "../services";
-import { Spinner, ErrorBox, Badge, Modal, Input, Btn, Toast, ConfirmModal, PasswordRules } from "../components/UI";
+import { Spinner, ErrorBox, Badge, Modal, Input, Btn, Toast, ConfirmModal, PasswordRules, today, fmtDate } from "../components/UI";
 import { isPasswordValid, PASSWORD_HINT } from "../utils/passwordPolicy";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const fmtNombre = (n) => new Intl.NumberFormat("fr-FR").format(Math.round(Number(n) || 0));
-const fmtDate = (d) =>
-  d ? new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 const fmtDateHeure = (d) =>
   d ? new Date(d).toLocaleString("fr-FR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
     : "Jamais";
@@ -443,7 +441,6 @@ function CreateModal({ form, setForm, onClose, onSubmit, loading }) {
     d.setDate(d.getDate() + n);
     return d.toISOString().split("T")[0];
   };
-  const today = () => new Date().toISOString().split("T")[0];
 
   // Quand on choisit un type, préremplit automatiquement les dates
   const setType = (t) => {
@@ -570,8 +567,7 @@ function AbonnementModal({ ent, onClose, mutate, notify, reload }) {
     return d.toISOString().split("T")[0];
   };
   const setPreset = (days) => {
-    const today = new Date().toISOString().split("T")[0];
-    setDebut(today);
+    setDebut(today());
     setFin(addDays(days));
   };
 

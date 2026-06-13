@@ -20,6 +20,17 @@ const fmtDate = (d) =>
    On choisit donc la granularité selon l'étendue de la période, puis on
    génère la série complète (avec des 0 pour les périodes sans donnée)
    afin d'obtenir une vraie courbe d'évolution lisible et performante. */
+// Une période où "debut" est postérieur à "fin" produit silencieusement une
+// série vide (BETWEEN $1 AND $2 ne matche rien) — l'utilisateur voit alors un
+// rapport "à zéro" sans comprendre pourquoi. On le détecte explicitement.
+function periodeInvalide(debut, fin) {
+  const d = new Date(debut);
+  const f = new Date(fin);
+  if (isNaN(d.getTime()) || isNaN(f.getTime())) return "Dates invalides.";
+  if (d > f) return "La date de début doit être antérieure ou égale à la date de fin.";
+  return null;
+}
+
 function graphGranularite(debut, fin) {
   const days = Math.round((new Date(fin) - new Date(debut)) / 86400000);
   if (days <= 31)   return "jour";
@@ -64,6 +75,10 @@ async function getRapport(req, res) {
     const debut = req.query.debut || `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-01`;
     const fin   = req.query.fin   || now.toISOString().split("T")[0];
     const entId = req.user.entreprise_id;
+
+    const erreurPeriode = periodeInvalide(debut, fin);
+    if (erreurPeriode) return res.status(400).json({ message: erreurPeriode });
+
     const granularite = graphGranularite(debut, fin);
 
     const [ventes, achats, factures, graphVentes, graphAchats, topArticles, cogsRow, creancesClients] = await Promise.all([
@@ -193,6 +208,10 @@ async function exportPDF(req, res) {
     const { debut, fin } = req.query;
     if (!debut || !fin)
       return res.status(400).json({ message: "Paramètres debut et fin requis." });
+
+    const erreurPeriode = periodeInvalide(debut, fin);
+    if (erreurPeriode) return res.status(400).json({ message: erreurPeriode });
+
     const entId = req.user.entreprise_id;
 
     // Réutiliser la même logique de données

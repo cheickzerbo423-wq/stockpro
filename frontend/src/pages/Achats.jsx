@@ -252,15 +252,28 @@ export default function Achats() {
     if (paye > totalCommande)
       return notify("Le montant payé ne peut pas dépasser le total.", "error");
 
-    // Répartir le paiement proportionnellement sur chaque ligne
+    // Répartir le paiement proportionnellement sur chaque ligne.
+    // Arrondir chaque ligne indépendamment peut créer un écart cumulatif
+    // (ex: 3 lignes à 33,33 → 33+33+33 = 99 au lieu de 100) : on arrondit
+    // normalement toutes les lignes sauf la dernière, qui reçoit le
+    // reliquat exact (paye - somme des lignes précédentes), garantissant
+    // que la somme des montant_paye == paye saisi.
     const results = [];
     let errors = [];
+    let payeRestant = paye;
     for (let i = 0; i < valides.length; i++) {
       const l = valides[i];
       const ligneMontant = (+l.prix_achat) * (+l.quantite);
-      const lignePaye = totalCommande > 0
-        ? Math.round((ligneMontant / totalCommande) * paye)
-        : ligneMontant;
+      let lignePaye;
+      if (totalCommande <= 0) {
+        lignePaye = ligneMontant;
+      } else if (i === valides.length - 1) {
+        // Dernière ligne : reliquat, borné entre 0 et son propre montant.
+        lignePaye = Math.max(0, Math.min(payeRestant, ligneMontant));
+      } else {
+        lignePaye = Math.round((ligneMontant / totalCommande) * paye);
+        payeRestant -= lignePaye;
+      }
       try {
         const res = await createAchat({
           article_code: l.article_code,

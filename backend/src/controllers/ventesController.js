@@ -4,8 +4,19 @@ const db = require("../config/db");
 
 // Génère un numéro de facture séquentiel PAR ENTREPRISE : FACT-2026-0001
 // Unicité garantie par entreprise grâce à la PK composite (code, entreprise_id).
+//
+// Atomicité : deux ventes concurrentes pourraient lire le même COUNT(*) et
+// générer le même code (doublon). On acquiert d'abord un verrou consultatif
+// Postgres (pg_advisory_xact_lock), propre à la combinaison entreprise+année,
+// qui sérialise la génération du numéro pour tous les appels concurrents —
+// le verrou est automatiquement libéré à la fin de la transaction (COMMIT
+// ou ROLLBACK), donc aucun nettoyage manuel n'est nécessaire.
 async function genFactureCode(dbClient, date, entId) {
   const annee = new Date(date).getFullYear();
+  await dbClient.query(
+    `SELECT pg_advisory_xact_lock(hashtext('facture_code_' || $1::text || '_' || $2::text))`,
+    [entId === null || entId === undefined ? "null" : entId, annee]
+  );
   const result = await dbClient.query(
     `SELECT COUNT(*) AS nb FROM factures WHERE EXTRACT(YEAR FROM date_facture) = $1 AND entreprise_id = $2`,
     [annee, entId]
@@ -55,23 +66,57 @@ async function create(req, res) {
     if (!client_nom)
       return res.status(400).json({ message: "Client obligatoire." });
 
+    // Validation des articles : code, prix_vente et quantite doivent être
+    // des nombres valides et strictement positifs avant tout calcul/insertion
+    // (un panier corrompu côté client ne doit jamais produire une facture à
+    // 0 FCFA ou avec NaN en base).
+    for (const item of articles) {
+      if (!item.code)
+        return res.status(400).json({ message: "Article invalide : code manquant." });
+      const prix = parseFloat(item.prix_vente);
+      if (isNaN(prix) || prix <= 0)
+        return res.status(400).json({ message: `Prix de vente invalide pour "${item.code}".` });
+      const qte = parseInt(item.quantite);
+      if (isNaN(qte) || qte <= 0)
+        return res.status(400).json({ message: `Quantité invalide pour "${item.code}".` });
+      item.prix_vente = prix;
+      item.quantite = qte;
+    }
+
+    // Validation du montant payé (s'il est fourni)
+    let payeInput = null;
+    if (montant_paye !== undefined && montant_paye !== null && montant_paye !== "") {
+      payeInput = parseFloat(montant_paye);
+      if (isNaN(payeInput) || payeInput < 0)
+        return res.status(400).json({ message: "Montant payé invalide." });
+    }
+
     await client.query("BEGIN");
 
     // Vérification des stocks avant toute transaction (cloisonné par entreprise)
+    // — on verrouille la ligne "articles" de chaque produit (FOR UPDATE) pour
+    // empêcher deux ventes concurrentes de lire le même stock_restant et de
+    // toutes deux le considérer suffisant (survente). La transaction
+    // concurrente reste bloquée sur ce verrou jusqu'au COMMIT/ROLLBACK courant.
     for (const item of articles) {
+      const lock = await client.query(
+        `SELECT id FROM articles WHERE code = $1 AND entreprise_id = $2 FOR UPDATE`,
+        [item.code, entId]
+      );
+      if (!lock.rows[0])
+        throw new Error(`Article "${item.code}" introuvable.`);
+
       const stock = await client.query(
         `SELECT stock_restant FROM vue_stock WHERE code = $1 AND entreprise_id = $2`,
         [item.code, entId]
       );
-      if (!stock.rows[0])
-        throw new Error(`Article "${item.code}" introuvable.`);
       if (stock.rows[0].stock_restant < item.quantite)
         throw new Error(`Stock insuffisant pour "${item.code}" : disponible ${stock.rows[0].stock_restant}, demandé ${item.quantite}.`);
     }
 
     // Calcul du total
     const total   = articles.reduce((s, a) => s + a.prix_vente * a.quantite, 0);
-    const paye    = (montant_paye !== undefined && montant_paye !== null) ? parseFloat(montant_paye) : total;
+    const paye    = payeInput !== null ? payeInput : total;
     const monnaie = Math.max(0, paye - total);
     const date    = date_vente || new Date().toISOString().split("T")[0];
     const factCode = await genFactureCode(client, date, entId);

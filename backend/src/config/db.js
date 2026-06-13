@@ -401,29 +401,40 @@ pool.connect((err, client, release) => {
         .catch((e) => console.error("⚠️  Migration PKs composites ignorée :", e.message))
         .then(() => {
           // Compte SuperAdmin de plateforme (entreprise_id = NULL — détaché de
-          // toute entreprise, voit/gère tout). Identifiants fixes connus du
-          // seul propriétaire de la plateforme (Thierry) : remis à cette
-          // valeur à chaque démarrage du serveur, qu'il existe déjà ou non —
-          // ainsi l'accès est toujours garanti même si le mot de passe a été
-          // perdu. Recommandé : le changer depuis Réglages → Utilisateurs
-          // une fois une interface dédiée disponible, ou redéployer avec un
-          // nouveau mot de passe ici si besoin.
+          // toute entreprise, voit/gère tout).
+          //
+          // Créé UNE SEULE FOIS (ON CONFLICT DO NOTHING) : si le compte existe
+          // déjà, on ne touche plus à son mot de passe — sinon tout changement
+          // de mot de passe effectué depuis l'interface serait silencieusement
+          // annulé au prochain redémarrage du serveur.
+          //
+          // Le mot de passe initial peut être fourni via la variable d'env
+          // SUPERADMIN_INITIAL_PASSWORD (recommandé en production). À défaut,
+          // une valeur par défaut est utilisée — à changer IMMÉDIATEMENT depuis
+          // Réglages → Utilisateurs après la première connexion.
           const bcrypt = require("bcryptjs");
           const SUPERADMIN_LOGIN = "superadmin";
-          const SUPERADMIN_MDP   = "Warigest@Super2026";
+          const SUPERADMIN_MDP   = process.env.SUPERADMIN_INITIAL_PASSWORD || "Warigest@Super2026";
           return bcrypt.hash(SUPERADMIN_MDP, 10).then((hash) =>
             client.query(
               `INSERT INTO utilisateurs (login, mdp_hash, categorie, entreprise_id, actif,
                  perm_vente, perm_appro, perm_articles, perm_facturation, perm_clients)
                VALUES ($1, $2, 'SuperAdmin', NULL, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE)
-               ON CONFLICT (login) DO UPDATE SET mdp_hash = EXCLUDED.mdp_hash,
-                 categorie = 'SuperAdmin', entreprise_id = NULL, actif = TRUE`,
+               ON CONFLICT (login) DO NOTHING
+               RETURNING id`,
               [SUPERADMIN_LOGIN, hash]
-            ).then(() => {
-              console.log("════════════════════════════════════════════════════════════");
-              console.log(`🔑 Compte SUPERADMIN prêt — login : ${SUPERADMIN_LOGIN}`);
-              console.log(`🔑 Mot de passe : ${SUPERADMIN_MDP}`);
-              console.log("════════════════════════════════════════════════════════════");
+            ).then((result) => {
+              if (result.rowCount > 0) {
+                console.log("════════════════════════════════════════════════════════════");
+                console.log(`🔑 Compte SUPERADMIN créé — login : ${SUPERADMIN_LOGIN}`);
+                if (!process.env.SUPERADMIN_INITIAL_PASSWORD) {
+                  console.log(`🔑 Mot de passe par défaut : ${SUPERADMIN_MDP}`);
+                  console.log("⚠️  Changez ce mot de passe immédiatement après la première connexion.");
+                } else {
+                  console.log("🔑 Mot de passe initial défini via SUPERADMIN_INITIAL_PASSWORD.");
+                }
+                console.log("════════════════════════════════════════════════════════════");
+              }
             })
           );
         })
@@ -595,6 +606,35 @@ pool.connect((err, client, release) => {
         )
         .then(() => console.log("✅ Colonne 'adresse' rendue obligatoire sur clients_fournisseurs."))
         .catch((e) => console.error("⚠️  Migration adresse NOT NULL ignorée :", e.message))
+        // ── Migration : index manquants (cloisonnement entreprise, dates, FKs) ──
+        // Sans ces index, chaque requête filtrée par entreprise_id (présente sur
+        // quasi toutes les requêtes de l'application multi-tenant) ou par plage
+        // de dates (rapports, historiques) fait un scan séquentiel complet —
+        // négligeable avec peu de données, mais coûteux dès que les tables
+        // grossissent. CREATE INDEX IF NOT EXISTS : idempotent, sûr à rejouer.
+        .then(() =>
+          client.query(`
+            CREATE INDEX IF NOT EXISTS idx_utilisateurs_entreprise        ON utilisateurs(entreprise_id);
+            CREATE INDEX IF NOT EXISTS idx_clients_fournisseurs_entreprise ON clients_fournisseurs(entreprise_id);
+
+            CREATE INDEX IF NOT EXISTS idx_factures_entreprise_date  ON factures(entreprise_id, date_facture);
+            CREATE INDEX IF NOT EXISTS idx_factures_client           ON factures(client_id);
+
+            CREATE INDEX IF NOT EXISTS idx_lignes_vente_entreprise_date ON lignes_vente(entreprise_id, date_vente);
+            CREATE INDEX IF NOT EXISTS idx_lignes_vente_article         ON lignes_vente(article_code, entreprise_id);
+            CREATE INDEX IF NOT EXISTS idx_lignes_vente_facture         ON lignes_vente(facture_code, entreprise_id);
+
+            CREATE INDEX IF NOT EXISTS idx_achats_entreprise_date ON achats(entreprise_id, date_achat);
+            CREATE INDEX IF NOT EXISTS idx_achats_article         ON achats(article_code, entreprise_id);
+            CREATE INDEX IF NOT EXISTS idx_achats_fournisseur     ON achats(fournisseur_id);
+
+            CREATE INDEX IF NOT EXISTS idx_audit_log_entreprise ON audit_log(entreprise_id);
+            CREATE INDEX IF NOT EXISTS idx_audit_log_created    ON audit_log(created_at);
+            CREATE INDEX IF NOT EXISTS idx_audit_log_user       ON audit_log(user_id);
+          `)
+        )
+        .then(() => console.log("✅ Index DB vérifiés (entreprise_id, dates, article_code, FKs)."))
+        .catch((e) => console.error("⚠️  Migration index ignorée :", e.message))
         .finally(() => release());
     });
 });

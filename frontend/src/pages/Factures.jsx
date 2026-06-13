@@ -6,6 +6,7 @@ import { facturesService } from "../services";
 import {
   fmt, fmtDate, Spinner, ErrorBox, Badge, Modal, Input,
   Btn, PageHeader, DataTable, TR, TD, Toast, SearchBox,
+  isFactureReglee,
 } from "../components/UI";
 
 export default function Factures() {
@@ -80,7 +81,7 @@ export default function Factures() {
   // KPIs
   const totalCA    = factures.reduce((s, f) => s + parseFloat(f.montant || 0), 0);
   // Source de vérité : reste = 0 → réglée (même si statut DB pas encore mis à jour)
-  const isReglée = (f) => f.statut || parseFloat(f.reste || 0) <= 0;
+  const isReglée = (f) => isFactureReglee(f.statut, f.reste);
 
   const totalReste = factures.reduce((s, f) => s + parseFloat(f.reste || 0), 0);
   const nbReglees  = factures.filter(isReglée).length;

@@ -79,7 +79,9 @@ async function create(req, res) {
       const date  = new Date().toISOString().split("T")[0];
       const mois  = MOIS[new Date(date).getMonth()];
       const annee = new Date(date).getFullYear();
-      const prixUnitaire = parseInt(prix_achat) || 0;
+      // prix_achat est un NUMERIC en base (peut comporter des décimales) :
+      // utiliser parseFloat, pas parseInt, sous peine de tronquer (ex: 1499.99 → 1499).
+      const prixUnitaire = parseFloat(prix_achat) || 0;
       const montantTotal = prixUnitaire * qteInitiale;
 
       await client.query(

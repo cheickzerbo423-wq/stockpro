@@ -20,6 +20,22 @@ export const fmtDate = (d) => {
   return `${day}/${m}/${y}`;
 };
 
+// ── Logique métier partagée ──────────────────────────────────
+// Une facture est considérée "réglée" si sa colonne "statut" (booléenne,
+// générée en base depuis montant_paye >= montant) est vraie, OU si son
+// "reste" est déjà <= 0 (source de vérité de secours : utile pour des
+// factures dont le "statut" stocké n'a pas encore été recalculé).
+// `statut` peut arriver soit comme booléen (true), soit comme chaîne
+// "true" (cas de `facture_statut` après une jointure SQL).
+export const isFactureReglee = (statut, reste) =>
+  statut === true || statut === "true" || parseFloat(reste || 0) <= 0;
+
+// Taux de marge brute (%), arrondi : (bénéfice / chiffre d'affaires) × 100.
+// Retourne 0 si le CA est nul ou négatif (évite une division par zéro et un
+// pourcentage absurde quand il n'y a aucune vente sur la période).
+export const tauxMarge = (benefice, caTotal) =>
+  caTotal > 0 ? Math.round((parseFloat(benefice) || 0) / parseFloat(caTotal) * 100) : 0;
+
 // ── Spinner ───────────────────────────────────────────────
 export function Spinner({ sm, label }) {
   if (sm) {

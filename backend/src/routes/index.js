@@ -2,7 +2,8 @@
 const express = require("express");
 const router  = express.Router();
 
-const { authenticate, authorize, superAdminOnly } = require("../middleware/auth");
+const { authenticate, authorize, superAdminOnly, adminOnly } = require("../middleware/auth");
+const { loginRateLimiter } = require("../middleware/security");
 const audit = require("../middleware/audit");
 
 const authCtrl     = require("../controllers/authController");
@@ -20,7 +21,7 @@ const superadminCtrl = require("../controllers/superadminController");
 // ============================================================
 // AUTH — Public
 // ============================================================
-router.post("/auth/login",    authCtrl.login);
+router.post("/auth/login",    loginRateLimiter, authCtrl.login);
 router.get ("/auth/me",       authenticate, authCtrl.me);
 router.put ("/auth/password", authenticate, authCtrl.changePassword);
 
@@ -72,12 +73,12 @@ router.get(/^\/factures\/(.+)$/,           authenticate, authorize("facturation"
 // ============================================================
 // UTILISATEURS — Admin uniquement
 // ============================================================
-router.get   ("/utilisateurs",     authenticate, usersCtrl.getAll);
-router.post  ("/utilisateurs",     authenticate, audit("CREATION_USER", "utilisateurs"), usersCtrl.create);
-router.put   ("/utilisateurs/:id", authenticate, audit("MODIF_USER",    "utilisateurs"), usersCtrl.update);
-router.delete("/utilisateurs/:id", authenticate, audit("SUPPRESSION_USER", "utilisateurs"), usersCtrl.remove);
+router.get   ("/utilisateurs",     authenticate, adminOnly, usersCtrl.getAll);
+router.post  ("/utilisateurs",     authenticate, adminOnly, audit("CREATION_USER", "utilisateurs"), usersCtrl.create);
+router.put   ("/utilisateurs/:id", authenticate, adminOnly, audit("MODIF_USER",    "utilisateurs"), usersCtrl.update);
+router.delete("/utilisateurs/:id", authenticate, adminOnly, audit("SUPPRESSION_USER", "utilisateurs"), usersCtrl.remove);
 
-router.post("/admin/reset", authenticate, usersCtrl.resetData);
+router.post("/admin/reset", authenticate, adminOnly, usersCtrl.resetData);
 
 // ============================================================
 // ENTREPRISE — Personnalisation factures/reçus/rapports PDF

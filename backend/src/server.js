@@ -15,9 +15,19 @@ if (missing.length > 0) {
 }
 
 const routes = require("./routes/index");
+const { securityHeaders } = require("./middleware/security");
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
+
+// Active "trust proxy" : Railway place l'app derrière un reverse-proxy, donc
+// req.ip refléterait l'IP du proxy sans ce réglage — important pour que le
+// rate-limiting sur /auth/login s'applique par IP client réelle et non par
+// l'IP unique du proxy (qui bloquerait tous les utilisateurs ensemble).
+app.set("trust proxy", 1);
+
+// En-têtes de sécurité HTTP sur toutes les réponses (cf. middleware/security.js)
+app.use(securityHeaders);
 
 // ============================================================
 // MIDDLEWARES GLOBAUX

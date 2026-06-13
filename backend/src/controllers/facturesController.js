@@ -91,7 +91,7 @@ async function updatePaiement(req, res) {
     res.json(result.rows[0]);
   } catch (err) {
     console.error("updatePaiement error:", err);
-    res.status(500).json({ message: err.message || "Erreur serveur." });
+    res.status(500).json({ message: "Erreur serveur lors de la mise à jour du paiement." });
   }
 }
 
@@ -155,7 +155,7 @@ async function generatePDF(req, res) {
 // GET /api/factures/:code/recu — Petit reçu thermique format 80mm
 async function generateRecu(req, res) {
   try {
-    const code    = req.params[0] || req.params.code;
+    const code    = decodeURIComponent(req.params[0] || req.params.code || "");
     const entId   = req.user.entreprise_id;
     const facture = await db.query(
       `SELECT * FROM factures WHERE code = $1 AND entreprise_id = $2`,

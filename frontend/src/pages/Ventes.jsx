@@ -6,6 +6,7 @@ import { ventesService, facturesService, clientsService } from "../services";
 import {
   fmt, fmtN, fmtDate, today, Spinner, ErrorBox,
   Input, Btn, Modal, Badge, PageHeader, DataTable, TR, TD, Toast, SearchBox,
+  isFactureReglee,
 } from "../components/UI";
 
 /* ─── Mini-form création rapide ─────────────────────────── */
@@ -594,7 +595,7 @@ export default function Ventes() {
             {/* ── Mobile : cards ── */}
             <div className="md:hidden divide-y divide-gray-50">
               {ventesAffichées.map((v, i) => {
-                const paid = v.facture_statut === true || v.facture_statut === "true" || parseFloat(v.reste) <= 0;
+                const paid = isFactureReglee(v.facture_statut, v.reste);
                 return (
                   <div key={i} className="px-4 py-3">
                     <div className="flex items-center justify-between mb-1.5">
@@ -659,7 +660,7 @@ export default function Ventes() {
                 {ventesAffichées.map((v, i) => {
                   const isFirst = !seenFactures.has(v.facture_code);
                   if (isFirst) seenFactures.add(v.facture_code);
-                  const paid = v.facture_statut === true || v.facture_statut === "true" || parseFloat(v.reste) <= 0;
+                  const paid = isFactureReglee(v.facture_statut, v.reste);
                   return (
                     <TR key={i}>
                       <TD>
@@ -771,8 +772,8 @@ export default function Ventes() {
               <div className="text-xs text-gray-400 uppercase font-bold mb-1">Référence</div>
               <div className="font-mono text-sm font-bold text-[#0023FF]">{factureDetail.code}</div>
               <div className="mt-2">
-                <Badge color={factureDetail.statut || parseFloat(factureDetail.reste || 0) <= 0 ? "emerald" : "red"}>
-                  {factureDetail.statut || parseFloat(factureDetail.reste || 0) <= 0 ? "✓ Réglée" : "⏳ Impayée"}
+                <Badge color={isFactureReglee(factureDetail.statut, factureDetail.reste) ? "emerald" : "red"}>
+                  {isFactureReglee(factureDetail.statut, factureDetail.reste) ? "✓ Réglée" : "⏳ Impayée"}
                 </Badge>
               </div>
             </div>

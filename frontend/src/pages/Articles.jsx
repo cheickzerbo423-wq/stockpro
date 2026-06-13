@@ -114,6 +114,10 @@ export default function Articles() {
       } catch { /* silencieux */ }
       finally { setLoadingCode(false); }
     }, 400);
+    // Annule le timer en attente si le composant est démonté ou si le
+    // libellé change avant son exécution (évite un setForm sur un
+    // composant démonté et une requête generate-code obsolète/concurrente).
+    return () => clearTimeout(debounceRef.current);
   }, [form.libelle]);
 
   const notify = (message, type = "success") => {

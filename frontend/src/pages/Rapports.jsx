@@ -5,7 +5,7 @@ import {
   LineChart, Line, CartesianGrid, Legend, PieChart, Pie, Cell,
 } from "recharts";
 import { rapportsService } from "../services";
-import { fmt, fmtN, Spinner, ErrorBox, Btn, PageHeader, Toast } from "../components/UI";
+import { fmt, fmtN, Spinner, ErrorBox, Btn, PageHeader, Toast, tauxMarge } from "../components/UI";
 
 // ── Utilitaires date ────────────────────────────────────────────────
 const today = () => new Date().toISOString().split("T")[0];
@@ -170,9 +170,7 @@ export default function Rapports() {
   // Cohérent avec le KPI "Marge Brute" (data.benefice = CA - COGS), et non
   // CA - total achats stock (qui mélange achats de période et ventes de stock
   // ancien, et donnait un % incohérent avec le montant affiché juste au-dessus).
-  const tauxMarge = data && data.ventes.ca_total > 0
-    ? Math.round((data.benefice / data.ventes.ca_total) * 100)
-    : 0;
+  const tauxMargeVal = data ? tauxMarge(data.benefice, data.ventes.ca_total) : 0;
   const tauxRecouvrement = data && data.factures.montant_total > 0
     ? Math.round((data.factures.montant_encaisse / data.factures.montant_total) * 100)
     : 0;
@@ -277,7 +275,7 @@ export default function Rapports() {
             <KpiCard
               icon="💰" label="Marge Brute"
               value={fmt(data.benefice)}
-              sub={`Marge ${tauxMarge}%`}
+              sub={`Marge ${tauxMargeVal}%`}
               accent={{
                 text: data.benefice >= 0 ? "text-emerald-600" : "text-red-600",
                 badge: data.benefice >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700",
@@ -356,12 +354,12 @@ export default function Rapports() {
               <div className="mb-4">
                 <div className="flex justify-between text-xs mb-1.5">
                   <span className="text-gray-500">Taux de marge brute</span>
-                  <span className={`font-bold ${tauxMarge >= 0 ? "text-emerald-600" : "text-red-600"}`}>{tauxMarge}%</span>
+                  <span className={`font-bold ${tauxMargeVal >= 0 ? "text-emerald-600" : "text-red-600"}`}>{tauxMargeVal}%</span>
                 </div>
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-700 ${tauxMarge >= 30 ? "bg-emerald-500" : tauxMarge >= 10 ? "bg-amber-500" : "bg-red-500"}`}
-                    style={{ width: `${Math.max(0, Math.min(100, tauxMarge))}%` }}
+                    className={`h-full rounded-full transition-all duration-700 ${tauxMargeVal >= 30 ? "bg-emerald-500" : tauxMargeVal >= 10 ? "bg-amber-500" : "bg-red-500"}`}
+                    style={{ width: `${Math.max(0, Math.min(100, tauxMargeVal))}%` }}
                   />
                 </div>
               </div>

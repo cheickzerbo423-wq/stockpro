@@ -50,7 +50,9 @@ async function create(req, res) {
     const mois  = MOIS[new Date(date).getMonth()];
     const annee = new Date(date).getFullYear();
 
-    const prixNum = parseInt(prix_achat, 10);
+    // prix_achat est un NUMERIC en base (peut comporter des décimales) :
+    // utiliser parseFloat, pas parseInt, sous peine de tronquer (ex: 1499.99 → 1499).
+    const prixNum = parseFloat(prix_achat);
     const qteNum  = parseInt(quantite, 10);
     if (!Number.isFinite(prixNum) || !Number.isFinite(qteNum) || prixNum <= 0 || qteNum <= 0)
       return res.status(400).json({ message: "Quantité ou prix d'achat invalide. Saisissez des nombres positifs." });
@@ -62,9 +64,13 @@ async function create(req, res) {
     if (montantTotal > 9_999_999_999_999)
       return res.status(400).json({ message: "Le montant total (quantité × prix) est trop élevé pour être enregistré. Vérifiez la quantité et le prix saisis pour cet article." });
 
-    const montantPaye  = req.body.montant_paye !== undefined
-      ? Math.min(parseFloat(req.body.montant_paye), montantTotal)
-      : montantTotal;
+    let montantPaye = montantTotal;
+    if (req.body.montant_paye !== undefined && req.body.montant_paye !== null && req.body.montant_paye !== "") {
+      const paye = parseFloat(req.body.montant_paye);
+      if (isNaN(paye) || paye < 0)
+        return res.status(400).json({ message: "Montant payé invalide." });
+      montantPaye = Math.min(paye, montantTotal);
+    }
 
     const result = await db.query(
       `INSERT INTO achats (article_code, libelle, fournisseur_id, fournisseur_nom, prix_achat, quantite, date_achat, mois, user_id, montant_paye, montant_total, entreprise_id)

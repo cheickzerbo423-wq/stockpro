@@ -4,7 +4,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
 import { useDashboard } from "../hooks/useApi";
-import { fmt, fmtN, Spinner, ErrorBox } from "../components/UI";
+import { fmt, fmtN, Spinner, ErrorBox, isFactureReglee, tauxMarge } from "../components/UI";
 
 const MOIS = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
 const BRAND = "#0023FF";
@@ -93,7 +93,7 @@ export default function Dashboard() {
 
   const tauxRec = kpis.ca_facture > 0 ? Math.round((kpis.encaisse / kpis.ca_facture) * 100) : 0;
   const beneficeColor = parseFloat(kpis.benefice) >= 0 ? "#059669" : "#DC2626";
-  const marge = kpis.ca_total > 0 ? Math.round((kpis.benefice / kpis.ca_total) * 100) : 0;
+  const marge = tauxMarge(kpis.benefice, kpis.ca_total);
 
   const graphData = MOIS.map((label, i) => {
     const key = `${annee}-${String(i + 1).padStart(2, "0")}`;
@@ -308,7 +308,7 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-1.5">
               {recent_factures.map((f) => {
-                const paid = f.statut || parseFloat(f.reste || 0) <= 0;
+                const paid = isFactureReglee(f.statut, f.reste);
                 const dateStr = f.date_facture
                   ? new Date(f.date_facture).toLocaleDateString("fr-FR", { day:"2-digit", month:"short" })
                   : "";

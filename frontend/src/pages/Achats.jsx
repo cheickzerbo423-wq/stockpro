@@ -48,7 +48,7 @@ function MiniForm({ title, icon, onSave, onCancel, saving }) {
 }
 
 /* ─── Ligne de commande ─────────────────────────────── */
-function LigneCommande({ ligne, articles, onUpdate, onRemove }) {
+function LigneCommande({ ligne, index, articles, onUpdate, onRemove }) {
   const [search, setSearch] = useState(ligne.libelle || "");
   const [open, setOpen]     = useState(false);
   const ref                 = useRef(null);
@@ -95,10 +95,15 @@ function LigneCommande({ ligne, articles, onUpdate, onRemove }) {
   const nonReconnu = !ligne.article_code && !!search.trim() && !open;
 
   return (
-    <div className="rounded-xl p-3 border bg-gray-50 border-gray-200 space-y-2">
-      <div className="flex items-start gap-2.5">
-        <div className="flex-1 relative" ref={ref}>
-          <label className="block text-xs font-semibold text-gray-500 mb-1">Article *</label>
+    <div className="rounded-xl p-3 border bg-gray-50 border-gray-200 space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-[#0023FF] uppercase tracking-wide">Produit {index}</span>
+        <button onClick={onRemove}
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 active:scale-95 transition"
+          title="Retirer ce produit">✕</button>
+      </div>
+      <div className="relative" ref={ref}>
+        <label className="block text-xs font-semibold text-gray-500 mb-1">Article *</label>
           <div className="relative">
             {/* Vignette du produit, intégrée dans le champ */}
             <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-md overflow-hidden bg-white border border-gray-200 flex items-center justify-center pointer-events-none">
@@ -148,10 +153,6 @@ function LigneCommande({ ligne, articles, onUpdate, onRemove }) {
             </div>
           )}
         </div>
-        <button onClick={onRemove}
-          className="w-9 h-9 mt-6 flex items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 active:scale-95 transition shrink-0"
-          title="Supprimer">✕</button>
-      </div>
 
       <div className="space-y-2">
         <div className="grid grid-cols-2 gap-2">
@@ -551,9 +552,10 @@ export default function Achats() {
               <span className="text-xs font-bold text-gray-500 uppercase">Produits à approvisionner</span>
               <span className="text-xs text-gray-400">{lignes.length} ligne(s)</span>
             </div>
-            {lignes.map((ligne) => (
+            {lignes.map((ligne, i) => (
               <LigneCommande
                 key={ligne.id}
+                index={i + 1}
                 ligne={ligne}
                 articles={articles}
                 onUpdate={(updated) => setLignes(lignes.map((l) => l.id === ligne.id ? updated : l))}

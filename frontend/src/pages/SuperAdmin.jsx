@@ -43,6 +43,10 @@ export default function SuperAdmin() {
   const [deleteTarget,  setDeleteTarget]  = useState(null);
   const [toggleTarget,  setToggleTarget]  = useState(null);
   const [search,        setSearch]        = useState("");
+  const [statusFilter,  setStatusFilter]  = useState("all");
+  const [selected,      setSelected]      = useState(() => new Set());
+  const [bulkDelete,    setBulkDelete]    = useState(false);
+  const [bulkBusy,      setBulkBusy]      = useState(false);
   const [form, setForm] = useState({ nom: "", admin_login: "", admin_mdp: "",
     abonnement_type: "mensuel", abonnement_debut: "", abonnement_fin: "" });
   const [toast, setToast] = useState(null);
@@ -78,6 +82,44 @@ export default function SuperAdmin() {
     } catch (err) { notify(err.message, "error"); setToggleTarget(null); }
   };
 
+  // Prolongation rapide depuis la liste : ajoute la durée AU-DELÀ du temps
+  // restant si l'abonnement est encore actif, sinon à partir d'aujourd'hui.
+  const quickExtend = async (ent, days) => {
+    const encoreActif = ent.abonnement_fin && new Date(ent.abonnement_fin) > new Date();
+    const base = encoreActif ? new Date(ent.abonnement_fin) : new Date();
+    base.setDate(base.getDate() + days);
+    const fin = base.toISOString().split("T")[0];
+    const debut = ent.abonnement_debut ? ent.abonnement_debut.split("T")[0] : today();
+    try {
+      await saveAbo(ent.id, {
+        abonnement_type:  ent.abonnement_type || "mensuel",
+        abonnement_debut: debut,
+        abonnement_fin:   fin,
+      });
+      notify(`« ${ent.nom} » prolongée jusqu'au ${fmtDate(fin)}.`);
+      reload();
+    } catch (err) { notify(err.message, "error"); }
+  };
+
+  // Suppression en masse : boucle sur l'endpoint de suppression existant.
+  const handleBulkDelete = async () => {
+    const ids = [...selected];
+    setBulkBusy(true);
+    let ok = 0, fail = 0;
+    for (const id of ids) {
+      try { await del(id); ok++; } catch { fail++; }
+    }
+    setBulkBusy(false);
+    setBulkDelete(false);
+    setSelected(new Set());
+    notify(
+      fail ? `${ok} entreprise(s) supprimée(s), ${fail} échec(s).`
+           : `${ok} entreprise(s) supprimée(s).`,
+      fail ? "error" : "success"
+    );
+    reload();
+  };
+
   // KPIs
   const nbTotal    = entreprises.length;
   const nbActives  = entreprises.filter(e => e.actif).length;
@@ -89,9 +131,43 @@ export default function SuperAdmin() {
   }).length;
   const caGlobal   = entreprises.reduce((s, e) => s + Number(e.ca_total || 0), 0);
 
+  // Filtre par statut d'abonnement / activité
+  const matchStatus = (e) => {
+    if (statusFilter === "all")       return true;
+    if (statusFilter === "active")    return e.actif;
+    if (statusFilter === "suspended") return !e.actif;
+    if (statusFilter === "unlimited") return !e.abonnement_fin;
+    const st = statutAbonnement(e);
+    if (statusFilter === "expiring")  return !!e.abonnement_fin && st.color === "orange";
+    if (statusFilter === "expired")   return !!e.abonnement_fin && st.color === "red";
+    return true;
+  };
+
   const filtered = entreprises.filter(e =>
-    !search || e.nom.toLowerCase().includes(search.toLowerCase()) || e.slug?.includes(search.toLowerCase())
+    (!search || e.nom.toLowerCase().includes(search.toLowerCase()) || e.slug?.includes(search.toLowerCase()))
+    && matchStatus(e)
   );
+
+  const FILTRES = [
+    ["all",       "Toutes",         nbTotal],
+    ["active",    "Actives",        nbActives],
+    ["suspended", "Suspendues",     nbSuspend],
+    ["expiring",  "Expire bientôt", nbExpiring],
+    ["expired",   "Expirées",       entreprises.filter(e => e.abonnement_fin && statutAbonnement(e).color === "red").length],
+    ["unlimited", "Illimité",       entreprises.filter(e => !e.abonnement_fin).length],
+  ];
+
+  // Sélection multiple (l'entreprise par défaut id=1 n'est pas supprimable)
+  const selectableIds = filtered.filter(e => e.id !== 1).map(e => e.id);
+  const allSelected = selectableIds.length > 0 && selectableIds.every(id => selected.has(id));
+  const toggleSelect = (id) =>
+    setSelected(prev => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  const toggleSelectAll = () =>
+    setSelected(allSelected ? new Set() : new Set(selectableIds));
 
   return (
     <div className="space-y-5">
@@ -157,11 +233,53 @@ export default function SuperAdmin() {
             </div>
           </div>
 
+          {/* Filtres par statut */}
+          <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-50 overflow-x-auto">
+            {FILTRES.map(([key, label, count]) => (
+              <button key={key} onClick={() => setStatusFilter(key)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition border
+                  ${statusFilter === key
+                    ? "bg-[#0023FF] text-white border-[#0023FF]"
+                    : "bg-white text-gray-500 border-gray-200 hover:border-[#0023FF]/40"}`}>
+                {label}
+                <span className={`px-1.5 rounded-full text-[10px] ${statusFilter === key ? "bg-white/25 text-white" : "bg-gray-100 text-gray-500"}`}>{count}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Barre d'actions groupées (sélection multiple) */}
+          {selected.size > 0 && (
+            <div className="flex items-center justify-between gap-3 px-5 py-3 bg-[#E6EAFF] border-b border-[#B3BFFF]">
+              <span className="text-sm font-bold text-[#0019CC]">
+                {selected.size} entreprise{selected.size > 1 ? "s" : ""} sélectionnée{selected.size > 1 ? "s" : ""}
+              </span>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setSelected(new Set())}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition">
+                  Annuler
+                </button>
+                <button onClick={() => setBulkDelete(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/>
+                  </svg>
+                  Supprimer la sélection
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Tableau */}
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-50 bg-gray-50/60">
+                  <th className="px-4 py-3 w-10">
+                    <input type="checkbox" checked={allSelected} onChange={toggleSelectAll}
+                      disabled={selectableIds.length === 0}
+                      title="Tout sélectionner"
+                      className="w-4 h-4 rounded border-gray-300 accent-[#0023FF] cursor-pointer" />
+                  </th>
                   <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase tracking-wide">Entreprise</th>
                   <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wide">Statut</th>
                   <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wide">Abonnement</th>
@@ -173,14 +291,19 @@ export default function SuperAdmin() {
               <tbody className="divide-y divide-gray-50">
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-gray-300 text-sm">
-                      {search ? "Aucune entreprise ne correspond à la recherche." : "Aucune entreprise cliente."}
+                    <td colSpan={7} className="text-center py-12 text-gray-300 text-sm">
+                      {search || statusFilter !== "all"
+                        ? "Aucune entreprise ne correspond aux filtres."
+                        : "Aucune entreprise cliente."}
                     </td>
                   </tr>
                 ) : filtered.map(ent => (
                   <EntrepriseRow
                     key={ent.id}
                     ent={ent}
+                    selected={selected.has(ent.id)}
+                    onSelect={() => toggleSelect(ent.id)}
+                    onExtend={(days) => quickExtend(ent, days)}
                     onRename={() => setRenameTarget(ent)}
                     onToggle={() => handleToggle(ent)}
                     onAbonnement={() => setAboTarget(ent)}
@@ -256,6 +379,20 @@ export default function SuperAdmin() {
         />
       )}
 
+      {/* ── Confirmation suppression en masse ── */}
+      {bulkDelete && (
+        <ConfirmModal
+          icon="🗑️"
+          title={`Supprimer ${selected.size} entreprise${selected.size > 1 ? "s" : ""} définitivement ?`}
+          sub="Toutes leurs données (utilisateurs, articles, ventes, factures…) seront effacées sans retour possible."
+          confirmLabel={bulkBusy ? "Suppression…" : "Tout supprimer"}
+          confirmColor="red"
+          loading={bulkBusy}
+          onConfirm={handleBulkDelete}
+          onCancel={() => setBulkDelete(false)}
+        />
+      )}
+
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
     </div>
   );
@@ -278,7 +415,7 @@ function KpiCard({ label, value, icon, accent }) {
 }
 
 // ── Ligne du tableau ──────────────────────────────────────────────────────────
-function EntrepriseRow({ ent, onRename, onToggle, onAbonnement, onDelete }) {
+function EntrepriseRow({ ent, selected, onSelect, onExtend, onRename, onToggle, onAbonnement, onDelete }) {
   const isDefault = ent.id === 1;
   const abo = statutAbonnement(ent);
   const aboColors = {
@@ -289,7 +426,15 @@ function EntrepriseRow({ ent, onRename, onToggle, onAbonnement, onDelete }) {
   };
 
   return (
-    <tr className="hover:bg-gray-50/60 transition group">
+    <tr className={`transition group ${selected ? "bg-[#F0F3FF]" : "hover:bg-gray-50/60"}`}>
+      {/* Case de sélection */}
+      <td className="px-4 py-4 align-top">
+        {!isDefault && (
+          <input type="checkbox" checked={!!selected} onChange={onSelect}
+            className="w-4 h-4 rounded border-gray-300 accent-[#0023FF] cursor-pointer" />
+        )}
+      </td>
+
       {/* Entreprise */}
       <td className="px-5 py-4">
         <div className="flex items-center gap-3 min-w-0">
@@ -359,6 +504,12 @@ function EntrepriseRow({ ent, onRename, onToggle, onAbonnement, onDelete }) {
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
             </svg>
           </ActionBtn>
+
+          {/* Prolongation rapide depuis la liste */}
+          <button onClick={() => onExtend(30)} title="Prolonger d'un mois"
+            className="px-2 h-7 rounded-lg text-[11px] font-bold text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition">+1 mois</button>
+          <button onClick={() => onExtend(365)} title="Prolonger d'un an"
+            className="px-2 h-7 rounded-lg text-[11px] font-bold text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition">+1 an</button>
 
           {/* Abonnement */}
           <ActionBtn onClick={onAbonnement} title="Gérer l'abonnement" color="purple">
@@ -557,6 +708,8 @@ function AbonnementModal({ ent, onClose, mutate, notify, reload }) {
   const [debut,  setDebut]  = useState(ent.abonnement_debut ? ent.abonnement_debut.split("T")[0] : "");
   const [fin,    setFin]    = useState(ent.abonnement_fin   ? ent.abonnement_fin.split("T")[0]   : "");
   const [saving, setSaving] = useState(false);
+  const [customN,    setCustomN]    = useState("");
+  const [customUnit, setCustomUnit] = useState("mois");
 
   const abo = statutAbonnement({ abonnement_fin: fin || null });
 
@@ -569,6 +722,18 @@ function AbonnementModal({ ent, onClose, mutate, notify, reload }) {
   const setPreset = (days) => {
     setDebut(today());
     setFin(addDays(days));
+  };
+
+  // Durée personnalisée libre : N jours / mois / ans à partir d'aujourd'hui
+  const applyCustom = () => {
+    const n = parseInt(customN);
+    if (!n || n <= 0) { notify("Saisis une durée valide.", "error"); return; }
+    const d = new Date();
+    if (customUnit === "jours")     d.setDate(d.getDate() + n);
+    else if (customUnit === "mois") d.setMonth(d.getMonth() + n);
+    else                            d.setFullYear(d.getFullYear() + n);
+    setDebut(today());
+    setFin(d.toISOString().split("T")[0]);
   };
 
   const handleSave = async () => {
@@ -631,6 +796,26 @@ function AbonnementModal({ ent, onClose, mutate, notify, reload }) {
             <button type="button" onClick={() => { setDebut(""); setFin(""); }}
               className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-xs font-bold hover:bg-gray-200 transition">
               Illimité
+            </button>
+          </div>
+        </div>
+
+        {/* Durée personnalisée libre */}
+        <div>
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Durée personnalisée</label>
+          <div className="flex gap-2">
+            <input type="number" min="1" inputMode="numeric" value={customN}
+              onChange={e => setCustomN(e.target.value)} placeholder="ex: 18"
+              className="w-20 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white" />
+            <select value={customUnit} onChange={e => setCustomUnit(e.target.value)}
+              className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white">
+              <option value="jours">jours</option>
+              <option value="mois">mois</option>
+              <option value="ans">ans</option>
+            </select>
+            <button type="button" onClick={applyCustom}
+              className="flex-1 px-3 py-2 rounded-xl bg-[#0023FF] text-white text-sm font-bold hover:bg-[#0019CC] active:scale-95 transition">
+              Appliquer
             </button>
           </div>
         </div>

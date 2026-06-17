@@ -311,13 +311,13 @@ export default function Parametres() {
         <div className="lg:col-span-3 space-y-5">
           <Card>
             <SectionTitle>Informations de l'entreprise</SectionTitle>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-              <div className="sm:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+              <div className="md:col-span-2">
                 <Input label="Nom de l'entreprise" value={form.nom}
                   onChange={(e) => setForm({ ...form, nom: e.target.value })}
                   placeholder="ex: Ets Diallo & Frères" />
               </div>
-              <div className="sm:col-span-2">
+              <div className="md:col-span-2">
                 <Input label="Adresse" value={form.adresse}
                   onChange={(e) => setForm({ ...form, adresse: e.target.value })}
                   placeholder="ex: Marché Sandaga, Dakar" />

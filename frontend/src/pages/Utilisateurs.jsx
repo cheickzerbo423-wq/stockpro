@@ -113,7 +113,7 @@ export default function Utilisateurs() {
       {/* ── Modal ajout ── */}
       {showAdd && (
         <Modal title="Nouvel Utilisateur" onClose={() => setShowAdd(false)}>
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
             <Input label="Login *" value={form.login} onChange={(e) => setForm({ ...form, login: e.target.value })} placeholder="ex: marie" />
             <Input label="Mot de passe *" type="password" value={form.mdp} onChange={(e) => setForm({ ...form, mdp: e.target.value })} />
             <div className="col-span-2 -mt-1">

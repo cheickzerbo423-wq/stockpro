@@ -453,8 +453,8 @@ export default function Achats() {
           wide
         >
           {/* Infos communes */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-            <div className="sm:col-span-2 relative">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <div className="md:col-span-2 relative">
               <label className="block text-xs font-semibold text-gray-500 mb-1">Fournisseur *</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>

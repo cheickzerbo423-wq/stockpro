@@ -359,8 +359,8 @@ function BottomNav({ allItems }) {
   const bottomItems = allItems.filter(i => BOTTOM_NAV_PATHS.includes(i.path));
   if (bottomItems.length === 0) return null;
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 flex h-16"
-      style={{ background: "#0F172A", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 flex"
+      style={{ background: "#0F172A", borderTop: "1px solid rgba(255,255,255,0.07)", minHeight: "4rem", paddingBottom: "env(safe-area-inset-bottom)" }}>
       {bottomItems.map(item => (
         <NavLink
           key={item.path}
@@ -480,7 +480,8 @@ function Layout({ children }) {
         </header>
 
         {/* Contenu page */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6"
+          style={{ scrollPaddingBottom: "env(safe-area-inset-bottom)" }}>
           {children}
         </div>
       </main>

@@ -283,8 +283,8 @@ export default function Articles() {
       {/* ── Modal Nouvel Article ── */}
       {showAdd && (
         <Modal title="Nouvel Article" onClose={() => { setShowAdd(false); setCodeAuto(true); }}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="md:col-span-2">
               <Input label="Libellé *" value={form.libelle}
                 onChange={(e) => { setForm({ ...form, libelle: e.target.value }); setCodeAuto(true); }}
                 placeholder="Nom du produit" error={formErr.libelle} />
@@ -327,7 +327,7 @@ export default function Articles() {
               onChange={(e) => setForm({ ...form, prix_achat: e.target.value })} />
             <Input label="Prix de Vente (FCFA)" type="number" value={form.prix_vente}
               onChange={(e) => setForm({ ...form, prix_vente: e.target.value })} />
-            <div className="col-span-2">
+            <div className="md:col-span-2">
               <label className="block text-xs font-semibold text-gray-500 mb-1">Photo du produit <span className="font-normal text-gray-400">(optionnel)</span></label>
               <ImagePicker value={form.image_url} onChange={(v) => setForm({ ...form, image_url: v })} />
             </div>
@@ -346,8 +346,8 @@ export default function Articles() {
             Code : <strong className="text-gray-800">{editArticle.code}</strong>
             <span className="ml-3 text-gray-400">(non modifiable)</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="md:col-span-2">
               <Input label="Libellé *" value={editForm.libelle}
                 onChange={(e) => setEditForm({ ...editForm, libelle: e.target.value.toUpperCase() })} />
             </div>
@@ -355,11 +355,11 @@ export default function Articles() {
               onChange={(e) => setEditForm({ ...editForm, prix_achat: e.target.value })} />
             <Input label="Prix de Vente (FCFA)" type="number" value={editForm.prix_vente}
               onChange={(e) => setEditForm({ ...editForm, prix_vente: e.target.value })} />
-            <div className="col-span-2">
+            <div className="md:col-span-2">
               <Input label="Stock Minimum (seuil alerte)" type="number" value={editForm.stock_min}
                 onChange={(e) => setEditForm({ ...editForm, stock_min: e.target.value })} />
             </div>
-            <div className="col-span-2">
+            <div className="md:col-span-2">
               <label className="block text-xs font-semibold text-gray-500 mb-1">Photo du produit <span className="font-normal text-gray-400">(optionnel)</span></label>
               <ImagePicker value={editForm.image_url} onChange={(v) => setEditForm({ ...editForm, image_url: v })} />
             </div>

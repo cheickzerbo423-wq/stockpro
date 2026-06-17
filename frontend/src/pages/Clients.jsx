@@ -585,7 +585,7 @@ export default function Clients() {
           title={`Modifier — ${editContact.nom}`}
           onClose={() => setEditContact(null)}
         >
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="col-span-2">
               <Input label="Nom & Prénom *" value={editForm.nom}
                 onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })} />
@@ -610,7 +610,7 @@ export default function Clients() {
       {/* ── Modal ajout ── */}
       {showAdd && (
         <Modal title={`Nouveau ${isClient ? "Client" : "Fournisseur"}`} onClose={() => setShowAdd(false)}>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="col-span-2">
               <Input label="Nom & Prénom *" value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} />
             </div>

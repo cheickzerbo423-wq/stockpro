@@ -151,22 +151,24 @@ function LigneCommande({ ligne, articles, onUpdate, onRemove }) {
           title="Supprimer">✕</button>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 items-end">
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1">Quantité *</label>
-          <input type="number" min="1" inputMode="numeric"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white"
-            value={ligne.quantite} onChange={(e) => onUpdate({ ...ligne, quantite: e.target.value })} placeholder="0" />
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Quantité *</label>
+            <input type="number" min="1" inputMode="numeric"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white"
+              value={ligne.quantite} onChange={(e) => onUpdate({ ...ligne, quantite: e.target.value })} placeholder="0" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">P.U. (FCFA) *</label>
+            <input type="number" min="0" inputMode="numeric"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white"
+              value={ligne.prix_achat} onChange={(e) => onUpdate({ ...ligne, prix_achat: e.target.value })} placeholder="0" />
+          </div>
         </div>
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1">P.U. (FCFA) *</label>
-          <input type="number" min="0" inputMode="numeric"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white"
-            value={ligne.prix_achat} onChange={(e) => onUpdate({ ...ligne, prix_achat: e.target.value })} placeholder="0" />
-        </div>
-        <div className="flex flex-col items-center justify-center bg-[#E6EAFF] rounded-lg py-2 px-1 border border-[#B3BFFF]">
-          <span className="text-xs text-[#0023FF] font-bold uppercase">Total</span>
-          <span className="text-sm font-black text-[#0023FF]">{fmt(total)}</span>
+        <div className="flex items-center justify-between bg-[#E6EAFF] rounded-lg px-3 py-2 border border-[#B3BFFF]">
+          <span className="text-xs text-[#0023FF] font-bold uppercase tracking-wide">Total ligne</span>
+          <span className="text-base font-black text-[#0023FF]">{fmt(total)}</span>
         </div>
       </div>
     </div>

@@ -33,29 +33,39 @@ app.use(securityHeaders);
 // MIDDLEWARES GLOBAUX
 // ============================================================
 
-// CORS — autorise le frontend Vercel + localhost dev
-const allowedOrigins = [
-  "https://stockpro-omega.vercel.app",
-  "https://warigest.vercel.app",
-  /\.vercel\.app$/,        // tous les sous-domaines Vercel
+// CORS — liste blanche explicite des origines autorisées.
+// Domaines de production à définir via la variable d'environnement
+// CORS_ALLOWED_ORIGINS (liste séparée par des virgules), ex :
+//   CORS_ALLOWED_ORIGINS=https://app.exemple.com,https://www.exemple.com
+const DEV_ORIGINS = [
   "http://localhost:3000",
   "http://localhost:5173",
   "http://localhost:5000",
 ];
 
-if (process.env.FRONTEND_URL) {
+let allowedOrigins = [...DEV_ORIGINS];
+
+if (process.env.CORS_ALLOWED_ORIGINS) {
+  allowedOrigins = allowedOrigins.concat(
+    process.env.CORS_ALLOWED_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean)
+  );
+} else if (process.env.FRONTEND_URL) {
+  // Compatibilité avec l'ancienne variable FRONTEND_URL.
   allowedOrigins.push(process.env.FRONTEND_URL);
+} else if (process.env.NODE_ENV === "production") {
+  // Aucun domaine de production configuré : placeholder à remplacer.
+  allowedOrigins.push("https://VOTRE-DOMAINE-A-DEFINIR.example.com");
+  console.warn("⚠️  CORS_ALLOWED_ORIGINS n'est pas défini : aucun domaine de production");
+  console.warn("⚠️  n'est autorisé (hors localhost). Définissez CORS_ALLOWED_ORIGINS dans");
+  console.warn("⚠️  les variables d'environnement (domaines séparés par des virgules).");
 }
 
 app.use(cors({
   origin: (origin, callback) => {
     // Autoriser les requêtes sans origin (Postman, Railway healthcheck, proxy Vercel)
     if (!origin) return callback(null, true);
-    const ok = allowedOrigins.some((o) =>
-      typeof o === "string" ? o === origin : o.test(origin)
-    );
-    if (ok) return callback(null, true);
-    // En développement on autorise tout
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    // En développement on autorise tout, pour ne pas bloquer les tests locaux.
     if (process.env.NODE_ENV !== "production") return callback(null, true);
     callback(new Error(`CORS bloqué pour l'origine : ${origin}`));
   },

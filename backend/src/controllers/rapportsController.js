@@ -141,11 +141,11 @@ async function getRapport(req, res) {
         [debut, fin, entId]
       ),
 
-      // COGS : coût des marchandises vendues sur la période
+      // COGS : coût des marchandises vendues sur la période (prix_achat figé
+      // à la vente, capturé sur lignes_vente).
       db.query(
-        `SELECT COALESCE(SUM(lv.quantite * a.prix_achat), 0) AS cogs
+        `SELECT COALESCE(SUM(lv.quantite * lv.prix_achat), 0) AS cogs
          FROM lignes_vente lv
-         JOIN articles a ON a.code = lv.article_code AND a.entreprise_id = lv.entreprise_id
          WHERE lv.entreprise_id = $3 AND lv.date_vente BETWEEN $1 AND $2`,
         [debut, fin, entId]
       ),
@@ -251,9 +251,8 @@ async function exportPDF(req, res) {
       // pour que le "Benefice Net" du PDF corresponde a celui affiche a l'ecran
       // (CA - COGS), et non CA - achats de stock de la periode.
       db.query(
-        `SELECT COALESCE(SUM(lv.quantite * a.prix_achat), 0) AS cogs
+        `SELECT COALESCE(SUM(lv.quantite * lv.prix_achat), 0) AS cogs
          FROM lignes_vente lv
-         JOIN articles a ON a.code = lv.article_code AND a.entreprise_id = lv.entreprise_id
          WHERE lv.entreprise_id = $3 AND lv.date_vente BETWEEN $1 AND $2`,
         [debut, fin, entId]
       ),

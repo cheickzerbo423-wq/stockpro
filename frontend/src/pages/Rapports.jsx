@@ -122,7 +122,10 @@ export default function Rapports() {
     setLoading(true); setError(null);
     try {
       const bornes = p === "custom" ? c : getPeriode(p);
-      if (p === "custom" && (!bornes.debut || !bornes.fin)) return setLoading(false);
+      if (p === "custom" && (!bornes.debut || !bornes.fin)) {
+        setError("Veuillez sélectionner une date de début et une date de fin.");
+        return setLoading(false);
+      }
       const result = await rapportsService.getRapport(bornes.debut, bornes.fin);
       setData(result);
     } catch (err) {

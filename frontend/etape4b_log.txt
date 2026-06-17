@@ -1,0 +1,52 @@
+============================================== 
+ WariGest Mobile - Etape 4b (reparation sharp) 
+============================================== 
+ 
+=== npm install --platform=win32 --arch=x64 sharp === 
+npm warn Unknown cli config "--platform". This will stop working in the next major version of npm.
+npm warn Unknown cli config "--arch". This will stop working in the next major version of npm.
+npm warn deprecated prebuild-install@7.1.3: No longer maintained. Please contact the author of the relevant native addon; alternatives are available.
+ 
+--- Fin install sharp (code 1) --- 
+ 
+=== npx capacitor-assets generate --android === 
+C:\Users\hp\Desktop\StockPro_Source\stockpro_source\frontend\node_modules\@capacitor\assets\node_modules\sharp\lib\sharp.js:37
+  throw new Error(help.join('\n'));
+  ^
+
+Error: 
+Something went wrong installing the "sharp" module
+
+Cannot find module '../build/Release/sharp-win32-x64.node'
+Require stack:
+- C:\Users\hp\Desktop\StockPro_Source\stockpro_source\frontend\node_modules\@capacitor\assets\node_modules\sharp\lib\sharp.js
+- C:\Users\hp\Desktop\StockPro_Source\stockpro_source\frontend\node_modules\@capacitor\assets\node_modules\sharp\lib\constructor.js
+- C:\Users\hp\Desktop\StockPro_Source\stockpro_source\frontend\node_modules\@capacitor\assets\node_modules\sharp\lib\index.js
+- C:\Users\hp\Desktop\StockPro_Source\stockpro_source\frontend\node_modules\@capacitor\assets\dist\input-asset.js
+- C:\Users\hp\Desktop\StockPro_Source\stockpro_source\frontend\node_modules\@capacitor\assets\dist\project.js
+- C:\Users\hp\Desktop\StockPro_Source\stockpro_source\frontend\node_modules\@capacitor\assets\dist\ctx.js
+- C:\Users\hp\Desktop\StockPro_Source\stockpro_source\frontend\node_modules\@capacitor\assets\dist\index.js
+- C:\Users\hp\Desktop\StockPro_Source\stockpro_source\frontend\node_modules\@capacitor\assets\bin\capacitor-assets
+
+Possible solutions:
+- Install with verbose logging and look for errors: "npm install --ignore-scripts=false --foreground-scripts --verbose sharp"
+- Install for the current win32-x64 runtime: "npm install --platform=win32 --arch=x64 sharp"
+- Consult the installation documentation: https://sharp.pixelplumbing.com/install
+    at Object.<anonymous> (C:\Users\hp\Desktop\StockPro_Source\stockpro_source\frontend\node_modules\@capacitor\assets\node_modules\sharp\lib\sharp.js:37:9)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+    at Module.load (node:internal/modules/cjs/loader:1533:32)
+    at Module._load (node:internal/modules/cjs/loader:1335:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.require (node:internal/modules/cjs/loader:1556:12)
+    at require (node:internal/modules/helpers:152:16)
+    at Object.<anonymous> (C:\Users\hp\Desktop\StockPro_Source\stockpro_source\frontend\node_modules\@capacitor\assets\node_modules\sharp\lib\constructor.js:11:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+
+Node.js v24.14.0
+ 
+--- Fin generate (code 1) --- 
+ 
+============================================== 
+ TERMINE - vous pouvez fermer cette fenetre 
+============================================== 

@@ -4,6 +4,27 @@ const db = require("../config/db");
 const MOIS = ["Janvier","Février","Mars","Avril","Mai","Juin",
               "Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 
+// Valide que les champs numériques d'un article (prix d'achat/vente, seuil de
+// stock) sont des nombres positifs ou nuls. Renvoie un message d'erreur (string)
+// si une valeur est invalide/négative, ou null si tout est correct. Les champs
+// non fournis (undefined/null/"") sont ignorés — laissés à leur valeur par
+// défaut ou existante.
+function validerChampsNumeriques({ prix_achat, prix_vente, stock_min }) {
+  const champs = [
+    ["prix_achat", prix_achat, "Le prix d'achat"],
+    ["prix_vente", prix_vente, "Le prix de vente"],
+    ["stock_min",  stock_min,  "Le seuil de stock minimum"],
+  ];
+  for (const [, valeur, label] of champs) {
+    if (valeur === undefined || valeur === null || valeur === "") continue;
+    const num = Number(valeur);
+    if (!Number.isFinite(num) || num < 0) {
+      return `${label} doit être un nombre positif ou nul.`;
+    }
+  }
+  return null;
+}
+
 // GET /api/articles
 async function getAll(req, res) {
   try {
@@ -55,6 +76,9 @@ async function create(req, res) {
     const { code, libelle, prix_achat, prix_vente, stock_min, stock_initial, image_url } = req.body;
     if (!code || !libelle)
       return res.status(400).json({ message: "Code et libellé obligatoires." });
+
+    const erreurNum = validerChampsNumeriques({ prix_achat, prix_vente, stock_min });
+    if (erreurNum) return res.status(400).json({ message: erreurNum });
 
     // Unicité du code article PAR entreprise (PK composite depuis migration).
     const exists = await db.query(
@@ -124,6 +148,10 @@ async function create(req, res) {
 async function update(req, res) {
   try {
     const { libelle, prix_achat, prix_vente, stock_min, image_url } = req.body;
+
+    const erreurNum = validerChampsNumeriques({ prix_achat, prix_vente, stock_min });
+    if (erreurNum) return res.status(400).json({ message: erreurNum });
+
     const hasImage = Object.prototype.hasOwnProperty.call(req.body, "image_url");
     // image_url : mise à jour uniquement si la clé est présente dans le body
     // (évite d'écraser l'image existante lors d'appels qui ne l'envoient pas).

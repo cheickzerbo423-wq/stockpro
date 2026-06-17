@@ -1,0 +1,65 @@
+
+removed 13 packages, and audited 191 packages in 10s
+
+57 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+npm notice
+npm notice New minor version of npm available! 11.9.0 -> 11.17.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.17.0
+npm notice To update run: npm install -g npm@11.17.0
+npm notice
+
+> warigest-backend@1.0.0 dev
+> nodemon src/server.js
+
+[33m[nodemon] 3.1.14[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): *.*[39m
+[33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[32m[nodemon] starting `node src/server.js`[39m
+(node:4576) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+╔════════════════════════════════════════╗
+║  WariGest API  — v1.0.0                ║
+║  Port    : 3000                          ║
+║  Env     : development                ║
+║  DB      : Railway URL                ║
+╚════════════════════════════════════════╝
+
+✅ Connecté à PostgreSQL — Base : undefined
+(node:4576) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+✅ Schéma 'achats' vérifié (colonnes mois/annee OK).
+✅ Table 'entreprise_config' vérifiée (personnalisation PDF par entreprise).
+✅ Table 'entreprises' vérifiée (multi-tenant).
+   · utilisateurs.entreprise_id OK
+   · articles.entreprise_id OK
+   · clients_fournisseurs.entreprise_id OK
+   · achats.entreprise_id OK
+   · factures.entreprise_id OK
+   · lignes_vente.entreprise_id OK
+   · audit_log.entreprise_id OK
+✅ Colonnes 'entreprise_id' vérifiées sur les tables cloisonnées.
+✅ Vue 'vue_stock' recréée avec un calcul de stock correct (plus de produit cartésien, entreprise_id exposé).
+✅ Backfill achats.annee/mois OK (? lignes mises à jour).
+✅ Table 'entreprise_config' restructurée pour le multi-entreprises (1 ligne par entreprise).
+✅ PKs composites (code, entreprise_id) sur articles/factures + FKs composites.
+✅ Compte 'SuperAdmin' vérifié (plateforme multi-entreprises).
+✅ Colonnes abonnement sur 'entreprises' vérifiées.
+✅ factures.statut converti en GENERATED ALWAYS AS (montant_paye >= montant).
+✅ Migration images : articles.image_url + vue_stock mise à jour.
+✅ Colonne 'must_change_password' vérifiée + comptes existants marqués pour changement de mot de passe.
+✅ Colonnes 'facture_style/recu_style/rapport_style' vérifiées (catalogue de styles PDF).
+✅ Contrainte clients_fournisseurs.type mise à jour (valeurs plurielles autorisées).
+✅ Colonne 'adresse' rendue obligatoire sur clients_fournisseurs.
+✅ Index DB vérifiés (entreprise_id, dates, article_code, FKs).
+✅ Colonne 'lignes_vente.prix_achat' vérifiée (coût historique figé à la vente).

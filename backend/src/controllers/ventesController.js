@@ -28,25 +28,67 @@ async function genFactureCode(dbClient, date, entId) {
 const MOIS = ["Janvier","Février","Mars","Avril","Mai","Juin",
               "Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 
-// GET /api/ventes — Historique des ventes
+// GET /api/ventes — Historique des ventes (paginé côté serveur)
+// Réponse : { data, total, page, limit, totalPages, kpis }
+// kpis est calculé sur l'ENSEMBLE des lignes filtrées (pas seulement la page
+// courante) afin que les cartes de synthèse (CA, clients, panier moyen)
+// restent exactes quelle que soit la page affichée.
 async function getAll(req, res) {
   try {
-    const { client, mois, annee, facture } = req.query;
-    let q = `
-      SELECT lv.*, f.client_nom, f.date_facture, f.montant AS facture_montant,
-             f.montant_paye, f.reste, f.statut AS facture_statut
-      FROM lignes_vente lv
-      JOIN factures f ON f.code = lv.facture_code AND f.entreprise_id = lv.entreprise_id
-      WHERE lv.entreprise_id = $1`;
+    const { client, mois, annee, facture, q: search } = req.query;
+    const page   = Math.max(1, parseInt(req.query.page) || 1);
+    const limit  = Math.min(Math.max(1, parseInt(req.query.limit) || 50), 200);
+    const offset = (page - 1) * limit;
+
+    let where = ` WHERE lv.entreprise_id = $1`;
     const params = [req.user.entreprise_id];
     let idx = 2;
-    if (client)  { q += ` AND f.client_nom ILIKE $${idx++}`; params.push(`%${client}%`); }
-    if (mois)    { q += ` AND lv.mois = $${idx++}`;          params.push(mois); }
-    if (annee)   { q += ` AND lv.annee = $${idx++}`;         params.push(annee); }
-    if (facture) { q += ` AND lv.facture_code = $${idx++}`;  params.push(facture); }
-    q += ` ORDER BY lv.date_vente ASC, lv.id ASC`;
-    const result = await db.query(q, params);
-    res.json(result.rows);
+    if (client)  { where += ` AND f.client_nom ILIKE $${idx++}`; params.push(`%${client}%`); }
+    if (mois)    { where += ` AND lv.mois = $${idx++}`;          params.push(mois); }
+    if (annee)   { where += ` AND lv.annee = $${idx++}`;         params.push(annee); }
+    if (facture) { where += ` AND lv.facture_code = $${idx++}`;  params.push(facture); }
+    if (search)  {
+      where += ` AND (lv.libelle ILIKE $${idx} OR f.client_nom ILIKE $${idx} OR lv.facture_code ILIKE $${idx})`;
+      params.push(`%${search}%`);
+      idx++;
+    }
+
+    const fromClause = `FROM lignes_vente lv
+      JOIN factures f ON f.code = lv.facture_code AND f.entreprise_id = lv.entreprise_id`;
+
+    const [dataResult, countResult, aggResult] = await Promise.all([
+      db.query(
+        `SELECT lv.*, f.client_nom, f.date_facture, f.montant AS facture_montant,
+                f.montant_paye, f.reste, f.statut AS facture_statut
+         ${fromClause}
+         ${where}
+         ORDER BY lv.date_vente ASC, lv.id ASC
+         LIMIT $${idx} OFFSET $${idx + 1}`,
+        [...params, limit, offset]
+      ),
+      db.query(`SELECT COUNT(*) AS total ${fromClause} ${where}`, params),
+      db.query(
+        `SELECT COALESCE(SUM(lv.montant_total), 0) AS total_ca,
+                COUNT(DISTINCT f.client_nom)        AS nb_clients,
+                COUNT(DISTINCT lv.facture_code)     AS nb_factures
+         ${fromClause} ${where}`,
+        params
+      ),
+    ]);
+
+    const total = parseInt(countResult.rows[0].total);
+    res.json({
+      data: dataResult.rows,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      kpis: {
+        total_ca:    aggResult.rows[0].total_ca,
+        nb_clients:  parseInt(aggResult.rows[0].nb_clients),
+        nb_factures: parseInt(aggResult.rows[0].nb_factures),
+      },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Erreur lors de la récupération des ventes." });
@@ -93,6 +135,19 @@ async function create(req, res) {
 
     await client.query("BEGIN");
 
+    // Validation cross-tenant : si un client_id est fourni, il doit appartenir
+    // à l'entreprise courante. Sans cette vérification, un utilisateur pourrait
+    // rattacher une facture à un client d'une autre entreprise (fuite de
+    // données entre tenants via un identifiant deviné/forgé).
+    if (client_id !== undefined && client_id !== null && client_id !== "") {
+      const clientCheck = await client.query(
+        `SELECT id FROM clients_fournisseurs WHERE id = $1 AND entreprise_id = $2`,
+        [client_id, entId]
+      );
+      if (!clientCheck.rows[0])
+        throw new Error("Client introuvable.");
+    }
+
     // Vérification des stocks avant toute transaction (cloisonné par entreprise)
     // — on verrouille la ligne "articles" de chaque produit (FOR UPDATE) pour
     // empêcher deux ventes concurrentes de lire le même stock_restant et de
@@ -100,7 +155,7 @@ async function create(req, res) {
     // concurrente reste bloquée sur ce verrou jusqu'au COMMIT/ROLLBACK courant.
     for (const item of articles) {
       const lock = await client.query(
-        `SELECT id FROM articles WHERE code = $1 AND entreprise_id = $2 FOR UPDATE`,
+        `SELECT code FROM articles WHERE code = $1 AND entreprise_id = $2 FOR UPDATE`,
         [item.code, entId]
       );
       if (!lock.rows[0])
@@ -138,12 +193,12 @@ async function create(req, res) {
     // Créer les lignes de vente
     const lignes = [];
     for (const item of articles) {
-      const art = await client.query(`SELECT libelle FROM articles WHERE code = $1 AND entreprise_id = $2`, [item.code, entId]);
+      const art = await client.query(`SELECT libelle, prix_achat FROM articles WHERE code = $1 AND entreprise_id = $2`, [item.code, entId]);
       const ligne = await client.query(
-        `INSERT INTO lignes_vente (facture_code, article_code, libelle, prix_vente, quantite, date_vente, mois, client_nom, user_id, entreprise_id)
-         VALUES ($1, $2, $3, $4::numeric, $5::integer, $6, $7, $8, $9::integer, $10)
+        `INSERT INTO lignes_vente (facture_code, article_code, libelle, prix_vente, prix_achat, quantite, date_vente, mois, client_nom, user_id, entreprise_id)
+         VALUES ($1, $2, $3, $4::numeric, $5::numeric, $6::integer, $7, $8, $9, $10::integer, $11)
          RETURNING *`,
-        [factCode, item.code, art.rows[0]?.libelle || item.code, parseFloat(item.prix_vente), parseInt(item.quantite), date, mois, client_nom, req.user?.id ? parseInt(req.user.id) : null, entId]
+        [factCode, item.code, art.rows[0]?.libelle || item.code, parseFloat(item.prix_vente), parseFloat(art.rows[0]?.prix_achat) || 0, parseInt(item.quantite), date, mois, client_nom, req.user?.id ? parseInt(req.user.id) : null, entId]
       );
       lignes.push(ligne.rows[0]);
     }

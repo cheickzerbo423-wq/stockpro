@@ -108,7 +108,7 @@ export default function Login() {
         {/* Footer gauche */}
         <div className="relative z-10">
           <p className="text-blue-400/40 text-xs font-medium">
-            © 2026 WariGest — Tous droits réservés
+            © {new Date().getFullYear()} WariGest — Tous droits réservés
           </p>
         </div>
       </div>
@@ -228,7 +228,7 @@ export default function Login() {
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-center gap-2">
             <WiLogo size={20} />
-            <span className="text-gray-400 text-xs font-semibold">WariGest v1.0 — © 2026</span>
+            <span className="text-gray-400 text-xs font-semibold">WariGest v1.0 — © {new Date().getFullYear()}</span>
           </div>
         </div>
       </div>

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">WariGest</string>
+    <string name="title_activity_main">WariGest</string>
+    <string name="package_name">com.warigest.app</string>
+    <string name="custom_url_scheme">com.warigest.app</string>
+</resources>

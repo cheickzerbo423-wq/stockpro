@@ -409,7 +409,7 @@ export default function Clients() {
 
   const handleDel = (id, nom) => setDelConfirm({ id, nom });
   const confirmDel = async () => {
-    try { await del(delConfirm.id); notify("Supprimé."); setDelConfirm(null); reload(); }
+    try { await del(delConfirm.id); notify("Contact archivé."); setDelConfirm(null); reload(); }
     catch (err) { notify(err.message, "error"); setDelConfirm(null); }
   };
 
@@ -632,7 +632,7 @@ export default function Clients() {
         <ConfirmModal
           icon="🗑️"
           title={`Supprimer ${delConfirm.nom} ?`}
-          message="Cette action est irréversible. Toutes les données associées seront perdues."
+          message="Ce contact sera archivé : il disparaîtra de vos listes, mais son historique (ventes, achats, factures) restera intact et inchangé."
           confirmLabel="Supprimer"
           confirmColor="red"
           onConfirm={confirmDel}

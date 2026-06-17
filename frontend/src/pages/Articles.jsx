@@ -185,7 +185,7 @@ export default function Articles() {
   const handleDelete = async (code) => {
     try {
       await deleteArticle(code);
-      notify("Article supprimé.");
+      notify("Article archivé.");
       setDelConfirm(null);
       reload();
     } catch (err) {

@@ -19,7 +19,7 @@ function classic(doc, ctx) {
 
   let txtX = M, txtW = 240;
   if (logoBuf) {
-    try { doc.image(logoBuf, M, 36, { fit: [42, 42] }); txtX = M + 52; txtW = 188; } catch (e) { /* ignoré */ }
+    try { doc.image(logoBuf, M, 36, { fit: [42, 42] }); txtX = M + 52; txtW = 188; } catch (e) { console.warn("Logo PDF illisible :", e.message); }
   }
 
   doc.fontSize(16).fillColor(INK).font("Helvetica-Bold").text(cfg.nom, txtX, 36, { width: txtW });
@@ -118,7 +118,7 @@ function moderne(doc, ctx) {
 
   let nameX = M;
   if (logoBuf) {
-    try { doc.image(logoBuf, M, 44, { fit: [30, 30] }); nameX = M + 40; } catch (e) { /* ignoré */ }
+    try { doc.image(logoBuf, M, 44, { fit: [30, 30] }); nameX = M + 40; } catch (e) { console.warn("Logo PDF illisible :", e.message); }
   }
   doc.fontSize(8).fillColor(SUB).font("Helvetica-Bold").text((cfg.nom || "").toUpperCase(), nameX, 50, { characterSpacing: 1.5 });
   doc.fontSize(30).fillColor(INK).font("Helvetica").text("Rapport financier", M, 70);
@@ -214,7 +214,7 @@ function bloc(doc, ctx) {
       doc.roundedRect(M, 22, 44, 44, 6).fill("#FFFFFF");
       doc.image(logoBuf, M + 4, 26, { fit: [36, 36] });
       nameX = M + 54;
-    } catch (e) { /* ignoré */ }
+    } catch (e) { console.warn("Logo PDF illisible :", e.message); }
   }
   doc.fontSize(14).fillColor("#FFFFFF").font("Helvetica-Bold").text(cfg.nom, nameX, 26, { width: 220 });
   doc.fontSize(8).fillColor("#FFFFFF").opacity(0.85).font("Helvetica")
@@ -312,7 +312,7 @@ function elegant(doc, ctx) {
 
   let y = 40;
   if (logoBuf) {
-    try { doc.image(logoBuf, (PW - 38) / 2, y, { fit: [38, 38] }); y += 46; } catch (e) { /* ignoré */ }
+    try { doc.image(logoBuf, (PW - 38) / 2, y, { fit: [38, 38] }); y += 46; } catch (e) { console.warn("Logo PDF illisible :", e.message); }
   }
   doc.fontSize(17).fillColor(INK).font("Times-Bold").text(cfg.nom, M, y, { width: INN, align: "center" });
   y += 20;
@@ -411,7 +411,7 @@ function compact(doc, ctx) {
 
   let nameX = M, nameW = 300;
   if (logoBuf) {
-    try { doc.image(logoBuf, M, 22, { fit: [28, 28] }); nameX = M + 34; nameW = 266; } catch (e) { /* ignoré */ }
+    try { doc.image(logoBuf, M, 22, { fit: [28, 28] }); nameX = M + 34; nameW = 266; } catch (e) { console.warn("Logo PDF illisible :", e.message); }
   }
   doc.fontSize(11).fillColor(INK).font("Helvetica-Bold").text(cfg.nom, nameX, 22, { width: nameW });
   doc.fontSize(7).fillColor(SUB).font("Helvetica")
@@ -517,7 +517,7 @@ function sidebar(doc, ctx) {
       doc.roundedRect(20, sy, 44, 44, 8).fill("#FFFFFF");
       doc.image(logoBuf, 25, sy + 5, { fit: [34, 34] });
       sy += 56;
-    } catch (e) { /* logo ignore */ }
+    } catch (e) { console.warn("Logo PDF illisible :", e.message); }
   }
   doc.fontSize(13).fillColor("#FFFFFF").font("Helvetica-Bold").text(cfg.nom, 20, sy, { width: SBW - 36 });
   sy += doc.heightOfString(cfg.nom, { width: SBW - 36 }) + 4;

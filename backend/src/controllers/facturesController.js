@@ -7,31 +7,67 @@ const { getStyle } = require("../utils/pdfStyles");
 const factureLayouts = require("../pdf/facturesLayouts");
 const recuLayouts = require("../pdf/recuLayouts");
 
-// GET /api/factures
+// GET /api/factures — Liste des factures (paginée côté serveur)
+// Réponse : { data, total, page, limit, totalPages, kpis }
+// kpis est calculé sur l'ENSEMBLE des factures filtrées (pas seulement la
+// page courante) afin que les cartes de synthèse (CA, reste, réglées/
+// impayées) restent exactes quelle que soit la page affichée.
+//
+// "statut" : "paid" => f.reste <= 0 (facture réglée), "unpaid" => f.reste > 0.
+// Aligné sur isFactureReglee() côté frontend, qui corrige le cas où la
+// colonne "statut" (générée) est obsolète mais "reste" vaut 0.
 async function getAll(req, res) {
   try {
-    const { client, statut, mois, annee } = req.query;
-    let q = `
-      SELECT f.*, COUNT(lv.id) AS nb_articles
-      FROM factures f
-      LEFT JOIN lignes_vente lv ON lv.facture_code = f.code AND lv.entreprise_id = f.entreprise_id
-      WHERE f.entreprise_id = $1`;
+    const { client, statut, annee, q: search } = req.query;
+    const page   = Math.max(1, parseInt(req.query.page) || 1);
+    const limit  = Math.min(Math.max(1, parseInt(req.query.limit) || 50), 200);
+    const offset = (page - 1) * limit;
+
+    let where = ` WHERE f.entreprise_id = $1`;
     const params = [req.user.entreprise_id];
     let idx = 2;
-    if (client) { q += ` AND f.client_nom ILIKE $${idx++}`; params.push(`%${client}%`); }
-    if (statut !== undefined) {
-      q += ` AND f.statut = $${idx++}`;
-      params.push(statut === "true" || statut === "1");
-    }
-    if (annee)  { q += ` AND EXTRACT(YEAR FROM f.date_facture) = $${idx++}`; params.push(annee); }
-    q += ` GROUP BY f.code, f.entreprise_id ORDER BY f.code ASC`;
-    // Garde-fou : limite haute pour éviter une réponse démesurée lorsque
-    // l'historique des factures grossit avec le temps (le frontend affiche
-    // la liste complète sans pagination ; au-delà de 5000 lignes, filtrer
-    // par mois/année/statut via les paramètres existants).
-    q += ` LIMIT 5000`;
-    const result = await db.query(q, params);
-    res.json(result.rows);
+    if (client) { where += ` AND f.client_nom ILIKE $${idx++}`; params.push(`%${client}%`); }
+    if (statut === "paid")   where += ` AND f.reste <= 0`;
+    if (statut === "unpaid") where += ` AND f.reste > 0`;
+    if (annee)  { where += ` AND EXTRACT(YEAR FROM f.date_facture) = $${idx++}`; params.push(annee); }
+    if (search) { where += ` AND (f.client_nom ILIKE $${idx} OR f.code ILIKE $${idx})`; params.push(`%${search}%`); idx++; }
+
+    const [dataResult, countResult, aggResult] = await Promise.all([
+      db.query(
+        `SELECT f.*, COUNT(lv.id) AS nb_articles
+         FROM factures f
+         LEFT JOIN lignes_vente lv ON lv.facture_code = f.code AND lv.entreprise_id = f.entreprise_id
+         ${where}
+         GROUP BY f.code, f.entreprise_id
+         ORDER BY f.code ASC
+         LIMIT $${idx} OFFSET $${idx + 1}`,
+        [...params, limit, offset]
+      ),
+      db.query(`SELECT COUNT(*) AS total FROM factures f ${where}`, params),
+      db.query(
+        `SELECT COALESCE(SUM(f.montant), 0)                       AS total_ca,
+                COALESCE(SUM(f.reste), 0)                         AS total_reste,
+                COUNT(*) FILTER (WHERE f.reste <= 0)              AS nb_reglees,
+                COUNT(*) FILTER (WHERE f.reste > 0)               AS nb_impayees
+         FROM factures f ${where}`,
+        params
+      ),
+    ]);
+
+    const total = parseInt(countResult.rows[0].total);
+    res.json({
+      data: dataResult.rows,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      kpis: {
+        total_ca:    aggResult.rows[0].total_ca,
+        total_reste: aggResult.rows[0].total_reste,
+        nb_reglees:  parseInt(aggResult.rows[0].nb_reglees),
+        nb_impayees: parseInt(aggResult.rows[0].nb_impayees),
+      },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Erreur serveur." });

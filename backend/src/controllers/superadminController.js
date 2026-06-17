@@ -197,10 +197,6 @@ async function remove(req, res) {
     await client.query("BEGIN");
 
     // 1) Désamorcer les références croisées (FK nullable)
-    // Note : "gammes" / articles.gamme_code appartiennent à une fonctionnalité
-    // non finalisée (gammesController.js n'est pas branché dans routes/index.js,
-    // la table "gammes" et la colonne "gamme_code" n'existent pas en base) —
-    // toute référence à ces objets ferait échouer la transaction de suppression.
     await client.query(`UPDATE factures  SET client_id = NULL      WHERE entreprise_id = $1`, [id]);
     await client.query(`UPDATE achats    SET fournisseur_id = NULL WHERE entreprise_id = $1`, [id]);
     await client.query(`UPDATE audit_log SET user_id = NULL        WHERE entreprise_id = $1`, [id]);

@@ -5,16 +5,13 @@ import { useFactures, useMutation, useSortableData } from "../hooks/useApi";
 import { facturesService } from "../services";
 import {
   fmt, fmtDate, Spinner, ErrorBox, Badge, Modal, Input,
-  Btn, PageHeader, DataTable, TR, TD, Toast, SearchBox,
+  Btn, PageHeader, DataTable, TR, TD, Toast, SearchBox, Pagination,
   isFactureReglee,
 } from "../components/UI";
 
 export default function Factures() {
   const navigate  = useNavigate();
   const location  = useLocation();
-
-  const { data: factures = [], loading, error, reload } = useFactures();
-  const { mutate: payFacture } = useMutation(facturesService.updatePaiement);
 
   const [selected,     setSelected]     = useState(null);
   const [detail,       setDetail]       = useState(null);
@@ -26,12 +23,30 @@ export default function Factures() {
   const [loadingRecu,  setLoadingRecu]  = useState(null);
   const [search,       setSearch]       = useState("");
   const [filterStatut, setFilterStatut] = useState("all"); // all | paid | unpaid
+  const [page,         setPage]         = useState(1);
+
+  const filters = useMemo(() => {
+    const f = { page, limit: 50 };
+    if (search.trim()) f.q = search.trim();
+    if (filterStatut !== "all") f.statut = filterStatut;
+    return f;
+  }, [page, search, filterStatut]);
+
+  const { data: result = {}, loading, error, reload } = useFactures(filters);
+  const factures    = result.data  || [];
+  const total       = result.total || 0;
+  const totalPages  = result.totalPages || 1;
+  const kpis        = result.kpis  || {};
+  const { mutate: payFacture } = useMutation(facturesService.updatePaiement);
 
   // Pré-filtrer si on arrive depuis la page Ventes
   useEffect(() => {
     const fs = location.state?.factureSearch; // eslint-disable-line
-    if (fs) { setSearch(fs); window.history.replaceState({}, document.title); }
+    if (fs) { setSearch(fs); setPage(1); window.history.replaceState({}, document.title); }
   }, []); // eslint-disable-line
+
+  // Revenir à la page 1 à chaque changement de recherche/filtre
+  useEffect(() => { setPage(1); }, [search, filterStatut]);
 
   const notify = (msg, type = "success") => {
     setToast({ message: msg, type });
@@ -78,14 +93,13 @@ export default function Factures() {
     } catch (err) { notify(err.message, "error"); }
   };
 
-  // KPIs
-  const totalCA    = factures.reduce((s, f) => s + parseFloat(f.montant || 0), 0);
+  // KPIs (calculés côté serveur sur l'ensemble des factures filtrées)
+  const totalCA    = parseFloat(kpis.total_ca || 0);
+  const totalReste = parseFloat(kpis.total_reste || 0);
+  const nbReglees  = kpis.nb_reglees  || 0;
+  const nbImpayees = kpis.nb_impayees || 0;
   // Source de vérité : reste = 0 → réglée (même si statut DB pas encore mis à jour)
   const isReglée = (f) => isFactureReglee(f.statut, f.reste);
-
-  const totalReste = factures.reduce((s, f) => s + parseFloat(f.reste || 0), 0);
-  const nbReglees  = factures.filter(isReglée).length;
-  const nbImpayees = factures.filter((f) => !isReglée(f)).length;
   // Taux de recouvrement EN VALEUR (encaissé / facturé), pas en nombre de
   // factures : un paiement partiel doit faire bouger l'indicateur même si
   // aucune facture supplémentaire n'est totalement réglée.
@@ -100,30 +114,14 @@ export default function Factures() {
     } catch (err) { notify(err.message || "Erreur", "error"); }
   };
 
-  // Filtres
-  const facturesFiltrees = useMemo(() => {
-    let list = factures;
-    if (filterStatut === "paid")   list = list.filter(isReglée);
-    if (filterStatut === "unpaid") list = list.filter((f) => !isReglée(f));
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (f) =>
-          (f.code || "").toLowerCase().includes(q) ||
-          (f.client_nom || "").toLowerCase().includes(q)
-      );
-    }
-    return list;
-  }, [factures, search, filterStatut]);
-
-  const { sorted: facturesAffichées, sortKey, sortDir, handleSort } = useSortableData(facturesFiltrees, "code", "asc");
+  const { sorted: facturesAffichées, sortKey, sortDir, handleSort } = useSortableData(factures, "code", "asc");
   const sortState = { key: sortKey, dir: sortDir };
 
   return (
     <div>
       <PageHeader
         title="Factures"
-        sub={`${factures.length} factures · CA total : ${fmt(totalCA)}`}
+        sub={`${total} facture(s) · CA total : ${fmt(totalCA)}`}
       />
 
       {/* KPIs */}
@@ -255,6 +253,7 @@ export default function Factures() {
             ))}
           </DataTable>
         )}
+        <Pagination page={page} totalPages={totalPages} total={total} limit={result.limit || 50} onChange={setPage} />
       </div>
 
       {/* ── Modal détail facture ── */}

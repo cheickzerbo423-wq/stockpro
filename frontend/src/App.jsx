@@ -1,6 +1,7 @@
 // src/App.jsx
-import { useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 import Login        from "./pages/Login";
@@ -13,7 +14,7 @@ import Factures     from "./pages/Factures";
 import Utilisateurs from "./pages/Utilisateurs";
 import Rapports     from "./pages/Rapports";
 import Guide        from "./pages/Guide";
-import { ConfirmModal } from "./components/UI";
+import { ConfirmModal, Toast } from "./components/UI";
 import Parametres   from "./pages/Parametres";
 import SuperAdmin   from "./pages/SuperAdmin";
 import ForcePasswordChange from "./pages/ForcePassword";
@@ -536,6 +537,59 @@ function PrivateRoute({ children, adminOnly = false, superAdminOnly = false, mod
   return children;
 }
 
+// ── Notifications globales (ex: session expirée) ──────────
+// Affiché au-dessus des routes : reste visible même si l'utilisateur est
+// redirigé (ex: vers /login) suite à l'événement.
+function AuthNotice() {
+  const { authNotice, clearAuthNotice } = useAuth();
+  if (!authNotice) return null;
+  return <Toast message={authNotice} type="info" onClose={clearAuthNotice} />;
+}
+
+// ── Intégration app mobile (Capacitor) ─────────────────────
+// Masque le splash screen natif une fois React monté, ajuste la barre de
+// statut Android à la couleur de la marque, et fait correspondre le bouton
+// "retour" matériel Android à la navigation React Router (recul d'une page,
+// ou confirmation de sortie sur les écrans racines). N'a aucun effet sur le
+// web (Capacitor.isNativePlatform() === false).
+function CapacitorBootstrap() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    import("@capacitor/splash-screen")
+      .then(({ SplashScreen }) => SplashScreen.hide())
+      .catch(() => {});
+
+    import("@capacitor/status-bar")
+      .then(({ StatusBar, Style }) => {
+        StatusBar.setBackgroundColor({ color: "#0023FF" }).catch(() => {});
+        StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let listenerHandle;
+    import("@capacitor/app").then(({ App: CapApp }) => {
+      CapApp.addListener("backButton", () => {
+        const ROOT_PATHS = ["/", "/login"];
+        if (ROOT_PATHS.includes(location.pathname)) {
+          CapApp.exitApp();
+        } else {
+          navigate(-1);
+        }
+      }).then((h) => { listenerHandle = h; });
+    }).catch(() => {});
+    return () => { listenerHandle?.remove(); };
+  }, [location.pathname, navigate]);
+
+  return null;
+}
+
 // ── App root ──────────────────────────────────────────────
 export default function App() {
   return (
@@ -556,6 +610,8 @@ export default function App() {
           <Route path="/superadmin"   element={<PrivateRoute superAdminOnly><Layout><SuperAdmin /></Layout></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <AuthNotice />
+        <CapacitorBootstrap />
       </BrowserRouter>
     </AuthProvider>
   );

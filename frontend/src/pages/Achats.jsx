@@ -4,7 +4,7 @@ import { useAchats, useArticles, useClients, useMutation, useSortableData } from
 import { achatsService, clientsService } from "../services";
 import {
   fmt, fmtN, fmtDate, today, Spinner, ErrorBox, Badge,
-  Modal, Input, Btn, PageHeader, DataTable, TR, TD, Toast, SearchBox,
+  Modal, Input, Btn, PageHeader, DataTable, TR, TD, Toast, SearchBox, Pagination,
 } from "../components/UI";
 
 /* ─── Mini-form création rapide ─────────────────────── */
@@ -154,14 +154,14 @@ function LigneCommande({ ligne, articles, onUpdate, onRemove }) {
       <div className="grid grid-cols-3 gap-2 items-end">
         <div>
           <label className="block text-xs font-semibold text-gray-500 mb-1">Quantité *</label>
-          <input type="number" min="1"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white"
+          <input type="number" min="1" inputMode="numeric"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white"
             value={ligne.quantite} onChange={(e) => onUpdate({ ...ligne, quantite: e.target.value })} placeholder="0" />
         </div>
         <div>
           <label className="block text-xs font-semibold text-gray-500 mb-1">P.U. (FCFA) *</label>
-          <input type="number" min="0"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white"
+          <input type="number" min="0" inputMode="numeric"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white"
             value={ligne.prix_achat} onChange={(e) => onUpdate({ ...ligne, prix_achat: e.target.value })} placeholder="0" />
         </div>
         <div className="flex flex-col items-center justify-center bg-[#E6EAFF] rounded-lg py-2 px-1 border border-[#B3BFFF]">
@@ -175,7 +175,6 @@ function LigneCommande({ ligne, articles, onUpdate, onRemove }) {
 
 /* ─── Page principale ───────────────────────────────── */
 export default function Achats() {
-  const { data: achats = [], loading, error, reload } = useAchats();
   const { data: articles = [], reload: reloadArticles } = useArticles();
   const { data: fournisseurs = [], reload: reloadFournisseurs } = useClients("Fournisseurs");
   const { mutate: createAchat, loading: saving } = useMutation(achatsService.create);
@@ -187,6 +186,22 @@ export default function Achats() {
   const [payAmount, setPayAmount] = useState("");
   const [toast, setToast]       = useState(null);
   const [searchTable, setSearchTable] = useState("");
+  const [page, setPage]         = useState(1);
+
+  const filters = useMemo(() => {
+    const f = { page, limit: 50 };
+    if (searchTable.trim()) f.q = searchTable.trim();
+    return f;
+  }, [page, searchTable]);
+
+  const { data: result = {}, loading, error, reload } = useAchats(filters);
+  const achats      = result.data  || [];
+  const total       = result.total || 0;
+  const totalPages  = result.totalPages || 1;
+  const kpis        = result.kpis  || {};
+
+  // Revenir à la page 1 à chaque changement de recherche
+  useEffect(() => { setPage(1); }, [searchTable]);
 
   /* ── Formulaire multi-lignes ── */
   const emptyLigne = () => ({ id: Date.now() + Math.random(), article_code: "", libelle: "", quantite: "", prix_achat: "" });
@@ -210,10 +225,11 @@ export default function Achats() {
   };
 
   const totalCommande = lignes.reduce((s, l) => s + (+l.prix_achat || 0) * (+l.quantite || 0), 0);
-  const totalDepenses = achats.reduce((s, a) => s + parseFloat(a.montant_total || 0), 0);
-  const totalDettes   = achats.reduce((s, a) => s + parseFloat(a.reste || 0), 0);
-  const nbAchats      = achats.length;
-  const nbFournisseursActifs = new Set(achats.map((a) => a.fournisseur_nom).filter(Boolean)).size;
+  // KPIs calculés côté serveur sur l'ensemble des achats filtrés
+  const totalDepenses = parseFloat(kpis.total_depenses || 0);
+  const totalDettes   = parseFloat(kpis.total_dettes || 0);
+  const nbAchats      = total;
+  const nbFournisseursActifs = kpis.nb_fournisseurs || 0;
 
   const resetModal = () => {
     setLignes([emptyLigne()]);
@@ -319,19 +335,8 @@ export default function Achats() {
     } catch (err) { notify(err.message, "error"); }
   };
 
-  /* ── Filtrage + tri du tableau principal ── */
-  const achatsFiltres = useMemo(() => {
-    if (!searchTable.trim()) return achats;
-    const q = searchTable.toLowerCase();
-    return achats.filter(
-      (a) =>
-        (a.libelle || "").toLowerCase().includes(q) ||
-        (a.fournisseur_nom || "").toLowerCase().includes(q) ||
-        (a.article_code || "").toLowerCase().includes(q)
-    );
-  }, [achats, searchTable]);
-
-  const { sorted: achatsAffichés, sortKey, sortDir, handleSort } = useSortableData(achatsFiltres, "date_achat", "asc");
+  /* ── Tri du tableau principal (filtrage désormais côté serveur) ── */
+  const { sorted: achatsAffichés, sortKey, sortDir, handleSort } = useSortableData(achats, "date_achat", "asc");
   const sortState = { key: sortKey, dir: sortDir };
   const artMap = useMemo(() => new Map(articles.map(a => [a.code, a])), [articles]);
 
@@ -339,7 +344,7 @@ export default function Achats() {
     <div>
       <PageHeader
         title="Approvisionnements"
-        sub={`${nbAchats} ligne(s) · Total dépensé : ${fmt(totalDepenses)}`}
+        sub={`${total} ligne(s) · Total dépensé : ${fmt(totalDepenses)}`}
         action={
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Btn onClick={() => { resetModal(); setShowAdd(true); }} className="w-full sm:w-auto">
@@ -437,6 +442,7 @@ export default function Achats() {
             ))}
           </DataTable>
         )}
+        <Pagination page={page} totalPages={totalPages} total={total} limit={result.limit || 50} onChange={setPage} />
       </div>
 
       {/* ── Modal Nouvel Approvisionnement ── */}
@@ -573,14 +579,14 @@ export default function Achats() {
               <button
                 type="button"
                 onClick={() => setMontantPaye(String(totalCommande))}
-                className="text-xs px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 font-bold hover:bg-emerald-200"
+                className="text-[13px] px-4 py-2 rounded-lg bg-emerald-100 text-emerald-700 font-bold hover:bg-emerald-200 active:scale-95 transition"
               >
                 ✅ Comptant
               </button>
               <button
                 type="button"
                 onClick={() => setMontantPaye("0")}
-                className="text-xs px-3 py-1.5 rounded-lg bg-red-100 text-red-700 font-bold hover:bg-red-200"
+                className="text-[13px] px-4 py-2 rounded-lg bg-red-100 text-red-700 font-bold hover:bg-red-200 active:scale-95 transition"
               >
                 📋 Crédit total
               </button>

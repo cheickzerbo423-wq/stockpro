@@ -123,31 +123,45 @@ async function update(req, res) {
 }
 
 async function remove(req, res) {
+  const client = await db.connect();
   try {
     if (req.user.categorie !== "Admin")
       return res.status(403).json({ message: "Réservé aux administrateurs." });
     const targetId = parseInt(req.params.id);
     if (targetId === req.user.id)
       return res.status(400).json({ message: "Vous ne pouvez pas supprimer votre propre compte." });
+
+    await client.query("BEGIN");
+
     // Vérifier que l'utilisateur existe ET appartient à la même entreprise
     // (et n'est pas le SuperAdmin plateforme)
-    const check = await db.query(
+    const check = await client.query(
       `SELECT id, login FROM utilisateurs WHERE id = $1 AND entreprise_id = $2 AND categorie != 'SuperAdmin'`,
       [targetId, req.user.entreprise_id]
     );
-    if (check.rows.length === 0)
+    if (check.rows.length === 0) {
+      await client.query("ROLLBACK");
       return res.status(404).json({ message: "Utilisateur introuvable." });
-    // Détacher les références avant suppression
-    await db.query(`UPDATE achats        SET user_id = NULL WHERE user_id = $1`, [targetId]);
-    await db.query(`UPDATE lignes_vente  SET user_id = NULL WHERE user_id = $1`, [targetId]);
-    await db.query(`UPDATE factures      SET user_id = NULL WHERE user_id = $1`, [targetId]);
-    await db.query(`UPDATE audit_log     SET user_id = NULL WHERE user_id = $1`, [targetId]);
+    }
+    // Détacher les références avant suppression — toutes ces opérations et la
+    // suppression finale doivent être atomiques : un échec à mi-chemin (ex.
+    // perte de connexion) ne doit pas laisser certaines références détachées
+    // et l'utilisateur encore présent (ou l'inverse).
+    await client.query(`UPDATE achats        SET user_id = NULL WHERE user_id = $1`, [targetId]);
+    await client.query(`UPDATE lignes_vente  SET user_id = NULL WHERE user_id = $1`, [targetId]);
+    await client.query(`UPDATE factures      SET user_id = NULL WHERE user_id = $1`, [targetId]);
+    await client.query(`UPDATE audit_log     SET user_id = NULL WHERE user_id = $1`, [targetId]);
     // Suppression définitive
-    await db.query(`DELETE FROM utilisateurs WHERE id = $1`, [targetId]);
+    await client.query(`DELETE FROM utilisateurs WHERE id = $1`, [targetId]);
+
+    await client.query("COMMIT");
     res.json({ message: `Utilisateur "${check.rows[0].login}" supprimé définitivement.` });
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error(err);
     res.status(500).json({ message: "Erreur serveur." });
+  } finally {
+    client.release();
   }
 }
 

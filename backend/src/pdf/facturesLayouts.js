@@ -19,7 +19,7 @@ function classic(doc, ctx) {
     try {
       doc.image(logoBuf, M, 40, { fit: [44, 44] });
       nameX = M + 54; nameW = 196;
-    } catch (e) { /* logo ignoré */ }
+    } catch (e) { console.warn("Logo PDF illisible :", e.message); }
   }
 
   doc.fontSize(16).fillColor(INK).font("Helvetica-Bold").text(cfg.nom, nameX, 40, { width: nameW });
@@ -51,15 +51,28 @@ function classic(doc, ctx) {
   const C3x = M + 290, C3w = 115;
   const C4x = M + 405, C4w = INN - 405;
 
-  doc.fontSize(8).fillColor(SUB).font("Helvetica-Bold");
-  doc.text("DESIGNATION", C1x, TY + 9, { width: C1w });
-  doc.text("QTE",         C2x, TY + 9, { width: C2w, align: "center" });
-  doc.text("PRIX UNIT.",  C3x, TY + 9, { width: C3w, align: "right" });
-  doc.text("MONTANT",     C4x, TY + 9, { width: C4w, align: "right" });
-  hr(TY + RH, 1, INK);
+  const drawTableHeader = (ty) => {
+    doc.fontSize(8).fillColor(SUB).font("Helvetica-Bold");
+    doc.text("DESIGNATION", C1x, ty + 9, { width: C1w });
+    doc.text("QTE",         C2x, ty + 9, { width: C2w, align: "center" });
+    doc.text("PRIX UNIT.",  C3x, ty + 9, { width: C3w, align: "right" });
+    doc.text("MONTANT",     C4x, ty + 9, { width: C4w, align: "right" });
+    hr(ty + RH, 1, INK);
+    return ty + RH;
+  };
 
-  let ry = TY + RH;
+  let ry = drawTableHeader(TY);
+
+  // Si la ligne suivante dépasserait la zone réservée aux totaux et au pied
+  // de page, on crée une nouvelle page et on répète l'en-tête du tableau —
+  // indispensable pour les factures à nombreuses lignes (sinon le pied de
+  // page et les totaux seraient écrasés).
+  const BOTTOM_LIMIT = PH - 200;
   lignes.forEach((l) => {
+    if (ry + 26 > BOTTOM_LIMIT) {
+      doc.addPage();
+      ry = drawTableHeader(40);
+    }
     ry += 4;
     doc.fontSize(9.5).fillColor(INK).font("Helvetica").text(l.libelle, C1x, ry, { width: C1w - 8 });
     doc.text(String(parseFloat(l.quantite) || 0), C2x, ry, { width: C2w, align: "center" });
@@ -68,6 +81,13 @@ function classic(doc, ctx) {
     ry += 22;
     hr(ry, 0.3, LITE);
   });
+
+  // Les totaux ont besoin d'environ 130px sous le tableau : si la place
+  // restante est insuffisante, on les reporte sur une nouvelle page.
+  if (ry + 130 > PH - 60) {
+    doc.addPage();
+    ry = 40;
+  }
 
   hr(ry + 4, 0.5, LITE);
 
@@ -109,7 +129,7 @@ function moderne(doc, ctx) {
   let y = 50;
   let nameX = M;
   if (logoBuf) {
-    try { doc.image(logoBuf, M, y, { fit: [32, 32] }); nameX = M + 42; } catch (e) { /* ignoré */ }
+    try { doc.image(logoBuf, M, y, { fit: [32, 32] }); nameX = M + 42; } catch (e) { console.warn("Logo PDF illisible :", e.message); }
   }
   doc.fontSize(8).fillColor(SUB).font("Helvetica-Bold")
      .text((cfg.nom || "").toUpperCase(), nameX, y + (logoBuf ? 8 : 0), { characterSpacing: 1.5 });
@@ -133,16 +153,27 @@ function moderne(doc, ctx) {
   y += 28;
 
   const C1x = M, C1w = 260, C2x = M + 260, C2w = 50, C3x = M + 310, C3w = 110, C4x = M + 420, C4w = INN - 420;
-  doc.fontSize(7.5).fillColor(SUB).font("Helvetica");
-  doc.text("DESIGNATION", C1x, y, { width: C1w });
-  doc.text("QTE",         C2x, y, { width: C2w, align: "center" });
-  doc.text("PRIX",        C3x, y, { width: C3w, align: "right" });
-  doc.text("MONTANT",     C4x, y, { width: C4w, align: "right" });
-  y += 16;
-  hr(y, 0.5, LINE);
-  y += 12;
+  const drawTableHeader = (ty) => {
+    doc.fontSize(7.5).fillColor(SUB).font("Helvetica");
+    doc.text("DESIGNATION", C1x, ty, { width: C1w });
+    doc.text("QTE",         C2x, ty, { width: C2w, align: "center" });
+    doc.text("PRIX",        C3x, ty, { width: C3w, align: "right" });
+    doc.text("MONTANT",     C4x, ty, { width: C4w, align: "right" });
+    ty += 16;
+    hr(ty, 0.5, LINE);
+    return ty + 12;
+  };
+  y = drawTableHeader(y);
 
+  // Pagination : répète l'en-tête de tableau sur une nouvelle page si la
+  // ligne suivante empièterait sur la zone des totaux/pied de page.
+  const BOTTOM_LIMIT = PH - 180;
   lignes.forEach((l) => {
+    if (y + 24 > BOTTOM_LIMIT) {
+      doc.addPage();
+      doc.rect(0, 0, PW, 4).fill(ACC);
+      y = drawTableHeader(40);
+    }
     doc.fontSize(9.5).fillColor(INK).font("Helvetica").text(l.libelle, C1x, y, { width: C1w - 8 });
     doc.text(String(parseFloat(l.quantite) || 0), C2x, y, { width: C2w, align: "center" });
     doc.fillColor(SUB).text(money(l.prix_vente), C3x, y, { width: C3w, align: "right" });
@@ -150,6 +181,12 @@ function moderne(doc, ctx) {
     y += 24;
     hr(y - 8, 0.5, LINE);
   });
+
+  if (y + 100 > PH - 50) {
+    doc.addPage();
+    doc.rect(0, 0, PW, 4).fill(ACC);
+    y = 40;
+  }
 
   y += 10;
   const TotW = 220, TotX = M + INN - TotW;
@@ -190,7 +227,7 @@ function bloc(doc, ctx) {
       doc.roundedRect(M, 28, 50, 50, 6).fill("#FFFFFF");
       doc.image(logoBuf, M + 5, 33, { fit: [40, 40] });
       nameX = M + 62;
-    } catch (e) { /* ignoré */ }
+    } catch (e) { console.warn("Logo PDF illisible :", e.message); }
   }
   doc.fontSize(15).fillColor("#FFFFFF").font("Helvetica-Bold").text(cfg.nom, nameX, 32, { width: 230 });
   doc.fontSize(8).fillColor("#FFFFFF").font("Helvetica").opacity(0.85);
@@ -216,15 +253,25 @@ function bloc(doc, ctx) {
   y += blocBoxH + 24;
 
   const C1x = M, C1w = 240, C2x = M + 240, C2w = 50, C3x = M + 290, C3w = 115, C4x = M + 405, C4w = INN - 405;
-  doc.rect(M, y, INN, 22).fill(ACC);
-  doc.fontSize(8).fillColor("#FFFFFF").font("Helvetica-Bold");
-  doc.text("DESIGNATION", C1x + 8, y + 7, { width: C1w });
-  doc.text("QTE",         C2x,     y + 7, { width: C2w, align: "center" });
-  doc.text("PRIX UNIT.",  C3x,     y + 7, { width: C3w, align: "right" });
-  doc.text("MONTANT",     C4x,     y + 7, { width: C4w - 8, align: "right" });
-  y += 22;
+  const drawTableHeader = (ty) => {
+    doc.rect(M, ty, INN, 22).fill(ACC);
+    doc.fontSize(8).fillColor("#FFFFFF").font("Helvetica-Bold");
+    doc.text("DESIGNATION", C1x + 8, ty + 7, { width: C1w });
+    doc.text("QTE",         C2x,     ty + 7, { width: C2w, align: "center" });
+    doc.text("PRIX UNIT.",  C3x,     ty + 7, { width: C3w, align: "right" });
+    doc.text("MONTANT",     C4x,     ty + 7, { width: C4w - 8, align: "right" });
+    return ty + 22;
+  };
+  y = drawTableHeader(y);
 
+  // Pagination : nouvelle page + en-tête de tableau répété si une ligne
+  // supplémentaire empièterait sur le bandeau de totaux/pied de page.
+  const BOTTOM_LIMIT = PH - 190;
   lignes.forEach((l, i) => {
+    if (y + 24 > BOTTOM_LIMIT) {
+      doc.addPage();
+      y = drawTableHeader(30);
+    }
     if (i % 2 === 1) doc.rect(M, y, INN, 24).fill(TINT);
     doc.fontSize(9.5).fillColor(INK).font("Helvetica").text(l.libelle, C1x + 8, y + 6, { width: C1w - 12 });
     doc.text(String(parseFloat(l.quantite) || 0), C2x, y + 6, { width: C2w, align: "center" });
@@ -232,6 +279,11 @@ function bloc(doc, ctx) {
     doc.fillColor(INK).font("Helvetica-Bold").text(money(l.montant_total), C4x, y + 6, { width: C4w - 8, align: "right" });
     y += 24;
   });
+
+  if (y + 120 > PH - 40) {
+    doc.addPage();
+    y = 30;
+  }
 
   y += 14;
   const TotW = 220, TotX = M + INN - TotW;
@@ -264,7 +316,7 @@ function elegant(doc, ctx) {
 
   let y = 44;
   if (logoBuf) {
-    try { doc.image(logoBuf, (PW - 40) / 2, y, { fit: [40, 40] }); y += 50; } catch (e) { /* ignoré */ }
+    try { doc.image(logoBuf, (PW - 40) / 2, y, { fit: [40, 40] }); y += 50; } catch (e) { console.warn("Logo PDF illisible :", e.message); }
   }
   doc.fontSize(18).fillColor(INK).font("Times-Bold").text(cfg.nom, M, y, { width: INN, align: "center" });
   y += 22;
@@ -296,16 +348,26 @@ function elegant(doc, ctx) {
   y += 10;
 
   const C1x = M, C1w = 260, C2x = M + 260, C2w = 50, C3x = M + 310, C3w = 110, C4x = M + 420, C4w = INN - 420;
-  doc.fontSize(8).fillColor(SUB).font("Times-Bold");
-  doc.text("Designation", C1x, y, { width: C1w });
-  doc.text("Qte",         C2x, y, { width: C2w, align: "center" });
-  doc.text("Prix unit.",  C3x, y, { width: C3w, align: "right" });
-  doc.text("Montant",     C4x, y, { width: C4w, align: "right" });
-  y += 14;
-  hr(y, 0.4, LINE);
-  y += 10;
+  const drawTableHeader = (ty) => {
+    doc.fontSize(8).fillColor(SUB).font("Times-Bold");
+    doc.text("Designation", C1x, ty, { width: C1w });
+    doc.text("Qte",         C2x, ty, { width: C2w, align: "center" });
+    doc.text("Prix unit.",  C3x, ty, { width: C3w, align: "right" });
+    doc.text("Montant",     C4x, ty, { width: C4w, align: "right" });
+    ty += 14;
+    hr(ty, 0.4, LINE);
+    return ty + 10;
+  };
+  y = drawTableHeader(y);
 
+  // Pagination : nouvelle page + en-tête de tableau répété pour les factures
+  // à nombreuses lignes.
+  const BOTTOM_LIMIT = PH - 170;
   lignes.forEach((l) => {
+    if (y + 22 > BOTTOM_LIMIT) {
+      doc.addPage();
+      y = drawTableHeader(40);
+    }
     doc.fontSize(10).fillColor(INK).font("Times-Roman").text(l.libelle, C1x, y, { width: C1w - 8 });
     doc.text(String(parseFloat(l.quantite) || 0), C2x, y, { width: C2w, align: "center" });
     doc.fillColor(SUB).font("Times-Roman").text(money(l.prix_vente), C3x, y, { width: C3w, align: "right" });
@@ -313,6 +375,11 @@ function elegant(doc, ctx) {
     y += 22;
     hr(y - 6, 0.3, LINE);
   });
+
+  if (y + 95 > PH - 50) {
+    doc.addPage();
+    y = 40;
+  }
 
   y += 12;
   const TotW = 220, TotX = M + INN - TotW;
@@ -347,7 +414,7 @@ function compact(doc, ctx) {
   let y = 26;
   let nameX = M, nameW = 280;
   if (logoBuf) {
-    try { doc.image(logoBuf, M, y, { fit: [28, 28] }); nameX = M + 34; nameW = 246; } catch (e) { /* ignoré */ }
+    try { doc.image(logoBuf, M, y, { fit: [28, 28] }); nameX = M + 34; nameW = 246; } catch (e) { console.warn("Logo PDF illisible :", e.message); }
   }
   doc.fontSize(11).fillColor(INK).font("Helvetica-Bold").text(cfg.nom, nameX, y, { width: nameW });
   const infoLine1 = [cfg.adresse, cfg.telephone && ("Tel: " + cfg.telephone), cfg.email].filter(Boolean).join("  |  ");
@@ -369,16 +436,26 @@ function compact(doc, ctx) {
   y += 16;
 
   const C1x = M, C1w = 260, C2x = M + 260, C2w = 44, C3x = M + 304, C3w = 100, C4x = M + 404, C4w = INN - 404;
-  doc.fontSize(7.5).fillColor(SUB).font("Helvetica-Bold");
-  doc.text("DESIGNATION", C1x, y, { width: C1w });
-  doc.text("QTE",         C2x, y, { width: C2w, align: "center" });
-  doc.text("P.U.",        C3x, y, { width: C3w, align: "right" });
-  doc.text("MONTANT",     C4x, y, { width: C4w, align: "right" });
-  y += 11;
-  hr(y, 0.5, INK);
-  y += 6;
+  const drawTableHeader = (ty) => {
+    doc.fontSize(7.5).fillColor(SUB).font("Helvetica-Bold");
+    doc.text("DESIGNATION", C1x, ty, { width: C1w });
+    doc.text("QTE",         C2x, ty, { width: C2w, align: "center" });
+    doc.text("P.U.",        C3x, ty, { width: C3w, align: "right" });
+    doc.text("MONTANT",     C4x, ty, { width: C4w, align: "right" });
+    ty += 11;
+    hr(ty, 0.5, INK);
+    return ty + 6;
+  };
+  y = drawTableHeader(y);
 
+  // Pagination : nouvelle page + en-tête répété (ce layout sert justement aux
+  // factures à nombreuses lignes, donc le risque de dépassement est élevé).
+  const BOTTOM_LIMIT = PH - 110;
   lignes.forEach((l, i) => {
+    if (y + 14 > BOTTOM_LIMIT) {
+      doc.addPage();
+      y = drawTableHeader(26);
+    }
     if (i % 2 === 1) doc.rect(M, y - 2, INN, 14).fill("#F9FAFB");
     doc.fontSize(8.5).fillColor(INK).font("Helvetica").text(l.libelle, C1x, y, { width: C1w - 6 });
     doc.text(String(parseFloat(l.quantite) || 0), C2x, y, { width: C2w, align: "center" });
@@ -386,6 +463,11 @@ function compact(doc, ctx) {
     doc.fillColor(INK).font("Helvetica-Bold").text(money(l.montant_total), C4x, y, { width: C4w, align: "right" });
     y += 14;
   });
+
+  if (y + 60 > PH - 26) {
+    doc.addPage();
+    y = 26;
+  }
 
   y += 4;
   hr(y, 0.5, LINE);
@@ -432,7 +514,7 @@ function sidebar(doc, ctx) {
       doc.roundedRect(20, sy, 46, 46, 8).fill("#FFFFFF");
       doc.image(logoBuf, 25, sy + 5, { fit: [36, 36] });
       sy += 58;
-    } catch (e) { /* logo ignore */ }
+    } catch (e) { console.warn("Logo PDF illisible :", e.message); }
   }
   doc.fontSize(13).fillColor("#FFFFFF").font("Helvetica-Bold").text(cfg.nom, 20, sy, { width: SBW - 36 });
   sy += doc.heightOfString(cfg.nom, { width: SBW - 36 }) + 6;
@@ -485,15 +567,27 @@ function sidebar(doc, ctx) {
   const C2w = 40, C3w = 70, C4w = 70, C1w = CW - C2w - C3w - C4w;
   const C1x = CX, C2x = CX + C1w, C3x = C2x + C2w, C4x = C3x + C3w;
 
-  doc.fontSize(8).fillColor(SUB).font("Helvetica-Bold");
-  doc.text("DESIGNATION", C1x, TY + 9, { width: C1w });
-  doc.text("QTE",         C2x, TY + 9, { width: C2w, align: "center" });
-  doc.text("PRIX UNIT.",  C3x, TY + 9, { width: C3w, align: "right" });
-  doc.text("MONTANT",     C4x, TY + 9, { width: C4w, align: "right" });
-  hr(TY + RH, 1, INK);
+  const drawTableHeader = (ty) => {
+    doc.fontSize(8).fillColor(SUB).font("Helvetica-Bold");
+    doc.text("DESIGNATION", C1x, ty + 9, { width: C1w });
+    doc.text("QTE",         C2x, ty + 9, { width: C2w, align: "center" });
+    doc.text("PRIX UNIT.",  C3x, ty + 9, { width: C3w, align: "right" });
+    doc.text("MONTANT",     C4x, ty + 9, { width: C4w, align: "right" });
+    hr(ty + RH, 1, INK);
+    return ty + RH;
+  };
 
-  let ry = TY + RH;
+  let ry = drawTableHeader(TY);
+
+  // Pagination : redessine le bandeau latéral coloré et répète l'en-tête de
+  // tableau sur une nouvelle page si nécessaire.
+  const BOTTOM_LIMIT = PH - 70;
   lignes.forEach((l) => {
+    if (ry + 26 > BOTTOM_LIMIT) {
+      doc.addPage();
+      doc.rect(0, 0, SBW, PH).fill(ACC);
+      ry = drawTableHeader(30);
+    }
     ry += 4;
     doc.fontSize(9.5).fillColor(INK).font("Helvetica").text(l.libelle, C1x, ry, { width: C1w - 8 });
     doc.text(String(parseFloat(l.quantite) || 0), C2x, ry, { width: C2w, align: "center" });

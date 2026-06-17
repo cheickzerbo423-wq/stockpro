@@ -32,11 +32,12 @@ async function init() {
   try {
     await pool.query(sql);
     console.log("✅ Base de données initialisée avec succès !");
-    console.log("   Tables : utilisateurs, articles, factures, lignes_vente, achats, clients_fournisseurs, devis, audit_log");
+    console.log("   Tables : entreprises, entreprise_config, utilisateurs, articles, factures, lignes_vente, achats, clients_fournisseurs, audit_log");
     console.log("   Vue    : vue_stock");
-    console.log("\n🔑 Accès admin par défaut :");
-    console.log("   Login    : admin");
-    console.log("   Mot de passe : admin123  ← CHANGEZ-LE !");
+    console.log("\n🔑 Aucun compte n'est créé par ce script.");
+    console.log("   Démarrez le serveur (npm start) : le compte SUPERADMIN est créé");
+    console.log("   automatiquement au premier démarrage (mot de passe affiché dans");
+    console.log("   les logs, ou défini via SUPERADMIN_INITIAL_PASSWORD).");
   } catch (err) {
     console.error("❌ Erreur lors de l'initialisation :", err.message);
     process.exit(1);

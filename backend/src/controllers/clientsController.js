@@ -205,7 +205,7 @@ async function remove(req, res) {
       `UPDATE clients_fournisseurs SET actif = FALSE WHERE id = $1 AND entreprise_id = $2`,
       [id, entId]
     );
-    res.json({ message: "Contact supprimé." });
+    res.json({ message: "Contact archivé." });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Erreur serveur." });

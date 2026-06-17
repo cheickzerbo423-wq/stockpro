@@ -5,7 +5,7 @@ import { useVentes, useArticles, useClients, useMutation, useSortableData } from
 import { ventesService, facturesService, clientsService } from "../services";
 import {
   fmt, fmtN, fmtDate, today, Spinner, ErrorBox,
-  Input, Btn, Modal, Badge, PageHeader, DataTable, TR, TD, Toast, SearchBox,
+  Input, Btn, Modal, Badge, PageHeader, DataTable, TR, TD, Toast, SearchBox, Pagination,
   isFactureReglee,
 } from "../components/UI";
 
@@ -343,24 +343,26 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                         </div>
                       </div>
                       <button onClick={() => remove(p.code)}
-                        className="ml-2 w-5 h-5 rounded-full bg-red-50 text-red-400 hover:bg-red-100 flex items-center justify-center text-xs shrink-0">✕</button>
+                        className="ml-2 w-8 h-8 rounded-full bg-red-50 text-red-400 hover:bg-red-100 active:bg-red-200 flex items-center justify-center text-sm shrink-0">✕</button>
                     </div>
                     <div className="flex items-center gap-2">
                       {/* − qty + */}
-                      <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
+                      <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
                         <button onClick={() => setQty(p.code, p.quantite - 1)}
-                          className="w-6 h-6 rounded-md bg-white shadow-sm text-gray-600 font-bold text-sm hover:text-[#0023FF] flex items-center justify-center">−</button>
+                          className="w-9 h-9 rounded-lg bg-white shadow-sm text-gray-600 font-bold text-lg hover:text-[#0023FF] active:scale-95 transition flex items-center justify-center">−</button>
                         <input type="number" min="1" max={stockMap.get(p.code) ?? undefined} value={p.quantite}
                           onChange={(e) => setQty(p.code, e.target.value)}
-                          className="w-9 text-center text-sm font-bold bg-transparent border-0 focus:outline-none" />
+                          inputMode="numeric"
+                          className="w-11 text-center text-base font-bold bg-transparent border-0 focus:outline-none" />
                         <button onClick={() => setQty(p.code, p.quantite + 1)}
                           disabled={p.quantite >= (stockMap.get(p.code) ?? Infinity)}
-                          className="w-6 h-6 rounded-md bg-[#0023FF] text-white font-bold text-sm flex items-center justify-center disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed">+</button>
+                          className="w-9 h-9 rounded-lg bg-[#0023FF] text-white font-bold text-lg active:scale-95 transition flex items-center justify-center disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed">+</button>
                       </div>
                       {/* Prix unitaire */}
                       <input type="number" min="0" value={p.prix_vente}
                         onChange={(e) => setPrice(p.code, e.target.value)}
-                        className="flex-1 text-right text-sm border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B3BFFF] min-w-0"
+                        inputMode="numeric"
+                        className="flex-1 text-right text-sm border border-gray-200 rounded-lg px-2 py-2 focus:outline-none focus:ring-1 focus:ring-[#B3BFFF] min-w-0"
                         title="Prix unitaire" />
                       <span className="text-sm font-black text-[#0023FF] shrink-0 w-20 text-right">{fmt(p.prix_vente * p.quantite)}</span>
                     </div>
@@ -384,15 +386,16 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setPaye(String(totalPanier))}
-                  className="flex-1 py-2 rounded-xl bg-emerald-100 text-emerald-700 text-xs font-bold hover:bg-emerald-200 transition">✅ Comptant</button>
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-100 text-emerald-700 text-[13px] font-bold hover:bg-emerald-200 active:scale-95 transition">✅ Comptant</button>
                 <button onClick={() => setPaye("0")}
-                  className="flex-1 py-2 rounded-xl bg-red-100 text-red-600 text-xs font-bold hover:bg-red-200 transition">📋 Crédit</button>
+                  className="flex-1 py-2.5 rounded-xl bg-red-100 text-red-600 text-[13px] font-bold hover:bg-red-200 active:scale-95 transition">📋 Crédit</button>
               </div>
               <div>
                 <label className="text-xs text-gray-500 font-semibold mb-1 block">Montant encaissé (FCFA)</label>
                 <input type="number" value={paye} onChange={(e) => setPaye(e.target.value)}
                   placeholder={`${totalPanier}`}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white" />
+                  inputMode="numeric"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-[#B3BFFF] bg-white" />
               </div>
               {monnaie !== null && (
                 <div className={`flex justify-between items-center px-3 py-2 rounded-xl text-sm font-bold
@@ -406,13 +409,14 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
         </div>
 
         {/* ── Footer ── */}
-        <div className="px-4 py-3 border-t border-gray-100 flex gap-2 flex-shrink-0 bg-white">
+        <div className="px-4 py-3 border-t border-gray-100 flex gap-2 flex-shrink-0 bg-white"
+          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
           <Btn color="gray" onClick={onClose} className="flex-1">Annuler</Btn>
           <button
             disabled={saving || panier.length === 0 || !client || hasOverstock}
             onClick={() => onSave({ client, clientId, datev, paye, panier })}
             title={hasOverstock ? "Quantité supérieure au stock disponible — corrigez le panier." : undefined}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition shadow-sm
+            className={`flex-1 py-3 rounded-xl text-sm font-bold transition shadow-sm active:scale-[0.98]
               ${panier.length === 0 || !client || hasOverstock
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                 : "bg-emerald-500 text-white hover:bg-emerald-600"}`}
@@ -433,7 +437,6 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
 
 /* ─── Page principale ──────────────────────────────────── */
 export default function Ventes() {
-  const { data: ventes  = [], loading, error, reload } = useVentes();
   const { data: articles = [], reload: reloadArticles } = useArticles();
   const { data: clients  = [], reload: reloadClients } = useClients("Clients");
   const { mutate: createVente, loading: saving } = useMutation(ventesService.create);
@@ -444,11 +447,24 @@ export default function Ventes() {
   const [showAdd, setShowAdd]   = useState(false);
   const [toast,   setToast]     = useState(null);
   const [search,  setSearch]    = useState("");
+  const [page,    setPage]      = useState(1);
   const [payModal, setPayModal] = useState(null);
   const [payAmount, setPayAmount] = useState("");
   const { mutate: payFacture }  = useMutation(facturesService.updatePaiement);
   const [factureDetail, setFactureDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(null);
+
+  const filters = useMemo(() => {
+    const f = { page, limit: 50 };
+    if (search.trim()) f.q = search.trim();
+    return f;
+  }, [page, search]);
+
+  const { data: result = {}, loading, error, reload } = useVentes(filters);
+  const ventes      = result.data  || [];
+  const total       = result.total || 0;
+  const totalPages  = result.totalPages || 1;
+  const kpis        = result.kpis  || {};
 
   const notify = (message, type = "success") => {
     setToast({ message, type });
@@ -458,8 +474,11 @@ export default function Ventes() {
   // Pré-filtrer si on arrive depuis la page Factures
   useEffect(() => {
     const fs = location.state?.factureSearch; // eslint-disable-line
-    if (fs) { setSearch(fs); window.history.replaceState({}, document.title); }
+    if (fs) { setSearch(fs); setPage(1); window.history.replaceState({}, document.title); }
   }, []); // eslint-disable-line
+
+  // Revenir à la page 1 à chaque changement de recherche
+  useEffect(() => { setPage(1); }, [search]);
 
   const viewFacture = async (code) => {
     if (loadingDetail === code) return;
@@ -471,24 +490,13 @@ export default function Ventes() {
     finally { setLoadingDetail(null); }
   };
 
-  const totalCA   = ventes.reduce((s, v) => s + parseFloat(v.montant_total || 0), 0);
-  const nbClients = new Set(ventes.map((v) => v.client_nom)).size;
-  const moyPanier = ventes.length
-    ? totalCA / new Set(ventes.map((v) => v.facture_code)).size
-    : 0;
+  // KPIs (calculés côté serveur sur l'ensemble des ventes filtrées)
+  const totalCA   = parseFloat(kpis.total_ca || 0);
+  const nbClients = kpis.nb_clients || 0;
+  const nbFactures = kpis.nb_factures || 0;
+  const moyPanier = nbFactures ? totalCA / nbFactures : 0;
 
-  const ventesFiltrees = useMemo(() => {
-    if (!search.trim()) return ventes;
-    const q = search.toLowerCase();
-    return ventes.filter(
-      (v) =>
-        (v.libelle || "").toLowerCase().includes(q) ||
-        (v.client_nom || "").toLowerCase().includes(q) ||
-        (v.facture_code || "").toLowerCase().includes(q)
-    );
-  }, [ventes, search]);
-
-  const { sorted: ventesAffichées, sortKey, sortDir, handleSort } = useSortableData(ventesFiltrees, "facture_code", "asc");
+  const { sorted: ventesAffichées, sortKey, sortDir, handleSort } = useSortableData(ventes, "facture_code", "asc");
   const sortState = { key: sortKey, dir: sortDir };
   const artMap = useMemo(() => new Map(articles.map(a => [a.code, a])), [articles]);
 
@@ -554,7 +562,7 @@ export default function Ventes() {
     <div>
       <PageHeader
         title="Ventes"
-        sub={`${ventes.length} ligne(s) · CA : ${fmt(totalCA)}`}
+        sub={`${total} ligne(s) · CA : ${fmt(totalCA)}`}
         action={<Btn onClick={() => setShowAdd(true)}>+ Nouvelle Vente</Btn>}
       />
 
@@ -588,7 +596,7 @@ export default function Ventes() {
 
       {/* Tableau / Cards */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        {loading ? <Spinner /> : error ? <ErrorBox message={error} onRetry={reload} /> : ventesFiltrees.length === 0 ? (
+        {loading ? <Spinner /> : error ? <ErrorBox message={error} onRetry={reload} /> : ventes.length === 0 ? (
           <p className="text-center text-sm text-gray-400 py-12">Aucune vente enregistrée.</p>
         ) : (
           <>
@@ -711,6 +719,7 @@ export default function Ventes() {
             </div>
           </>
         )}
+        <Pagination page={page} totalPages={totalPages} total={total} limit={result.limit || 50} onChange={setPage} />
       </div>
 
       {/* Modal */}

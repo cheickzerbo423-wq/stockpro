@@ -1,0 +1,23 @@
+============================================== 
+ WariGest Mobile - Etape 4e (cap sync) 
+============================================== 
+ 
+=== npx --yes cap sync android === 
+[warn] The bundledWebRuntime configuration option has been deprecated. Can be safely deleted.
+√ Copying web assets from build to android\app\src\main\assets\public in 367.91ms
+√ Creating capacitor.config.json in android\app\src\main\assets in 4.56ms
+√ copy android in 472.42ms
+√ Updating Android plugins in 26.31ms
+[info] Found 5 Capacitor plugins for android:
+       @capacitor/filesystem@6.0.4
+       @capacitor/share@6.0.4
+       @capacitor/app@6.0.3
+       @capacitor/splash-screen@6.0.4
+       @capacitor/status-bar@6.0.3
+√ update android in 415.36ms
+[info] Sync finished in 1.038s
+--- code 0 --- 
+ 
+============================================== 
+ TERMINE - vous pouvez fermer cette fenetre 
+============================================== 

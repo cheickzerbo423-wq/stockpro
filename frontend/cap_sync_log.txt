@@ -1,0 +1,86 @@
+============================================== 
+ WariGest Mobile - Etape 3 
+============================================== 
+ 
+=== 1/3 : npm run build:mobile === 
+
+> warigest-frontend@1.0.0 build:mobile
+> cross-env REACT_APP_API_URL=https://stockpro-production-530f.up.railway.app/api react-scripts build
+
+(node:4968) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  254.88 kB (+23.66 kB)  build\static\js\main.dbe5dca0.js
+  2.98 kB                build\static\js\457.14f204b8.chunk.js
+  655 B (+287 B)         build\static\css\main.527e79b7.css
+  430 B                  build\static\js\427.e807a918.chunk.js
+  424 B                  build\static\js\551.de7322d2.chunk.js
+  351 B                  build\static\js\851.53bc59d5.chunk.js
+  308 B                  build\static\js\869.31cb3600.chunk.js
+  235 B                  build\static\js\974.5e1035cc.chunk.js
+  231 B                  build\static\js\209.587b5395.chunk.js
+  228 B                  build\static\js\205.043090ba.chunk.js
+  222 B                  build\static\js\484.6207fdb2.chunk.js
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  npm install -g serve
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+ 
+--- Fin build:mobile (code 0) --- 
+ 
+=== 2/3 : npx cap add android === 
+[warn] The bundledWebRuntime configuration option has been deprecated. Can be safely deleted.
+√ Adding native android project in android in 725.33ms
+√ add in 726.76ms
+√ Copying web assets from build to android\app\src\main\assets\public in 308.35ms
+√ Creating capacitor.config.json in android\app\src\main\assets in 4.89ms
+√ copy android in 436.34ms
+√ Updating Android plugins in 34.88ms
+[info] Found 5 Capacitor plugins for android:
+       @capacitor/filesystem@6.0.4
+       @capacitor/share@6.0.4
+       @capacitor/app@6.0.3
+       @capacitor/splash-screen@6.0.4
+       @capacitor/status-bar@6.0.3
+√ update android in 411.58ms
+√ Syncing Gradle in 2.44ms
+[success] android platform added!
+Follow the Developer Workflow guide to get building:
+https://capacitorjs.com/docs/basics/workflow
+ 
+--- Fin cap add android (code 0) --- 
+ 
+=== 3/3 : npx cap sync android === 
+[warn] The bundledWebRuntime configuration option has been deprecated. Can be safely deleted.
+√ Copying web assets from build to android\app\src\main\assets\public in 273.49ms
+√ Creating capacitor.config.json in android\app\src\main\assets in 5.54ms
+√ copy android in 344.09ms
+√ Updating Android plugins in 19.27ms
+[info] Found 5 Capacitor plugins for android:
+       @capacitor/filesystem@6.0.4
+       @capacitor/share@6.0.4
+       @capacitor/app@6.0.3
+       @capacitor/splash-screen@6.0.4
+       @capacitor/status-bar@6.0.3
+√ update android in 356.70ms
+[info] Sync finished in 0.812s
+ 
+--- Fin cap sync android (code 0) --- 
+ 
+============================================== 
+ TERMINE - vous pouvez fermer cette fenetre 
+============================================== 

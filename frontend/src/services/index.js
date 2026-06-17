@@ -1,6 +1,6 @@
 // src/services/index.js
 // Tous les appels API organisés par module
-import api from "./api";
+import api, { fetchBlobAuthenticated, openBlob, downloadBlob } from "./api";
 
 // ══════════════════════════════════════════
 // AUTH
@@ -125,42 +125,19 @@ export const facturesService = {
 
   // Ouvre le PDF dans un nouvel onglet
   openPDF: async (code) => {
-    const token = localStorage.getItem("warigest_token");
-    const url = `${process.env.REACT_APP_API_URL || "/api"}/factures/${encodeURIComponent(code)}/pdf`;
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    if (!res.ok) throw new Error("Erreur serveur");
-    const blob = await res.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const win = window.open(blobUrl, "_blank");
-    if (win) win.addEventListener("load", () => URL.revokeObjectURL(blobUrl));
+    const blob = await fetchBlobAuthenticated(`/factures/${encodeURIComponent(code)}/pdf`);
+    openBlob(blob, `Facture_${code}.pdf`);
   },
 
   // Télécharge le PDF directement
   downloadPDF: async (code) => {
-    const token = localStorage.getItem("warigest_token");
-    const url = `${process.env.REACT_APP_API_URL || "/api"}/factures/${encodeURIComponent(code)}/pdf`;
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    if (!res.ok) throw new Error("Erreur serveur");
-    const blob = await res.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = `Facture_${code}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(blobUrl);
+    const blob = await fetchBlobAuthenticated(`/factures/${encodeURIComponent(code)}/pdf`);
+    downloadBlob(blob, `Facture_${code}.pdf`);
   },
 
   openRecu: async (code) => {
-    const token = localStorage.getItem("warigest_token");
-    const url = `${process.env.REACT_APP_API_URL || "/api"}/factures/${encodeURIComponent(code)}/recu`;
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    if (!res.ok) throw new Error("Erreur serveur");
-    const blob = await res.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const win = window.open(blobUrl, "_blank");
-    if (win) win.addEventListener("load", () => URL.revokeObjectURL(blobUrl));
+    const blob = await fetchBlobAuthenticated(`/factures/${encodeURIComponent(code)}/recu`);
+    openBlob(blob, `Recu_${code}.pdf`);
   },
 };
 
@@ -208,14 +185,14 @@ export const entrepriseService = {
   // avant de l'enregistrer. Retourne une URL "blob:" à utiliser dans un
   // <iframe> ou window.open — penser à révoquer l'URL après usage.
   getPdfPreviewBlobUrl: async (type, style) => {
-    const token = localStorage.getItem("warigest_token");
-    const base  = process.env.REACT_APP_API_URL || "/api";
-    const url   = `${base}/entreprise/pdf-preview?type=${encodeURIComponent(type)}&style=${encodeURIComponent(style)}`;
-    const res   = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    if (!res.ok) throw new Error("Erreur serveur");
-    const blob = await res.blob();
+    const blob = await fetchBlobAuthenticated("/entreprise/pdf-preview", { type, style });
     return URL.createObjectURL(blob);
   },
+
+  // Variante renvoyant le Blob brut (utilisée pour la prévisualisation
+  // sur mobile, qui passe par openBlob/le partage natif Capacitor).
+  getPdfPreviewBlob: (type, style) =>
+    fetchBlobAuthenticated("/entreprise/pdf-preview", { type, style }),
 };
 
 // ══════════════════════════════════════════
@@ -250,21 +227,8 @@ export const rapportsService = {
     api.get("/rapports", { params: { debut, fin } }).then((r) => r.data),
 
   exportPDF: async (debut, fin) => {
-    const token = localStorage.getItem("warigest_token");
-    const base  = process.env.REACT_APP_API_URL || "/api";
-    const res   = await fetch(`${base}/rapports/pdf?debut=${debut}&fin=${fin}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) throw new Error("Erreur export");
-    const blob   = await res.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = `Rapport_${debut}_${fin}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(blobUrl);
+    const blob = await fetchBlobAuthenticated("/rapports/pdf", { debut, fin });
+    downloadBlob(blob, `Rapport_${debut}_${fin}.pdf`);
   },
 };
 

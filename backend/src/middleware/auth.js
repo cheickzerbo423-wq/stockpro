@@ -15,7 +15,10 @@ async function authenticate(req, res, next) {
 
   const token = authHeader.split(" ")[1];
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Fixe explicitement l'algorithme attendu : empêche un token forgé avec
+    // l'algorithme "none" ou un autre algorithme d'être accepté (défense en
+    // profondeur, indépendante de la configuration de la librairie).
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ["HS256"] });
 
     // Vérifie que le compte existe encore (supprimé par un admin → 401 immédiat)
     // et relit categorie/permissions/must_change_password à jour depuis la base

@@ -8,11 +8,27 @@
     "react-router-dom": "^6.20.0",
     "axios": "^1.6.2",
     "recharts": "^2.9.0",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/filesystem": "^6.0.1",
+    "@capacitor/share": "^6.0.2",
+    "@capacitor/app": "^6.0.1",
+    "@capacitor/splash-screen": "^6.0.2",
+    "@capacitor/status-bar": "^6.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2",
+    "@capacitor/assets": "^3.0.5",
+    "cross-env": "^7.0.3"
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build"
+    "build": "react-scripts build",
+    "build:mobile": "cross-env REACT_APP_API_URL=https://stockpro-production-530f.up.railway.app/api react-scripts build",
+    "cap:sync": "npm run build:mobile && npx cap sync android",
+    "cap:open": "npx cap open android",
+    "cap:assets": "npx capacitor-assets generate --android"
   },
   "proxy": "http://localhost:3000",
   "browserslist": {

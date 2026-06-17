@@ -37,7 +37,22 @@ function securityHeaders(req, res, next) {
 const WINDOW_MS    = 15 * 60 * 1000; // 15 minutes
 const MAX_ATTEMPTS = 10;
 
-const attempts = new Map(); // ip -> { count, resetAt }
+// Verrou par compte : plus strict (5 essais) car cible un login précis et ne
+// pénalise pas les autres utilisateurs partageant la même IP (bureau, NAT).
+const ACCOUNT_MAX_ATTEMPTS = 5;
+
+const attempts        = new Map(); // ip -> { count, resetAt }
+const accountAttempts = new Map(); // login (lowercase) -> { count, resetAt }
+
+function checkAndIncrement(store, key, maxAttempts, now) {
+  let entry = store.get(key);
+  if (!entry || entry.resetAt <= now) {
+    entry = { count: 0, resetAt: now + WINDOW_MS };
+    store.set(key, entry);
+  }
+  entry.count += 1;
+  return { blocked: entry.count > maxAttempts, resetAt: entry.resetAt };
+}
 
 function loginRateLimiter(req, res, next) {
   const now = Date.now();
@@ -56,17 +71,24 @@ function loginRateLimiter(req, res, next) {
       if (entry.resetAt <= now) attempts.delete(key);
     }
   }
-
-  let entry = attempts.get(ip);
-  if (!entry || entry.resetAt <= now) {
-    entry = { count: 0, resetAt: now + WINDOW_MS };
-    attempts.set(ip, entry);
+  if (accountAttempts.size > 5000) {
+    for (const [key, entry] of accountAttempts) {
+      if (entry.resetAt <= now) accountAttempts.delete(key);
+    }
   }
 
-  entry.count += 1;
+  const ipResult = checkAndIncrement(attempts, ip, MAX_ATTEMPTS, now);
 
-  if (entry.count > MAX_ATTEMPTS) {
-    const retryAfterSec = Math.ceil((entry.resetAt - now) / 1000);
+  // Verrou par compte, en plus du verrou par IP : empêche le bruteforce
+  // distribué (plusieurs IP) ciblant un seul login.
+  const login = typeof req.body?.login === "string" ? req.body.login.trim().toLowerCase() : null;
+  const accountResult = login
+    ? checkAndIncrement(accountAttempts, login, ACCOUNT_MAX_ATTEMPTS, now)
+    : { blocked: false, resetAt: ipResult.resetAt };
+
+  if (ipResult.blocked || accountResult.blocked) {
+    const resetAt = Math.max(ipResult.resetAt, accountResult.resetAt);
+    const retryAfterSec = Math.ceil((resetAt - now) / 1000);
     res.setHeader("Retry-After", String(retryAfterSec));
     return res.status(429).json({
       message: "Trop de tentatives de connexion. Réessayez dans quelques minutes.",

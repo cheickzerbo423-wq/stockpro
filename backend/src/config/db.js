@@ -136,12 +136,10 @@ pool.connect((err, client, release) => {
           // Rattachement de chaque table cloisonnée à une entreprise.
           // Colonne ajoutée en NULL d'abord puis renseignée avec l'entreprise
           // par défaut (id = 1) pour les lignes déjà existantes. Chaque table
-          // est migrée indépendamment (son propre try/catch) : l'absence
-          // éventuelle d'une table ("gammes", non utilisée actuellement) ne
-          // bloque pas la migration des autres.
+          // est migrée indépendamment (son propre try/catch).
           const tables = [
             "utilisateurs", "articles", "clients_fournisseurs", "achats",
-            "factures", "lignes_vente", "audit_log", "gammes",
+            "factures", "lignes_vente", "audit_log",
           ];
           return tables.reduce((p, t) => p.then(() =>
             client.query(`
@@ -410,11 +408,33 @@ pool.connect((err, client, release) => {
           //
           // Le mot de passe initial peut être fourni via la variable d'env
           // SUPERADMIN_INITIAL_PASSWORD (recommandé en production). À défaut,
-          // une valeur par défaut est utilisée — à changer IMMÉDIATEMENT depuis
-          // Réglages → Utilisateurs après la première connexion.
+          // un mot de passe aléatoire fort est généré et affiché UNE SEULE FOIS
+          // dans les logs au moment de la création du compte — plus aucun mot
+          // de passe par défaut connu/codé en dur n'existe dans le code source.
           const bcrypt = require("bcryptjs");
+          const crypto = require("crypto");
+          const { isPasswordValid } = require("../utils/passwordPolicy");
           const SUPERADMIN_LOGIN = "superadmin";
-          const SUPERADMIN_MDP   = process.env.SUPERADMIN_INITIAL_PASSWORD || "Warigest@Super2026";
+
+          function generateSecurePassword() {
+            const lower   = "abcdefghijkmnpqrstuvwxyz";
+            const upper   = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+            const digits  = "23456789";
+            const special = "!@#$%&*?";
+            const all = lower + upper + digits + special;
+            const pick = (set) => set[crypto.randomInt(set.length)];
+            let pwd = pick(upper) + pick(lower) + pick(digits) + pick(special);
+            for (let i = 0; i < 12; i++) pwd += pick(all);
+            return pwd.split("").sort(() => crypto.randomInt(3) - 1).join("");
+          }
+
+          let SUPERADMIN_MDP = process.env.SUPERADMIN_INITIAL_PASSWORD;
+          let generated = false;
+          if (!SUPERADMIN_MDP || !isPasswordValid(SUPERADMIN_MDP)) {
+            SUPERADMIN_MDP = generateSecurePassword();
+            generated = true;
+          }
+
           return bcrypt.hash(SUPERADMIN_MDP, 10).then((hash) =>
             client.query(
               `INSERT INTO utilisateurs (login, mdp_hash, categorie, entreprise_id, actif,
@@ -427,9 +447,11 @@ pool.connect((err, client, release) => {
               if (result.rowCount > 0) {
                 console.log("════════════════════════════════════════════════════════════");
                 console.log(`🔑 Compte SUPERADMIN créé — login : ${SUPERADMIN_LOGIN}`);
-                if (!process.env.SUPERADMIN_INITIAL_PASSWORD) {
-                  console.log(`🔑 Mot de passe par défaut : ${SUPERADMIN_MDP}`);
-                  console.log("⚠️  Changez ce mot de passe immédiatement après la première connexion.");
+                if (generated) {
+                  console.log(`🔑 Mot de passe généré aléatoirement : ${SUPERADMIN_MDP}`);
+                  console.log("⚠️  Notez-le et changez-le immédiatement après la première connexion.");
+                  console.log("⚠️  Il ne sera plus jamais affiché — définissez SUPERADMIN_INITIAL_PASSWORD");
+                  console.log("⚠️  pour fixer ce mot de passe initial lors des prochains déploiements.");
                 } else {
                   console.log("🔑 Mot de passe initial défini via SUPERADMIN_INITIAL_PASSWORD.");
                 }
@@ -635,6 +657,27 @@ pool.connect((err, client, release) => {
         )
         .then(() => console.log("✅ Index DB vérifiés (entreprise_id, dates, article_code, FKs)."))
         .catch((e) => console.error("⚠️  Migration index ignorée :", e.message))
+        // ── Migration : coût historique (COGS) figé à la vente ──────────────
+        // Ajoute lignes_vente.prix_achat (NUMERIC) : capture le prix d'achat de
+        // l'article AU MOMENT DE LA VENTE, pour calculer un coût des marchandises
+        // vendues (COGS) et une marge bénéficiaire fiables — indépendants des
+        // changements ultérieurs de prix d'achat dans articles. Backfill des
+        // lignes existantes avec le prix d'achat ACTUEL de l'article (meilleure
+        // estimation disponible pour l'historique).
+        .then(() =>
+          client.query(`
+            ALTER TABLE lignes_vente ADD COLUMN IF NOT EXISTS prix_achat NUMERIC DEFAULT 0;
+
+            UPDATE lignes_vente lv
+            SET prix_achat = a.prix_achat
+            FROM articles a
+            WHERE a.code = lv.article_code
+              AND a.entreprise_id = lv.entreprise_id
+              AND lv.prix_achat = 0;
+          `)
+        )
+        .then(() => console.log("✅ Colonne 'lignes_vente.prix_achat' vérifiée (coût historique figé à la vente)."))
+        .catch((e) => console.error("⚠️  Migration prix_achat lignes_vente ignorée :", e.message))
         .finally(() => release());
     });
 });

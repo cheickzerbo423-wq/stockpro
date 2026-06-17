@@ -5,34 +5,70 @@ const db = require("../config/db");
 const MOIS = ["Janvier","Février","Mars","Avril","Mai","Juin",
               "Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 
-// GET /api/achats
+// GET /api/achats — Historique des achats (paginé côté serveur)
+// Réponse : { data, total, page, limit, totalPages, kpis }
+// kpis est calculé sur l'ENSEMBLE des lignes filtrées (pas seulement la page
+// courante) afin que les cartes de synthèse (dépenses, dettes, fournisseurs)
+// restent exactes quelle que soit la page affichée.
 async function getAll(req, res) {
   try {
-    const { fournisseur, article, mois, annee } = req.query;
+    const { fournisseur, article, mois, annee, q: search } = req.query;
+    const page   = Math.max(1, parseInt(req.query.page) || 1);
+    const limit  = Math.min(Math.max(1, parseInt(req.query.limit) || 50), 200);
+    const offset = (page - 1) * limit;
+
     // montant_total est recalculé dynamiquement (prix_achat * quantite) pour ne pas
     // dépendre de la colonne stockée qui peut être 0 sur d'anciens enregistrements.
-    let q = `
-      SELECT id, article_code, libelle, fournisseur_id, fournisseur_nom,
-             prix_achat, quantite, date_achat, user_id, mois, annee, montant_paye,
-             (prix_achat * quantite)                 AS montant_total,
-             (prix_achat * quantite - montant_paye)  AS reste,
-             (montant_paye >= prix_achat * quantite) AS statut
-      FROM achats WHERE entreprise_id = $1`;
+    let where = ` WHERE entreprise_id = $1`;
     const params = [req.user.entreprise_id];
     let idx = 2;
-    if (fournisseur) { q += ` AND fournisseur_nom ILIKE $${idx++}`; params.push(`%${fournisseur}%`); }
-    if (article)     { q += ` AND article_code = $${idx++}`;        params.push(article); }
-    if (mois)        { q += ` AND mois = $${idx++}`;                params.push(mois); }
-    if (annee)       { q += ` AND annee = $${idx++}`;               params.push(annee); }
-    q += ` ORDER BY date_achat ASC, id ASC`;
-    // Garde-fou : limite haute pour éviter une réponse démesurée lorsque
-    // l'historique des achats grossit avec le temps (le frontend affiche
-    // la liste complète sans pagination ; au-delà de 5000 lignes, filtrer
-    // par mois/année via les paramètres existants).
-    q += ` LIMIT 5000`;
-    const result = await db.query(q, params);
-    res.json(result.rows);
+    if (fournisseur) { where += ` AND fournisseur_nom ILIKE $${idx++}`; params.push(`%${fournisseur}%`); }
+    if (article)     { where += ` AND article_code = $${idx++}`;        params.push(article); }
+    if (mois)        { where += ` AND mois = $${idx++}`;                params.push(mois); }
+    if (annee)       { where += ` AND annee = $${idx++}`;               params.push(annee); }
+    if (search)      {
+      where += ` AND (libelle ILIKE $${idx} OR fournisseur_nom ILIKE $${idx} OR article_code ILIKE $${idx})`;
+      params.push(`%${search}%`);
+      idx++;
+    }
+
+    const [dataResult, countResult, aggResult] = await Promise.all([
+      db.query(
+        `SELECT id, article_code, libelle, fournisseur_id, fournisseur_nom,
+                prix_achat, quantite, date_achat, user_id, mois, annee, montant_paye,
+                (prix_achat * quantite)                 AS montant_total,
+                (prix_achat * quantite - montant_paye)  AS reste,
+                (montant_paye >= prix_achat * quantite) AS statut
+         FROM achats ${where}
+         ORDER BY date_achat ASC, id ASC
+         LIMIT $${idx} OFFSET $${idx + 1}`,
+        [...params, limit, offset]
+      ),
+      db.query(`SELECT COUNT(*) AS total FROM achats ${where}`, params),
+      db.query(
+        `SELECT COALESCE(SUM(prix_achat * quantite), 0)                 AS total_depenses,
+                COALESCE(SUM(prix_achat * quantite - montant_paye), 0)  AS total_dettes,
+                COUNT(DISTINCT fournisseur_nom)                         AS nb_fournisseurs
+         FROM achats ${where}`,
+        params
+      ),
+    ]);
+
+    const total = parseInt(countResult.rows[0].total);
+    res.json({
+      data: dataResult.rows,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      kpis: {
+        total_depenses:  aggResult.rows[0].total_depenses,
+        total_dettes:    aggResult.rows[0].total_dettes,
+        nb_fournisseurs: parseInt(aggResult.rows[0].nb_fournisseurs),
+      },
+    });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Erreur lors de la récupération des achats." });
   }
 }
@@ -50,6 +86,18 @@ async function create(req, res) {
     const art = await db.query(`SELECT libelle FROM articles WHERE code = $1 AND actif = TRUE AND entreprise_id = $2`, [article_code, entId]);
     if (!art.rows[0])
       return res.status(404).json({ message: "Article introuvable." });
+
+    // Validation cross-tenant : si un fournisseur_id est fourni, il doit
+    // appartenir à l'entreprise courante (évite de rattacher un achat à un
+    // fournisseur d'une autre entreprise via un identifiant deviné/forgé).
+    if (fournisseur_id !== undefined && fournisseur_id !== null && fournisseur_id !== "") {
+      const fournCheck = await db.query(
+        `SELECT id FROM clients_fournisseurs WHERE id = $1 AND entreprise_id = $2`,
+        [fournisseur_id, entId]
+      );
+      if (!fournCheck.rows[0])
+        return res.status(404).json({ message: "Fournisseur introuvable." });
+    }
 
     const date  = date_achat || new Date().toISOString().split("T")[0];
     const mois  = MOIS[new Date(date).getMonth()];
@@ -126,35 +174,54 @@ async function create(req, res) {
 // pouvoir être supprimé si cela ferait passer le stock restant de l'article
 // en négatif (incohérence avec les ventes déjà enregistrées).
 async function remove(req, res) {
+  const client = await db.connect();
   try {
     const entId = req.user.entreprise_id;
-    const achat = await db.query(
-      `SELECT article_code, quantite FROM achats WHERE id = $1 AND entreprise_id = $2`,
+    await client.query("BEGIN");
+
+    // SELECT ... FOR UPDATE : verrouille la ligne d'achat pour la durée de la
+    // transaction, afin qu'une vente concurrente ne puisse pas modifier le
+    // stock entre la vérification et la suppression (évite une incohérence
+    // de stock négatif sous concurrence).
+    const achat = await client.query(
+      `SELECT article_code, quantite FROM achats WHERE id = $1 AND entreprise_id = $2 FOR UPDATE`,
       [req.params.id, entId]
     );
-    if (!achat.rows[0]) return res.status(404).json({ message: "Achat introuvable." });
+    if (!achat.rows[0]) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ message: "Achat introuvable." });
+    }
     const { article_code, quantite } = achat.rows[0];
 
-    const stock = await db.query(
+    const stock = await client.query(
       `SELECT stock_restant FROM vue_stock WHERE code = $1 AND entreprise_id = $2`,
       [article_code, entId]
     );
     const stockRestant = stock.rows[0]?.stock_restant ?? 0;
     if (stockRestant - quantite < 0) {
+      await client.query("ROLLBACK");
       return res.status(409).json({
         message: `Impossible de supprimer cet approvisionnement : le stock de l'article "${article_code}" deviendrait négatif (une partie de cette quantité a déjà été vendue).`,
       });
     }
 
-    const result = await db.query(
+    const result = await client.query(
       `DELETE FROM achats WHERE id = $1 AND entreprise_id = $2 RETURNING id`,
       [req.params.id, entId]
     );
-    if (!result.rows[0])
+    if (!result.rows[0]) {
+      await client.query("ROLLBACK");
       return res.status(404).json({ message: "Achat introuvable." });
+    }
+
+    await client.query("COMMIT");
     res.json({ message: "Achat supprimé." });
   } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Erreur suppression achat :", err.message);
     res.status(500).json({ message: "Erreur lors de la suppression." });
+  } finally {
+    client.release();
   }
 }
 

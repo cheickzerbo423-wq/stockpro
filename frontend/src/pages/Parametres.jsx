@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useEntreprise } from "../hooks/useApi";
 import { entrepriseService } from "../services";
+import { openBlob } from "../services/api";
 import { Spinner, ErrorBox, Card, Input, Btn, PageHeader, Toast, SectionTitle, Modal } from "../components/UI";
 
 const DEVISES = ["FCFA", "EUR", "USD", "XOF", "XAF", "MAD", "GNF", "CDF", "NGN", "GHS"];
@@ -154,6 +155,7 @@ function StyleGallery({ catalog, palettes, value, onChange, onPreview }) {
 function PdfPreviewModal({ docType, docLabel, style, onClose }) {
   const [url, setUrl] = useState(null);
   const [err, setErr] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     let blobUrl = null;
@@ -167,7 +169,7 @@ function PdfPreviewModal({ docType, docLabel, style, onClose }) {
       cancelled = true;
       if (blobUrl) URL.revokeObjectURL(blobUrl);
     };
-  }, [docType, style.id]);
+  }, [docType, style.id, retryCount]);
 
   return (
     <Modal title={`Aperçu — ${docLabel} · ${style.label}`} onClose={onClose} wide>
@@ -175,7 +177,10 @@ function PdfPreviewModal({ docType, docLabel, style, onClose }) {
         Exemple généré avec des données fictives, à partir de vos informations d'entreprise (nom, logo, devise...).
       </p>
       {err ? (
-        <div className="text-sm text-red-500 font-medium py-8 text-center">{err}</div>
+        <div className="flex flex-col items-center gap-3 py-8 text-center">
+          <p className="text-sm text-red-500 font-medium">{err}</p>
+          <Btn color="gray" onClick={() => setRetryCount((c) => c + 1)}>Réessayer</Btn>
+        </div>
       ) : !url ? (
         <div className="py-16"><Spinner /></div>
       ) : (
@@ -187,7 +192,10 @@ function PdfPreviewModal({ docType, docLabel, style, onClose }) {
           <div className="sm:hidden flex flex-col items-center gap-3 py-10 px-4 bg-gray-50 rounded-xl border border-gray-100 text-center">
             <span className="text-4xl">📄</span>
             <p className="text-sm text-gray-500">L'aperçu intégré n'est pas disponible sur ce navigateur.</p>
-            <Btn onClick={() => window.open(url, "_blank")}>Ouvrir l'aperçu PDF</Btn>
+            <Btn onClick={async () => {
+              const blob = await entrepriseService.getPdfPreviewBlob(docType, style.id);
+              openBlob(blob, `Apercu_${docType}_${style.id}.pdf`);
+            }}>Ouvrir l'aperçu PDF</Btn>
           </div>
         </>
       )}

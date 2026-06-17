@@ -125,7 +125,8 @@ export function Modal({ title, onClose, children, wide }) {
           </button>
         </div>
         {/* Contenu */}
-        <div className="px-5 sm:px-6 py-5 overflow-y-auto flex-1">{children}</div>
+        <div className="px-5 sm:px-6 py-5 overflow-y-auto flex-1"
+          style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}>{children}</div>
       </div>
     </div>
   );
@@ -375,6 +376,49 @@ export function DataTable({ headers, children, empty = "Aucune donnée", sort, o
           </p>
         </>
       )}
+    </div>
+  );
+}
+
+// ── Pagination ─────────────────────────────────────────────
+// Barre de pagination réutilisable pour les listes paginées côté serveur
+// (Ventes, Achats, Factures). N'affiche rien si une seule page suffit.
+export function Pagination({ page, totalPages, total, limit, onChange }) {
+  if (!totalPages || totalPages <= 1) return null;
+  const from = total === 0 ? 0 : (page - 1) * limit + 1;
+  const to   = Math.min(page * limit, total);
+
+  const span = 1;
+  const pages = [];
+  for (let p = Math.max(1, page - span); p <= Math.min(totalPages, page + span); p++) pages.push(p);
+
+  const btnBase = "min-w-[32px] h-8 px-2 rounded-lg text-xs font-bold border transition disabled:opacity-30 disabled:cursor-not-allowed";
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1 py-3">
+      <p className="text-[11px] text-gray-400 font-semibold">
+        {total > 0 ? `${from}–${to} sur ${total}` : "Aucun résultat"}
+      </p>
+      <div className="flex items-center gap-1">
+        <button onClick={() => onChange(1)} disabled={page <= 1}
+          className={`${btnBase} border-gray-200 text-gray-500 hover:bg-gray-50`}>«</button>
+        <button onClick={() => onChange(page - 1)} disabled={page <= 1}
+          className={`${btnBase} border-gray-200 text-gray-500 hover:bg-gray-50`}>‹</button>
+        {pages[0] > 1 && <span className="text-gray-300 px-1 text-xs">…</span>}
+        {pages.map((p) => (
+          <button key={p} onClick={() => onChange(p)}
+            className={`${btnBase} ${p === page
+              ? "bg-[#0023FF] border-[#0023FF] text-white"
+              : "border-gray-200 text-gray-500 hover:bg-[#E6EAFF] hover:border-[#B3BFFF]"}`}>
+            {p}
+          </button>
+        ))}
+        {pages[pages.length - 1] < totalPages && <span className="text-gray-300 px-1 text-xs">…</span>}
+        <button onClick={() => onChange(page + 1)} disabled={page >= totalPages}
+          className={`${btnBase} border-gray-200 text-gray-500 hover:bg-gray-50`}>›</button>
+        <button onClick={() => onChange(totalPages)} disabled={page >= totalPages}
+          className={`${btnBase} border-gray-200 text-gray-500 hover:bg-gray-50`}>»</button>
+      </div>
     </div>
   );
 }

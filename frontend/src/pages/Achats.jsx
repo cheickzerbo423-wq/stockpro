@@ -96,27 +96,29 @@ function LigneCommande({ ligne, articles, onUpdate, onRemove }) {
 
   return (
     <div className="rounded-xl p-3 border bg-gray-50 border-gray-200 space-y-2">
-      <div className="flex items-start gap-2">
-        {/* Aperçu image produit sélectionné */}
-        <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-white border border-gray-200 flex items-center justify-center mt-5">
-          {selectedArt?.image_url
-            ? <img src={selectedArt.image_url} alt="" className="w-full h-full object-cover" />
-            : <span className="text-2xl">📦</span>}
-        </div>
+      <div className="flex items-start gap-2.5">
         <div className="flex-1 relative" ref={ref}>
           <label className="block text-xs font-semibold text-gray-500 mb-1">Article *</label>
-          <input
-            className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 bg-white pr-8 ${
-              nonReconnu ? "border-red-300 focus:ring-red-200" : "border-gray-200 focus:ring-[#B3BFFF]"
-            }`}
-            placeholder="Rechercher par code ou nom…"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setOpen(true); onUpdate({ ...ligne, article_code: "", libelle: e.target.value }); }}
-            onFocus={() => setOpen(true)}
-            onBlur={handleBlur}
-          />
-          <span className="absolute right-3 top-8 text-gray-400 cursor-pointer select-none"
-            onMouseDown={(e) => { e.preventDefault(); setOpen((v) => !v); }}>▾</span>
+          <div className="relative">
+            {/* Vignette du produit, intégrée dans le champ */}
+            <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-md overflow-hidden bg-white border border-gray-200 flex items-center justify-center pointer-events-none">
+              {selectedArt?.image_url
+                ? <img src={selectedArt.image_url} alt="" className="w-full h-full object-cover" />
+                : <span className="text-base">📦</span>}
+            </div>
+            <input
+              className={`w-full border rounded-lg pl-11 pr-8 py-2.5 text-sm focus:outline-none focus:ring-2 bg-white ${
+                nonReconnu ? "border-red-300 focus:ring-red-200" : "border-gray-200 focus:ring-[#B3BFFF]"
+              }`}
+              placeholder="Rechercher par code ou nom…"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setOpen(true); onUpdate({ ...ligne, article_code: "", libelle: e.target.value }); }}
+              onFocus={() => setOpen(true)}
+              onBlur={handleBlur}
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer select-none"
+              onMouseDown={(e) => { e.preventDefault(); setOpen((v) => !v); }}>▾</span>
+          </div>
 
           {nonReconnu && (
             <p className="text-[11px] text-red-500 font-semibold mt-1">
@@ -147,7 +149,7 @@ function LigneCommande({ ligne, articles, onUpdate, onRemove }) {
           )}
         </div>
         <button onClick={onRemove}
-          className="w-8 h-8 mt-5 flex items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 transition shrink-0"
+          className="w-9 h-9 mt-6 flex items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 active:scale-95 transition shrink-0"
           title="Supprimer">✕</button>
       </div>
 

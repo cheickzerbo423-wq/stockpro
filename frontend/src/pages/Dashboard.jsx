@@ -28,11 +28,11 @@ const ChartTip = ({ active, payload, label }) => {
 
 /* ─── KPI Card ──────────────────────────────────────────────── */
 const PALETTES = {
-  blue:   { bg: "#EEF0FF", bar: "#0023FF" },
-  green:  { bg: "#ECFDF5", bar: "#059669" },
-  red:    { bg: "#FEF2F2", bar: "#DC2626" },
-  amber:  { bg: "#FFFBEB", bar: "#D97706" },
-  purple: { bg: "#F5F3FF", bar: "#7C3AED" },
+  blue:   { bg: "#E0E7FF", bar: "#3B5BFF" },
+  green:  { bg: "#D1FAE5", bar: "#10B981" },
+  red:    { bg: "#FFE4E6", bar: "#F43F5E" },
+  amber:  { bg: "#FEF3C7", bar: "#F59E0B" },
+  purple: { bg: "#EDE9FE", bar: "#8B5CF6" },
 };
 
 function KpiCard({ icon, label, value, sub, color = "blue" }) {
@@ -107,7 +107,7 @@ export default function Dashboard() {
     <div className="space-y-5 max-w-7xl mx-auto pb-8">
 
       {/* ── En-tête gradient ── */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg,#0023FF 0%,#4B6BFF 100%)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg,#0023FF 0%,#3B5BFF 52%,#6B5BFF 100%)" }}>
         <div className="px-5 py-5 sm:px-7 sm:py-6 flex items-center justify-between gap-4">
           <div>
             <h2 className="text-xl sm:text-2xl font-black text-white leading-tight">Tableau de Bord</h2>

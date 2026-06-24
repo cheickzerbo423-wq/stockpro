@@ -47,7 +47,8 @@ function MiniForm({ title, icon, onSave, onCancel, saving }) {
   );
 }
 
-/* ─── Ligne de commande ─────────────────────────────── */
+/* ─── Ligne de commande (ancien composant, plus utilisé depuis le catalogue) ─── */
+// eslint-disable-next-line no-unused-vars
 function LigneCommande({ ligne, index, articles, onUpdate, onRemove }) {
   const [search, setSearch] = useState(ligne.libelle || "");
   const [open, setOpen]     = useState(false);
@@ -219,6 +220,7 @@ export default function Achats() {
   const [savingFournisseur, setSavingFournisseur]   = useState(false);
   const [dateAchat, setDateAchat] = useState(today());
   const [montantPaye, setMontantPaye] = useState("");
+  const [articleSearch, setArticleSearch] = useState("");
 
   const fournisseursFiltres = fournisseurQ.trim()
     ? fournisseurs.filter((f) => f.nom.toLowerCase().includes(fournisseurQ.toLowerCase()))
@@ -230,6 +232,35 @@ export default function Achats() {
   };
 
   const totalCommande = lignes.reduce((s, l) => s + (+l.prix_achat || 0) * (+l.quantite || 0), 0);
+
+  // ── Panier d'approvisionnement (catalogue à toucher + recherche) ──
+  const lignesPanier = lignes.filter((l) => l.article_code);
+  const catalogueFiltre = articleSearch.trim()
+    ? articles.filter((a) =>
+        a.libelle.toLowerCase().includes(articleSearch.toLowerCase()) ||
+        (a.code || "").toLowerCase().includes(articleSearch.toLowerCase()))
+    : articles;
+  const updateLigne = (id, key, val) =>
+    setLignes((prev) => prev.map((l) => (l.id === id ? { ...l, [key]: val } : l)));
+  const removeLigne = (id) => setLignes((prev) => prev.filter((l) => l.id !== id));
+  const addArticleToCart = (a) => {
+    setLignes((prev) => {
+      const existe = prev.find((l) => l.article_code === a.code);
+      if (existe)
+        return prev.map((l) =>
+          l.article_code === a.code ? { ...l, quantite: (+l.quantite || 0) + 1 } : l);
+      const nouvelle = {
+        id: Date.now() + Math.random(),
+        article_code: a.code,
+        libelle: a.libelle,
+        quantite: 1,
+        prix_achat: a.prix_achat ?? "",
+        image_url: a.image_url,
+      };
+      return [...prev.filter((l) => l.article_code), nouvelle];
+    });
+  };
+
   // KPIs calculés côté serveur sur l'ensemble des achats filtrés
   const totalDepenses = parseFloat(kpis.total_depenses || 0);
   const totalDettes   = parseFloat(kpis.total_dettes || 0);
@@ -546,33 +577,102 @@ export default function Achats() {
             />
           </div>
 
-          {/* Lignes de produits */}
-          <div className="space-y-2 mb-3">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-bold text-gray-500 uppercase">Produits à approvisionner</span>
-              <span className="text-xs text-gray-400">{lignes.length} ligne(s)</span>
+          {/* Catalogue : toucher un produit pour l'ajouter */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Produits à approvisionner</span>
+              <span className="text-xs text-gray-400">{lignesPanier.length} produit(s)</span>
             </div>
-            {lignes.map((ligne, i) => (
-              <LigneCommande
-                key={ligne.id}
-                index={i + 1}
-                ligne={ligne}
-                articles={articles}
-                onUpdate={(updated) => setLignes(lignes.map((l) => l.id === ligne.id ? updated : l))}
-                onRemove={() => lignes.length > 1 && setLignes(lignes.filter((l) => l.id !== ligne.id))}
-              />
-            ))}
+
+            {/* Recherche */}
+            <div className="relative mb-2.5">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input type="text" value={articleSearch} onChange={(e) => setArticleSearch(e.target.value)}
+                placeholder="Rechercher un produit…"
+                className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#0023FF]/10 focus:border-[#0023FF] focus:bg-white transition" />
+              {articleSearch && (
+                <button type="button" onClick={() => setArticleSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-500 text-xs">✕</button>
+              )}
+            </div>
+
+            {/* Grille de produits */}
+            {catalogueFiltre.length === 0 ? (
+              <div className="py-7 text-center text-sm text-gray-400">Aucun produit trouvé</div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto pb-0.5">
+                {catalogueFiltre.map((a) => {
+                  const inCart = lignes.find((l) => l.article_code === a.code)?.quantite || 0;
+                  return (
+                    <button key={a.code} type="button" onClick={() => addArticleToCart(a)}
+                      className={`relative rounded-xl border p-2.5 text-left transition-all duration-150 flex flex-col
+                        ${inCart > 0 ? "border-[#0023FF] bg-[#F0F3FF] shadow-sm" : "border-gray-100 bg-white hover:border-[#B3BFFF] hover:bg-[#F7F8FF]"}`}>
+                      {inCart > 0 && (
+                        <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-[#0023FF] text-white text-[10px] font-black flex items-center justify-center shadow">{inCart}</span>
+                      )}
+                      <div className="w-full aspect-square rounded-lg overflow-hidden bg-gray-100 mb-1.5 flex items-center justify-center">
+                        {a.image_url
+                          ? <img src={a.image_url} alt={a.libelle} className="w-full h-full object-cover" />
+                          : <span className="text-2xl">📦</span>}
+                      </div>
+                      <div className="text-[10px] text-gray-400 font-mono">{a.code}</div>
+                      <div className="text-xs font-bold text-gray-800 leading-tight line-clamp-2">{a.libelle}</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">Stock : {a.stock_restant ?? "?"}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {/* Boutons ajouter */}
-          <div className="flex gap-2 mb-4">
-            <button
-              onClick={() => setLignes([...lignes, emptyLigne()])}
-              className="flex-1 py-2 border-2 border-dashed border-[#B3BFFF] rounded-xl text-[#0023FF] text-sm font-bold hover:bg-[#E6EAFF] transition"
-            >
-              + Ajouter un produit
-            </button>
-          </div>
+          {/* Panier d'approvisionnement */}
+          {lignesPanier.length === 0 ? (
+            <div className="mb-4 py-7 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-100 text-gray-400">
+              <div className="text-2xl mb-1">📥</div>
+              <span className="text-xs">Touchez un produit ci-dessus pour l'ajouter</span>
+            </div>
+          ) : (
+            <div className="mb-4 rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-100">
+                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Panier — {lignesPanier.length} produit(s)</span>
+                <button type="button" onClick={() => setLignes([])} className="text-[11px] text-red-400 hover:text-red-600 font-semibold">Vider</button>
+              </div>
+              {lignesPanier.map((l) => (
+                <div key={l.id} className="px-3 py-2.5 border-b border-gray-50 last:border-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-gray-100 border border-gray-100 flex items-center justify-center flex-shrink-0">
+                      {l.image_url
+                        ? <img src={l.image_url} alt="" className="w-full h-full object-cover" />
+                        : <span className="text-base">📦</span>}
+                    </div>
+                    <span className="flex-1 text-sm font-semibold text-gray-800 truncate">{l.libelle}</span>
+                    <button type="button" onClick={() => removeLigne(l.id)}
+                      className="w-7 h-7 rounded-full bg-red-50 text-red-400 hover:bg-red-100 active:scale-95 transition flex items-center justify-center text-xs shrink-0">✕</button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+                      <button type="button" onClick={() => updateLigne(l.id, "quantite", Math.max(1, (+l.quantite || 0) - 1))}
+                        className="w-8 h-8 rounded-lg bg-white shadow-sm text-gray-600 font-bold text-lg active:scale-95 transition flex items-center justify-center">−</button>
+                      <input type="number" min="1" inputMode="numeric" value={l.quantite}
+                        onChange={(e) => updateLigne(l.id, "quantite", e.target.value)}
+                        className="w-10 text-center text-base font-bold bg-transparent border-0 focus:outline-none" />
+                      <button type="button" onClick={() => updateLigne(l.id, "quantite", (+l.quantite || 0) + 1)}
+                        className="w-8 h-8 rounded-lg bg-[#0023FF] text-white font-bold text-lg active:scale-95 transition flex items-center justify-center">+</button>
+                    </div>
+                    <div className="relative flex-1 min-w-0">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 font-bold pointer-events-none">P.A.</span>
+                      <input type="number" min="0" inputMode="numeric" value={l.prix_achat}
+                        onChange={(e) => updateLigne(l.id, "prix_achat", e.target.value)} placeholder="0"
+                        className="w-full text-right text-sm border border-gray-200 rounded-lg pl-10 pr-2 py-2 focus:outline-none focus:ring-1 focus:ring-[#B3BFFF]" />
+                    </div>
+                    <span className="text-sm font-black text-[#0023FF] w-20 text-right shrink-0">{fmt((+l.prix_achat || 0) * (+l.quantite || 0))}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Total & Paiement */}
           <div className="border-t border-gray-100 pt-4">

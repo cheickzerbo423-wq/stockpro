@@ -2,7 +2,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useFactures, useMutation, useSortableData } from "../hooks/useApi";
-import { facturesService } from "../services";
+import { facturesService, entrepriseService } from "../services";
+import * as printer from "../utils/printer";
 import {
   fmt, fmtDate, Spinner, ErrorBox, Badge, Modal, Input,
   Btn, PageHeader, DataTable, TR, TD, Toast, SearchBox, Pagination,
@@ -77,6 +78,38 @@ export default function Factures() {
     try { await facturesService.openRecu(code); }
     catch { notify("Erreur génération reçu.", "error"); }
     finally { setLoadingRecu(null); }
+  };
+
+  // Impression de la facture (PDF) via la fenêtre d'impression du système.
+  const handlePrintFacture = async (code) => {
+    setLoadingPDF(code);
+    try { await facturesService.printPDF(code); }
+    catch { notify("Erreur impression facture.", "error"); }
+    finally { setLoadingPDF(null); }
+  };
+
+  // Impression d'un ticket de reçu sur la mini-imprimante Bluetooth.
+  const handlePrintTicket = async (facture, lignes) => {
+    try {
+      let cfg = {};
+      try { cfg = await entrepriseService.getConfig(); } catch { /* en-tête optionnel */ }
+      await printer.printReceipt({
+        entreprise: { nom: cfg.nom, telephone: cfg.telephone, adresse: cfg.adresse },
+        code: facture.code,
+        dateStr: fmtDate(facture.date_facture),
+        clientNom: facture.client_nom,
+        items: (lignes || []).map((l) => ({
+          libelle: l.libelle, quantite: Number(l.quantite), prix: Number(l.prix_vente),
+        })),
+        total: Number(facture.montant),
+        paye: Number(facture.montant_paye),
+        monnaie: Number(facture.monnaie_rendue || 0),
+        devise: cfg.devise || "FCFA",
+      });
+      notify("Ticket envoyé à l'imprimante.");
+    } catch (e) {
+      notify(e.message || "Impression ticket impossible.", "error");
+    }
   };
 
   const handlePay = async () => {
@@ -340,9 +373,10 @@ export default function Factures() {
               </Btn>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Btn color="gray"   onClick={() => handlePDF(selected.code, true)} loading={loadingPDF === selected.code}>⬇ Télécharger</Btn>
-              <Btn color="gray"   onClick={() => handlePDF(selected.code)}       loading={loadingPDF === selected.code}>🖨 Facture PDF</Btn>
-              <Btn color="green"  onClick={() => handleRecu(selected.code)}      loading={loadingRecu === selected.code}>🎫 Ticket</Btn>
+              <Btn color="gray"   onClick={() => handlePDF(selected.code, true)} loading={loadingPDF === selected.code}>⬇ PDF</Btn>
+              <Btn color="gray"   onClick={() => handlePrintFacture(selected.code)} loading={loadingPDF === selected.code}>🖨 Imprimer</Btn>
+              <Btn color="green"  onClick={() => handleRecu(selected.code)}      loading={loadingRecu === selected.code}>🎫 Reçu</Btn>
+              <Btn color="green"  onClick={() => handlePrintTicket(selected, detail.lignes)}>🧾 Ticket</Btn>
               <Btn color="gray"   onClick={() => { setSelected(null); setDetail(null); }}>Fermer</Btn>
             </div>
           </div>

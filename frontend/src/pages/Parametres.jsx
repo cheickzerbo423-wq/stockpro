@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useEntreprise } from "../hooks/useApi";
 import { entrepriseService } from "../services";
 import { openBlob } from "../services/api";
+import * as printer from "../utils/printer";
 import { Spinner, ErrorBox, Card, Input, Btn, PageHeader, Toast, SectionTitle, Modal } from "../components/UI";
 
 const DEVISES = ["FCFA", "EUR", "USD", "XOF", "XAF", "MAD", "GNF", "CDF", "NGN", "GHS"];
@@ -23,6 +24,103 @@ const DOC_TABS = [
   { key: "recu",    label: "Reçus",    field: "recu_style" },
   { key: "rapport", label: "Rapports", field: "rapport_style" },
 ];
+
+// ── Carte : connexion imprimante (Bluetooth tickets + PDF système) ─────────
+function PrinterCard() {
+  const [name, setName] = useState(printer.getPrinterName());
+  const [mode, setMode] = useState(printer.getPrintMode());
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg]   = useState(null);
+  const supported = printer.isBluetoothSupported();
+
+  const flash = (text, type = "success") => {
+    setMsg({ text, type });
+    setTimeout(() => setMsg(null), 5000);
+  };
+
+  const handleConnect = async () => {
+    setBusy(true);
+    try {
+      const n = await printer.connectPrinter();
+      setName(n);
+      flash(`Imprimante « ${n} » connectée.`);
+    } catch (e) {
+      if (e?.name !== "NotFoundError") flash(e.message || "Connexion annulée.", "error");
+    } finally { setBusy(false); }
+  };
+
+  const handleTest = async () => {
+    setBusy(true);
+    try {
+      await printer.printTest();
+      flash("Ticket de test envoyé à l'imprimante.");
+    } catch (e) { flash(e.message || "Échec de l'impression.", "error"); }
+    finally { setBusy(false); }
+  };
+
+  const handleForget = () => {
+    printer.forgetPrinter();
+    setName("");
+    flash("Imprimante oubliée.");
+  };
+
+  const changeMode = (m) => { setMode(m); printer.setPrintMode(m); };
+
+  return (
+    <Card>
+      <SectionTitle>Imprimante</SectionTitle>
+      <p className="text-xs text-gray-400 mt-1 mb-4">
+        Connectez une mini-imprimante Bluetooth pour les tickets de reçu, et/ou imprimez les factures, reçus et rapports en PDF sur n'importe quelle imprimante via la fenêtre d'impression du système.
+      </p>
+
+      <div className="rounded-xl border border-gray-200 p-4 mb-4">
+        <div className="min-w-0 mb-3">
+          <div className="text-sm font-bold text-gray-800">Mini-imprimante Bluetooth (tickets)</div>
+          <div className="text-xs mt-0.5">
+            {name
+              ? <span className="text-emerald-600 font-semibold">● {name}</span>
+              : <span className="text-gray-400">Aucune imprimante connectée</span>}
+          </div>
+        </div>
+
+        {!supported ? (
+          <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+            Le Bluetooth n'est pas disponible sur ce navigateur. Utilisez Google Chrome (Android ou ordinateur). Sur iPhone, utilisez l'impression PDF.
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            <Btn onClick={handleConnect} loading={busy}>{name ? "Reconnecter / changer" : "Connecter une imprimante"}</Btn>
+            <Btn color="gray" onClick={handleTest} disabled={busy}>Imprimer un test</Btn>
+            {name && <Btn color="gray" onClick={handleForget} disabled={busy}>Oublier</Btn>}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Impression des reçus par défaut</p>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => changeMode("ticket")}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition ${mode === "ticket" ? "bg-[#0023FF] text-white border-[#0023FF]" : "bg-white text-gray-600 border-gray-200 hover:border-[#0023FF]/40"}`}>
+            🧾 Ticket (Bluetooth)
+          </button>
+          <button type="button" onClick={() => changeMode("pdf")}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition ${mode === "pdf" ? "bg-[#0023FF] text-white border-[#0023FF]" : "bg-white text-gray-600 border-gray-200 hover:border-[#0023FF]/40"}`}>
+            📄 PDF (système)
+          </button>
+        </div>
+        <p className="text-[11px] text-gray-400 mt-2">
+          Les factures et rapports s'impriment toujours en PDF (mise en page complète).
+        </p>
+      </div>
+
+      {msg && (
+        <div className={`mt-4 text-xs font-semibold rounded-lg px-3 py-2 ${msg.type === "error" ? "bg-red-50 text-red-600 border border-red-100" : "bg-emerald-50 text-emerald-700 border border-emerald-100"}`}>
+          {msg.text}
+        </div>
+      )}
+    </Card>
+  );
+}
 
 // ── Aperçu miniature CSS d'une mise en page (5 architectures) ─────────────
 function StyleThumb({ layoutId, pal }) {
@@ -464,6 +562,11 @@ export default function Parametres() {
             </>
           )}
         </Card>
+      </div>
+
+      {/* ── Imprimante ── */}
+      <div className="mt-5">
+        <PrinterCard />
       </div>
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}

@@ -1,6 +1,6 @@
 // src/services/index.js
 // Tous les appels API organisés par module
-import api, { fetchBlobAuthenticated, openBlob, downloadBlob } from "./api";
+import api, { fetchBlobAuthenticated, openBlob, downloadBlob, printBlob } from "./api";
 
 // ══════════════════════════════════════════
 // AUTH
@@ -139,6 +139,18 @@ export const facturesService = {
     const blob = await fetchBlobAuthenticated(`/factures/${encodeURIComponent(code)}/recu`);
     openBlob(blob, `Recu_${code}.pdf`);
   },
+
+  // Imprime la facture (PDF) via la fenêtre d'impression du système.
+  printPDF: async (code) => {
+    const blob = await fetchBlobAuthenticated(`/factures/${encodeURIComponent(code)}/pdf`);
+    printBlob(blob, `Facture_${code}.pdf`);
+  },
+
+  // Imprime le reçu (PDF) via la fenêtre d'impression du système.
+  printRecu: async (code) => {
+    const blob = await fetchBlobAuthenticated(`/factures/${encodeURIComponent(code)}/recu`);
+    printBlob(blob, `Recu_${code}.pdf`);
+  },
 };
 
 // ══════════════════════════════════════════
@@ -229,6 +241,12 @@ export const rapportsService = {
   exportPDF: async (debut, fin) => {
     const blob = await fetchBlobAuthenticated("/rapports/pdf", { debut, fin });
     downloadBlob(blob, `Rapport_${debut}_${fin}.pdf`);
+  },
+
+  // Imprime le rapport (PDF) via la fenêtre d'impression du système.
+  printPDF: async (debut, fin) => {
+    const blob = await fetchBlobAuthenticated("/rapports/pdf", { debut, fin });
+    printBlob(blob, `Rapport_${debut}_${fin}.pdf`);
   },
 };
 

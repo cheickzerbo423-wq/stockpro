@@ -146,6 +146,15 @@ export default function Rapports() {
     finally { setExportLoading(false); }
   };
 
+  const handlePrint = async () => {
+    setExportLoading(true);
+    try {
+      const bornes = periode === "custom" ? custom : getPeriode(periode);
+      await rapportsService.printPDF(bornes.debut, bornes.fin);
+    } catch { notify("Erreur impression du rapport.", "error"); }
+    finally { setExportLoading(false); }
+  };
+
   // Données graphique CA vs Dépenses — déjà agrégées et complétées (avec des
   // 0 sur les périodes sans mouvement) côté backend, selon la granularité
   // adaptée à l'étendue de la période (jour / mois / année).
@@ -196,9 +205,14 @@ export default function Rapports() {
         action={
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             {data && (
-              <Btn color="gray" onClick={handleExport} loading={exportLoading} className="w-full sm:w-auto">
-                ⬇ Exporter PDF
-              </Btn>
+              <>
+                <Btn color="gray" onClick={handleExport} loading={exportLoading} className="w-full sm:w-auto">
+                  ⬇ Exporter PDF
+                </Btn>
+                <Btn color="gray" onClick={handlePrint} loading={exportLoading} className="w-full sm:w-auto">
+                  🖨 Imprimer
+                </Btn>
+              </>
             )}
             <Btn onClick={() => charger()} loading={loading} className="w-full sm:w-auto">🔄 Actualiser</Btn>
           </div>

@@ -588,6 +588,25 @@ export default function Guide() {
         <Tip icon="🖌️" color="blue">
           Par défaut, le style <strong>Classique Bleu</strong> est appliqué. Avec 30 combinaisons disponibles, chaque entreprise peut trouver un rendu adapté à son identité visuelle.
         </Tip>
+
+        <SectionTitle>🖨️ Impression — imprimante & mini-imprimante</SectionTitle>
+        <p className="text-sm text-gray-600 leading-relaxed mb-3">
+          En bas de la page Paramètres, la carte <strong>Imprimante</strong> permet d'imprimer vos reçus, factures et rapports de deux façons complémentaires.
+        </p>
+        <div className="space-y-2">
+          <Step n="1"><strong>Mini-imprimante Bluetooth (tickets)</strong> : cliquez sur <strong>Connecter une imprimante</strong>, choisissez votre imprimante thermique dans la liste Bluetooth, puis vérifiez avec <strong>Imprimer un test</strong>. (Nécessite Google Chrome sur Android ou ordinateur.)</Step>
+          <Step n="2"><strong>Imprimante classique (PDF)</strong> : aucune configuration. Les factures, reçus et rapports s'impriment via la fenêtre d'impression du système, sur n'importe quelle imprimante (USB, WiFi, réseau).</Step>
+          <Step n="3">Choisissez le <strong>mode d'impression des reçus par défaut</strong> : <strong>Ticket (Bluetooth)</strong> ou <strong>PDF (système)</strong>.</Step>
+        </div>
+
+        <SectionTitle>Imprimer un document</SectionTitle>
+        <div className="space-y-2">
+          <Step n="1"><strong>Facture / reçu</strong> : ouvrez une facture dans l'onglet <strong>Factures</strong>, puis utilisez <strong>🖨 Imprimer</strong> (facture PDF), <strong>🎫 Reçu</strong> (reçu PDF) ou <strong>🧾 Ticket</strong> (mini-imprimante Bluetooth).</Step>
+          <Step n="2"><strong>Rapport</strong> : dans l'onglet <strong>Rapports financiers</strong>, cliquez sur <strong>🖨 Imprimer</strong> pour l'envoyer à votre imprimante, ou <strong>⬇ Exporter PDF</strong> pour l'enregistrer.</Step>
+        </div>
+        <Tip icon="📱" color="blue">
+          Sur iPhone, le Bluetooth n'est pas disponible dans le navigateur : utilisez l'impression <strong>PDF</strong>, qui fonctionne partout. Le ticket Bluetooth est idéal sur <strong>Android</strong> et <strong>ordinateur</strong>.
+        </Tip>
       </Section>
 
       {/* ── Pied de page ── */}

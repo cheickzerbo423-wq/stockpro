@@ -151,3 +151,36 @@ export function downloadBlob(blob, filename) {
   document.body.removeChild(a);
   URL.revokeObjectURL(blobUrl);
 }
+
+// Imprime un PDF (Blob) via la fenêtre d'impression du système (n'importe quelle
+// imprimante : USB, WiFi, réseau…). Web : iframe caché + window.print().
+// Mobile (Capacitor) : ouverture native — l'utilisateur imprime depuis le
+// lecteur PDF / la feuille de partage Android.
+export function printBlob(blob, filename = "document.pdf") {
+  if (Capacitor.isNativePlatform()) {
+    saveAndShareBlob(blob, filename);
+    return;
+  }
+  const blobUrl = URL.createObjectURL(blob);
+  const iframe = document.createElement("iframe");
+  iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "0";
+  iframe.src = blobUrl;
+  iframe.onload = () => {
+    try {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    } catch (e) {
+      window.open(blobUrl, "_blank");
+    }
+    setTimeout(() => {
+      if (iframe.parentNode) document.body.removeChild(iframe);
+      URL.revokeObjectURL(blobUrl);
+    }, 60000);
+  };
+  document.body.appendChild(iframe);
+}

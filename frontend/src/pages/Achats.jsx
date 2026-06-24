@@ -602,7 +602,7 @@ export default function Achats() {
             {catalogueFiltre.length === 0 ? (
               <div className="py-7 text-center text-sm text-gray-400">Aucun produit trouvé</div>
             ) : (
-              <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto pb-0.5">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 max-h-52 lg:max-h-80 overflow-y-auto pb-0.5">
                 {catalogueFiltre.map((a) => {
                   const inCart = lignes.find((l) => l.article_code === a.code)?.quantite || 0;
                   return (

@@ -285,9 +285,9 @@ export default function Guide() {
           <Step n="1">Cliquez sur <strong>+ Nouvel Approvisionnement</strong>.</Step>
           <Step n="2">Dans le champ <strong>Fournisseur</strong>, tapez pour filtrer et cliquez sur un nom pour le sélectionner.</Step>
           <Step n="3">Si le fournisseur n'existe pas encore, ouvrez la liste et cliquez sur <strong>+ Nouveau fournisseur</strong> — il sera créé et sélectionné immédiatement.</Step>
-          <Step n="4">Dans chaque ligne, tapez le nom ou code de l'article — une liste de suggestions s'ouvre avec le stock actuel de chaque produit.</Step>
-          <Step n="5">Saisissez la quantité reçue et le prix unitaire d'achat.</Step>
-          <Step n="6">Cliquez <strong>+ Ajouter un produit</strong> pour ajouter autant de lignes que nécessaire.</Step>
+          <Step n="4">Dans le <strong>catalogue</strong>, touchez (ou cliquez) un produit pour l'ajouter au panier. Utilisez la <strong>barre de recherche</strong> pour le retrouver vite ; un badge bleu indique la quantité déjà ajoutée.</Step>
+          <Step n="5">Dans le <strong>panier</strong>, ajustez la quantité reçue avec les boutons <strong>− / +</strong> et vérifiez le <strong>prix d'achat</strong> (pré-rempli depuis la fiche article).</Step>
+          <Step n="6">Répétez pour chaque produit reçu en touchant d'autres articles du catalogue.</Step>
           <Step n="7">Définissez le mode de paiement et enregistrez.</Step>
         </div>
 

@@ -38,19 +38,34 @@ const PALETTES = {
 function KpiCard({ icon, label, value, sub, color = "blue" }) {
   const p = PALETTES[color] || PALETTES.blue;
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-shadow duration-200"
-      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-      <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl mb-3"
-        style={{ background: p.bg }}>
-        {icon}
+    <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-default"
+      style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
+      <div className="h-1" style={{ background: p.bar }} />
+      <div className="p-4 sm:p-5">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
+          style={{ background: p.bg }}>
+          {icon}
+        </div>
+        <div className="text-sm sm:text-base font-black text-gray-900 leading-tight tracking-tight break-normal">
+          {value}
+        </div>
+        <div className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-wide">{label}</div>
+        {sub && (
+          <div className="mt-3 pt-2.5 border-t border-gray-50 text-[10px] text-gray-400 font-medium">
+            {sub}
+          </div>
+        )}
       </div>
-      <div className="text-lg sm:text-xl font-black text-gray-900 leading-tight tracking-tight break-words">
-        {value}
-      </div>
-      <div className="text-xs font-semibold text-gray-400 mt-1">{label}</div>
-      {sub && (
-        <div className="text-[11px] text-gray-400 mt-1.5 leading-snug">{sub}</div>
-      )}
+    </div>
+  );
+}
+
+/* ─── Mini stat chip ────────────────────────────────────────── */
+function StatChip({ label, value, color }) {
+  return (
+    <div className="flex flex-col items-center gap-0.5 px-4 py-3 sm:px-6 flex-1">
+      <div className="text-sm sm:text-base font-black whitespace-nowrap" style={{ color }}>{value}</div>
+      <div className="text-[10px] font-semibold text-blue-200 uppercase tracking-wide text-center leading-tight">{label}</div>
     </div>
   );
 }
@@ -88,68 +103,37 @@ export default function Dashboard() {
   const hasGraph = graphData.some((d) => d.ca > 0);
   const fmtK = (v) => v >= 1e6 ? (v/1e6).toFixed(1)+"M" : v >= 1000 ? (v/1000).toFixed(0)+"k" : v;
 
-  // Mini-courbe (SVG pur) pour la carte "chiffre d'affaires" en vedette.
-  const sparkPoints = (() => {
-    const vals = graphData.map((d) => d.ca);
-    const max = Math.max(...vals, 1);
-    const W = 104, H = 40, n = vals.length;
-    return vals.map((v, i) => `${((i / (n - 1)) * W).toFixed(1)},${(H - (v / max) * H).toFixed(1)}`).join(" ");
-  })();
-
   return (
     <div className="space-y-5 max-w-7xl mx-auto pb-8">
 
-      {/* ── En-tête ── */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs sm:text-sm text-gray-400 font-medium capitalize truncate">
-            {new Date().toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long", year:"numeric" })}
-          </p>
-          <h2 className="text-xl sm:text-2xl font-black text-gray-900 leading-tight">Tableau de bord</h2>
-        </div>
-        <button onClick={reload}
-          className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#0023FF] bg-white border border-gray-200 hover:border-[#0023FF]/40 px-3.5 py-2 rounded-xl transition flex-shrink-0">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5">
-            <polyline points="23 4 23 10 17 10"/>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-          </svg>
-          <span className="hidden sm:inline">Actualiser</span>
-        </button>
-      </div>
-
-      {/* ── Carte chiffre d'affaires (vedette) ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Chiffre d'affaires · {annee}</p>
-            <div className="text-2xl sm:text-3xl font-black text-gray-900 mt-1 leading-tight break-words">{fmt(kpis.ca_total)}</div>
-            <div className={`inline-flex items-center gap-1.5 mt-2.5 text-xs font-bold px-2.5 py-1 rounded-lg ${tauxRec >= 80 ? "bg-emerald-50 text-emerald-700" : tauxRec >= 50 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"}`}>
-              Recouvrement {tauxRec}%
-            </div>
+      {/* ── En-tête gradient ── */}
+      <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg,#0023FF 0%,#4B6BFF 100%)" }}>
+        <div className="px-5 py-5 sm:px-7 sm:py-6 flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-white leading-tight">Tableau de Bord</h2>
+            <p className="text-blue-200 text-xs sm:text-sm mt-0.5 font-medium">
+              {new Date().toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long", year:"numeric" })}
+            </p>
           </div>
-          {hasGraph && (
-            <svg width="104" height="40" viewBox="0 0 104 40" className="flex-shrink-0" aria-hidden="true">
-              <polyline points={sparkPoints} fill="none" stroke={BRAND} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <button onClick={reload}
+            className="flex items-center gap-2 text-xs font-bold text-white/80 hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 px-3.5 py-2 rounded-xl transition-all duration-150 flex-shrink-0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
             </svg>
-          )}
+            <span className="hidden sm:inline">Actualiser</span>
+          </button>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-gray-50">
-          <div>
-            <div className="text-sm sm:text-base font-black text-gray-900 break-words">{fmt(kpis.encaisse)}</div>
-            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mt-0.5">CA encaissé</div>
-          </div>
-          <div>
-            <div className="text-sm sm:text-base font-black text-red-500 break-words">{fmt(kpis.montant_a_recouvrer)}</div>
-            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mt-0.5">Créances</div>
-          </div>
-          <div>
-            <div className="text-sm sm:text-base font-black text-gray-900">{fmtN(kpis.nb_clients)}</div>
-            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mt-0.5">Clients actifs</div>
-          </div>
-          <div>
-            <div className="text-sm sm:text-base font-black" style={{ color: beneficeColor }}>{marge}%</div>
-            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mt-0.5">Marge brute</div>
-          </div>
+        {/* Stats band — 2×2 mobile, 4 en ligne desktop */}
+        <div className="bg-white/10 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 divide-white/10"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+          {/* séparateurs CSS via bordures droites */}
+          <div className="border-r border-b sm:border-b-0 border-white/10"><StatChip label="CA encaissé" value={fmt(kpis.encaisse)} color="#fff" /></div>
+          <div className="border-b sm:border-b-0 sm:border-r border-white/10"><StatChip label="Créances" value={fmt(kpis.montant_a_recouvrer)} color="#FCA5A5" /></div>
+          <div className="border-r border-white/10"><StatChip label="Clients actifs" value={fmtN(kpis.nb_clients)} color="#A5F3FC" /></div>
+          <div><StatChip label="Recouvrement"
+            value={`${tauxRec}%`}
+            color={tauxRec >= 80 ? "#6EE7B7" : tauxRec >= 50 ? "#FDE68A" : "#FCA5A5"} /></div>
         </div>
       </div>
 

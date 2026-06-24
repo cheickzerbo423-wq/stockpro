@@ -40,13 +40,14 @@ function KpiCard({ icon, label, value, sub, color = "blue" }) {
   return (
     <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-default"
       style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
-      <div className="h-1" style={{ background: p.bar }} />
+      <div className="h-1.5" style={{ background: p.bar }} />
       <div className="p-4 sm:p-5">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3"
-          style={{ background: p.bg }}>
+        <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl mb-3 shadow-sm"
+          style={{ background: p.bar }}>
           {icon}
         </div>
-        <div className="text-sm sm:text-base font-black text-gray-900 leading-tight tracking-tight break-normal">
+        <div className="text-sm sm:text-base font-black leading-tight tracking-tight break-normal"
+          style={{ color: p.bar }}>
           {value}
         </div>
         <div className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-wide">{label}</div>

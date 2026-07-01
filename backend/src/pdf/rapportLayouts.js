@@ -26,9 +26,9 @@ function classic(doc, ctx) {
   doc.fontSize(8.5).fillColor(SUB).font("Helvetica")
      .text((cfg.adresse || "") + (cfg.telephone ? (cfg.adresse ? "  ·  " : "") + cfg.telephone : ""), txtX, 58, { width: txtW });
 
-  doc.fontSize(22).fillColor(ACC).font("Helvetica-Bold").text("RAPPORT FINANCIER", PW - M - 230, 34, { width: 230, align: "right" });
-  doc.fontSize(8.5).fillColor(INK).font("Helvetica-Bold").text(`${debutStr}  -  ${finStr}`, PW - M - 230, 63, { width: 230, align: "right" });
-  doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("Genere le " + genStr, PW - M - 230, 77, { width: 230, align: "right" });
+  doc.fontSize(16).fillColor(ACC).font("Helvetica-Bold").text("RAPPORT FINANCIER", PW - M - 250, 40, { width: 250, align: "right" });
+  doc.fontSize(8.5).fillColor(INK).font("Helvetica-Bold").text(`${debutStr}  -  ${finStr}`, PW - M - 250, 64, { width: 250, align: "right" });
+  doc.fontSize(7.5).fillColor(SUB).font("Helvetica").text("Genere le " + genStr, PW - M - 250, 78, { width: 250, align: "right" });
 
   hr(96, 1, ACC); hr(98, 0.3, LITE);
   doc.y = 112;

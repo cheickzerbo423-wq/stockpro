@@ -74,6 +74,36 @@ import {
 } from "../components/UI";
 import Icon from "../components/Icon";
 
+/* ── Vignette d'article cliquable : changer l'image directement depuis la liste ── */
+function ArticleThumb({ a, onUpdate, notify }) {
+  const inputRef = useRef(null);
+  const [busy, setBusy] = useState(false);
+  const pick = async (file) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const dataUrl = await resizeImage(file);
+      await onUpdate(a, dataUrl);
+    } catch (e) {
+      notify("Impossible de traiter cette image.", "error");
+    } finally { setBusy(false); }
+  };
+  return (
+    <button type="button" onClick={() => inputRef.current && inputRef.current.click()}
+      disabled={busy} title="Cliquer pour changer l'image"
+      className="relative group/th w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden border border-gray-100 shadow-sm cursor-pointer">
+      {a.image_url
+        ? <img src={a.image_url} alt="" className="w-full h-full object-cover" />
+        : <span className="w-full h-full bg-gray-50 flex items-center justify-center text-gray-400"><Icon name="box" size={22} /></span>}
+      <span className="absolute inset-0 bg-black/45 text-white flex items-center justify-center opacity-0 group-hover/th:opacity-100 transition">
+        {busy ? <Icon name="refresh" size={16} className="animate-spin" /> : <Icon name="camera" size={16} />}
+      </span>
+      <input ref={inputRef} type="file" accept="image/*" className="hidden"
+        onChange={(e) => { if (e.target.files[0]) pick(e.target.files[0]); e.target.value = ""; }} />
+    </button>
+  );
+}
+
 export default function Articles() {
   const [search, setSearch]       = useState("");
   const [showAdd, setShowAdd]     = useState(false);
@@ -183,6 +213,21 @@ export default function Articles() {
     } catch (err) { notify(err.message, "error"); }
   };
 
+  // Changement rapide de l'image depuis la liste (clic sur la vignette).
+  const handleImageChange = async (a, dataUrl) => {
+    try {
+      await updateArticle(a.code, {
+        libelle:    a.libelle,
+        prix_achat: a.prix_achat,
+        prix_vente: a.prix_vente,
+        stock_min:  a.stock_min,
+        image_url:  dataUrl,
+      });
+      notify("Image du produit mise à jour.");
+      reload();
+    } catch (err) { notify(err.message || "Échec de la mise à jour de l'image.", "error"); }
+  };
+
   const handleDelete = async (code) => {
     try {
       await deleteArticle(code);
@@ -242,10 +287,7 @@ export default function Articles() {
                   <TD><span className="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">{a.code}</span></TD>
                   <TD bold>
                     <div className="flex items-center gap-2">
-                      {a.image_url
-                        ? <img src={a.image_url} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0 border border-gray-100 shadow-sm" />
-                        : <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0"><Icon name="box" size={22} /></div>
-                      }
+                      <ArticleThumb a={a} onUpdate={handleImageChange} notify={notify} />
                       <span className="truncate">{a.libelle}</span>
                     </div>
                   </TD>

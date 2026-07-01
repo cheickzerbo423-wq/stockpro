@@ -510,6 +510,7 @@ pool.connect((err, client, release) => {
         .then(() =>
           client.query(`
             ALTER TABLE articles ADD COLUMN IF NOT EXISTS image_url TEXT;
+            ALTER TABLE articles ADD COLUMN IF NOT EXISTS gamme VARCHAR(60);
             DROP VIEW IF EXISTS vue_stock;
             CREATE VIEW vue_stock AS
             SELECT
@@ -521,6 +522,7 @@ pool.connect((err, client, release) => {
               a.stock_min,
               a.actif,
               a.image_url,
+              a.gamme,
               COALESCE(ent.total, 0)::integer                                     AS entree,
               COALESCE(sor.total, 0)::integer                                     AS sortie,
               (COALESCE(ent.total, 0) - COALESCE(sor.total, 0))::integer          AS stock_restant,

@@ -73,7 +73,7 @@ async function getOne(req, res) {
 async function create(req, res) {
   const client = await db.connect();
   try {
-    const { code, libelle, prix_achat, prix_vente, stock_min, stock_initial, image_url } = req.body;
+    const { code, libelle, prix_achat, prix_vente, stock_min, stock_initial, image_url, gamme } = req.body;
     if (!code || !libelle)
       return res.status(400).json({ message: "Code et libellé obligatoires." });
 
@@ -95,10 +95,10 @@ async function create(req, res) {
     await client.query("BEGIN");
 
     const result = await client.query(
-      `INSERT INTO articles (code, libelle, prix_achat, prix_vente, stock_min, image_url, entreprise_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO articles (code, libelle, prix_achat, prix_vente, stock_min, image_url, gamme, entreprise_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [code.toUpperCase(), libelle.toUpperCase(), prix_achat || 0, prix_vente || 0, stock_min || 5, image_url || null, req.user.entreprise_id]
+      [code.toUpperCase(), libelle.toUpperCase(), prix_achat || 0, prix_vente || 0, stock_min || 5, image_url || null, (gamme && String(gamme).trim()) || null, req.user.entreprise_id]
     );
     const article = result.rows[0];
 
@@ -147,31 +147,30 @@ async function create(req, res) {
 // PUT /api/articles/:code
 async function update(req, res) {
   try {
-    const { libelle, prix_achat, prix_vente, stock_min, image_url } = req.body;
+    const { libelle, prix_achat, prix_vente, stock_min, image_url, gamme } = req.body;
 
     const erreurNum = validerChampsNumeriques({ prix_achat, prix_vente, stock_min });
     if (erreurNum) return res.status(400).json({ message: erreurNum });
 
+    // image_url et gamme ne sont mis à jour que si la clé est présente dans le
+    // body (évite d'écraser l'existant lors d'appels partiels). Présente et
+    // vide → NULL. AND entreprise_id : empêche de modifier l'article d'un autre tenant.
     const hasImage = Object.prototype.hasOwnProperty.call(req.body, "image_url");
-    // image_url : mise à jour uniquement si la clé est présente dans le body
-    // (évite d'écraser l'image existante lors d'appels qui ne l'envoient pas).
-    // Si présente et vide → NULL (suppression de l'image).
-    // AND entreprise_id : empêche toute modification d'un article d'une autre entreprise.
-    const setClauses = [
-      "libelle    = COALESCE($1, libelle)",
-      "prix_achat = COALESCE($2, prix_achat)",
-      "prix_vente = COALESCE($3, prix_vente)",
-      "stock_min  = COALESCE($4, stock_min)",
-      ...(hasImage ? ["image_url = $5"] : []),
-      "updated_at = NOW()",
-    ];
-    const codeIdx    = hasImage ? 6 : 5;
-    const entreIdx   = hasImage ? 7 : 6;
-    const params     = [libelle, prix_achat, prix_vente, stock_min,
-      ...(hasImage ? [image_url || null] : []),
-      req.params.code, req.user.entreprise_id];
+    const hasGamme = Object.prototype.hasOwnProperty.call(req.body, "gamme");
+    const set = [];
+    const params = [];
+    let i = 1;
+    set.push(`libelle    = COALESCE($${i++}, libelle)`);    params.push(libelle);
+    set.push(`prix_achat = COALESCE($${i++}, prix_achat)`); params.push(prix_achat);
+    set.push(`prix_vente = COALESCE($${i++}, prix_vente)`); params.push(prix_vente);
+    set.push(`stock_min  = COALESCE($${i++}, stock_min)`);  params.push(stock_min);
+    if (hasImage) { set.push(`image_url = $${i++}`); params.push(image_url || null); }
+    if (hasGamme) { set.push(`gamme = $${i++}`);     params.push((gamme && String(gamme).trim()) || null); }
+    set.push("updated_at = NOW()");
+    const codeIdx  = i++; params.push(req.params.code);
+    const entreIdx = i++; params.push(req.user.entreprise_id);
     const result = await db.query(
-      `UPDATE articles SET ${setClauses.join(", ")}
+      `UPDATE articles SET ${set.join(", ")}
        WHERE code = $${codeIdx} AND entreprise_id = $${entreIdx}
        RETURNING *`,
       params

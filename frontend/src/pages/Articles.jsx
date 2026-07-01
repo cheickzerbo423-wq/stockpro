@@ -108,10 +108,11 @@ export default function Articles() {
   const [search, setSearch]       = useState("");
   const [showAdd, setShowAdd]     = useState(false);
   const [editArticle, setEditArticle] = useState(null);
-  const [editForm, setEditForm]   = useState({ libelle: "", prix_achat: "", prix_vente: "", stock_min: "", image_url: "" });
+  const [editForm, setEditForm]   = useState({ libelle: "", prix_achat: "", prix_vente: "", stock_min: "", image_url: "", gamme: "" });
   const [toast, setToast]         = useState(null);
   const [delConfirm, setDelConfirm] = useState(null); // { code, libelle }
-  const [form, setForm]           = useState({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5", stock_initial: "", image_url: "" });
+  const [gammeFilter, setGammeFilter] = useState("");
+  const [form, setForm]           = useState({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5", stock_initial: "", image_url: "", gamme: "" });
   const [formErr, setFormErr]     = useState({});
   const [codeAuto, setCodeAuto]   = useState(true);
   const [loadingCode, setLoadingCode] = useState(false);
@@ -186,7 +187,7 @@ export default function Articles() {
       await createArticle({ ...form, code: codeToUse });
       notify("Article créé avec succès !");
       setShowAdd(false);
-      setForm({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5", stock_initial: "", image_url: "" });
+      setForm({ code: "", libelle: "", prix_achat: "", prix_vente: "", stock_min: "5", stock_initial: "", image_url: "", gamme: "" });
       setCodeAuto(true);
       reload();
     } catch (err) { notify(err.message, "error"); }
@@ -200,6 +201,7 @@ export default function Articles() {
       prix_vente: a.prix_vente,
       stock_min:  a.stock_min,
       image_url:  a.image_url || "",
+      gamme:      a.gamme || "",
     });
   };
 
@@ -243,6 +245,11 @@ export default function Articles() {
   const totalValeur = articles.reduce((s, a) => s + (parseFloat(a.valeur_stock) || 0), 0);
   const sortState = { key: sortKey, dir: sortDir };
 
+  // Gammes (catégories) optionnelles : liste des gammes distinctes utilisées,
+  // et filtrage de la liste affichée si une gamme est sélectionnée.
+  const gammes = [...new Set(articles.map((a) => a.gamme).filter(Boolean))].sort((x, y) => x.localeCompare(y));
+  const articlesAffiches = gammeFilter ? articlesTries.filter((a) => (a.gamme || "") === gammeFilter) : articlesTries;
+
   return (
     <div>
       <PageHeader
@@ -251,14 +258,23 @@ export default function Articles() {
         action={<Btn onClick={() => setShowAdd(true)}>+ Nouvel Article</Btn>}
       />
 
-      {/* Barre de recherche */}
-      <div className="mb-4">
-        <SearchBox
-          value={search}
-          onChange={setSearch}
-          placeholder="Rechercher par code ou libellé…"
-          suggestions={articles.map(a => ({ label: a.libelle, sub: `Code : ${a.code} — Stock : ${a.stock_restant}` }))}
-        />
+      {/* Barre de recherche + filtre par gamme */}
+      <div className="mb-4 flex flex-col sm:flex-row gap-2">
+        <div className="flex-1 min-w-0">
+          <SearchBox
+            value={search}
+            onChange={setSearch}
+            placeholder="Rechercher par code ou libellé…"
+            suggestions={articles.map(a => ({ label: a.libelle, sub: `Code : ${a.code} — Stock : ${a.stock_restant}` }))}
+          />
+        </div>
+        {gammes.length > 0 && (
+          <select value={gammeFilter} onChange={(e) => setGammeFilter(e.target.value)}
+            className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-[#0023FF] sm:w-56 flex-shrink-0">
+            <option value="">Toutes les gammes</option>
+            {gammes.map((g) => <option key={g} value={g}>{g}</option>)}
+          </select>
+        )}
       </div>
 
       {/* Tableau */}
@@ -280,7 +296,7 @@ export default function Articles() {
             sort={sortState} onSort={handleSort}
             empty="Aucun article trouvé."
           >
-            {articlesTries.map((a) => {
+            {articlesAffiches.map((a) => {
               const stock = parseInt(a.stock_restant) || 0;
               return (
                 <TR key={a.code}>
@@ -288,7 +304,10 @@ export default function Articles() {
                   <TD bold>
                     <div className="flex items-center gap-2">
                       <ArticleThumb a={a} onUpdate={handleImageChange} notify={notify} />
-                      <span className="truncate">{a.libelle}</span>
+                      <div className="min-w-0">
+                        <span className="truncate block">{a.libelle}</span>
+                        {a.gamme && <span className="inline-block mt-0.5 text-[10px] font-semibold text-[#0023FF] bg-[#E6EAFF] px-1.5 py-0.5 rounded">{a.gamme}</span>}
+                      </div>
                     </div>
                   </TD>
                   <TD right>{fmt(a.prix_achat)}</TD>
@@ -371,6 +390,11 @@ export default function Articles() {
             <Input label="Prix de Vente (FCFA)" type="number" value={form.prix_vente}
               onChange={(e) => setForm({ ...form, prix_vente: e.target.value })} />
             <div className="md:col-span-2">
+              <Input label="Gamme / catégorie (optionnel)" value={form.gamme}
+                onChange={(e) => setForm({ ...form, gamme: e.target.value })}
+                placeholder="ex: Boissons, Électronique, Alimentation…" />
+            </div>
+            <div className="md:col-span-2">
               <label className="block text-xs font-semibold text-gray-500 mb-1">Photo du produit <span className="font-normal text-gray-400">(optionnel)</span></label>
               <ImagePicker value={form.image_url} onChange={(v) => setForm({ ...form, image_url: v })} />
             </div>
@@ -401,6 +425,11 @@ export default function Articles() {
             <div className="md:col-span-2">
               <Input label="Stock Minimum (seuil alerte)" type="number" value={editForm.stock_min}
                 onChange={(e) => setEditForm({ ...editForm, stock_min: e.target.value })} />
+            </div>
+            <div className="md:col-span-2">
+              <Input label="Gamme / catégorie (optionnel)" value={editForm.gamme}
+                onChange={(e) => setEditForm({ ...editForm, gamme: e.target.value })}
+                placeholder="ex: Boissons, Électronique…" />
             </div>
             <div className="md:col-span-2">
               <label className="block text-xs font-semibold text-gray-500 mb-1">Photo du produit <span className="font-normal text-gray-400">(optionnel)</span></label>

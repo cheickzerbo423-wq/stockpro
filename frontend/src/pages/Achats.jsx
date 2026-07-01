@@ -424,16 +424,15 @@ export default function Achats() {
         {loading ? <Spinner /> : error ? <ErrorBox message={error} onRetry={reload} /> : (
           <DataTable
             headers={[
-              { label: "Date",        sortKey: "date_achat",      w: "9%" },
+              { label: "Date",        sortKey: "date_achat",      w: "8%" },
               { label: "Article",     sortKey: "libelle",         w: "16%" },
-              { label: "Fournisseur", sortKey: "fournisseur_nom", w: "12%" },
-              { label: "Qté",   sortKey: "quantite",      right: true, w: "8%" },
+              { label: "Fournisseur", sortKey: "fournisseur_nom", w: "13%" },
+              { label: "Qté",   sortKey: "quantite",      right: true, w: "7%" },
               { label: "P.U.",  sortKey: "prix_achat",    right: true, w: "8%" },
-              { label: "Total", sortKey: "montant_total", right: true, w: "13%" },
-              { label: "Payé",  sortKey: "montant_paye",  right: true, w: "13%" },
+              { label: "Total", sortKey: "montant_total", right: true, w: "12%" },
+              { label: "Payé",  sortKey: "montant_paye",  right: true, w: "12%" },
               { label: "Reste", sortKey: "reste",         right: true, w: "10%" },
-              { label: "Statut", sortKey: "statut",       w: "7%" },
-              { label: "", w: "4%" },
+              { label: "Statut", sortKey: "statut",       w: "14%" },
             ]}
             sort={sortState} onSort={handleSort}
             empty="Aucun approvisionnement."
@@ -460,20 +459,20 @@ export default function Achats() {
                   </span>
                 </TD>
                 <TD>
-                  {(() => {
-                    const total = parseFloat(a.montant_total);
-                    const paye  = parseFloat(a.montant_paye);
-                    if (paye >= total && total > 0) return <Badge color="emerald">Payé</Badge>;
-                    if (paye === 0)                 return <Badge color="red">Crédit</Badge>;
-                    return <Badge color="amber">Partiel</Badge>;
-                  })()}
-                </TD>
-                <TD>
-                  {parseFloat(a.reste) > 0 && (
-                    <Btn sm color="orange" onClick={() => { setPayModal(a); setPayAmount(String(a.reste)); }}>
-                      Payer
-                    </Btn>
-                  )}
+                  <div className="flex items-center gap-2 whitespace-nowrap">
+                    {(() => {
+                      const total = parseFloat(a.montant_total);
+                      const paye  = parseFloat(a.montant_paye);
+                      if (paye >= total && total > 0) return <Badge color="emerald">Payé</Badge>;
+                      if (paye === 0)                 return <Badge color="red">Crédit</Badge>;
+                      return <Badge color="amber">Partiel</Badge>;
+                    })()}
+                    {parseFloat(a.reste) > 0 && (
+                      <Btn sm color="orange" onClick={() => { setPayModal(a); setPayAmount(String(a.reste)); }}>
+                        Payer
+                      </Btn>
+                    )}
+                  </div>
                 </TD>
               </TR>
             ))}

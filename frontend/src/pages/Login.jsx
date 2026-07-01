@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Icon from "../components/Icon";
 
 const WiLogo = ({ size = 52 }) => (
   <svg viewBox="555 550 1372 1380" width={size} height={size}
@@ -15,9 +16,9 @@ const WiLogo = ({ size = 52 }) => (
 );
 
 const FEATURES = [
-  { icon: "📦", title: "Stock en temps réel", sub: "Alertes automatiques de rupture" },
-  { icon: "🧾", title: "Facturation rapide", sub: "PDF générés en 1 clic" },
-  { icon: "📊", title: "Rapports financiers", sub: "CA, bénéfices, dépenses" },
+  { icon: "box", title: "Stock en temps réel", sub: "Alertes automatiques de rupture" },
+  { icon: "receipt", title: "Facturation rapide", sub: "PDF générés en 1 clic" },
+  { icon: "chart", title: "Rapports financiers", sub: "CA, bénéfices, dépenses" },
 ];
 
 export default function Login() {
@@ -89,7 +90,7 @@ export default function Login() {
                   borderColor: "rgba(255,255,255,0.08)",
                   backdropFilter: "blur(12px)"
                 }}>
-                <div className="text-2xl flex-shrink-0">{f.icon}</div>
+                <div className="flex-shrink-0 text-white/90"><Icon name={f.icon} size={24} /></div>
                 <div>
                   <div className="text-white text-sm font-bold">{f.title}</div>
                   <div className="text-blue-300/60 text-xs font-medium">{f.sub}</div>
@@ -129,7 +130,7 @@ export default function Login() {
 
           {/* Titre formulaire */}
           <div className="mb-8">
-            <h1 className="text-2xl font-black text-gray-900 mb-1">Bienvenue 👋</h1>
+            <h1 className="text-2xl font-black text-gray-900 mb-1">Bienvenue</h1>
             <p className="text-gray-400 text-sm font-medium">Connectez-vous à votre espace de gestion</p>
           </div>
 

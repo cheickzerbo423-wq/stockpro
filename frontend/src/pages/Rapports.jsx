@@ -6,6 +6,7 @@ import {
 } from "recharts";
 import { rapportsService } from "../services";
 import { fmt, fmtN, today, Spinner, ErrorBox, Btn, PageHeader, Toast, tauxMarge } from "../components/UI";
+import Icon from "../components/Icon";
 
 function getPeriode(type) {
   const now = new Date();
@@ -207,14 +208,14 @@ export default function Rapports() {
             {data && (
               <>
                 <Btn color="gray" onClick={handleExport} loading={exportLoading} className="w-full sm:w-auto">
-                  ⬇ Exporter PDF
+                  <span className="inline-flex items-center gap-1.5"><Icon name="download" size={14} /> Exporter PDF</span>
                 </Btn>
                 <Btn color="gray" onClick={handlePrint} loading={exportLoading} className="w-full sm:w-auto">
-                  🖨 Imprimer
+                  <span className="inline-flex items-center gap-1.5"><Icon name="printer" size={14} /> Imprimer</span>
                 </Btn>
               </>
             )}
-            <Btn onClick={() => charger()} loading={loading} className="w-full sm:w-auto">🔄 Actualiser</Btn>
+            <Btn onClick={() => charger()} loading={loading} className="w-full sm:w-auto"><span className="inline-flex items-center gap-1.5"><Icon name="refresh" size={14} /> Actualiser</span></Btn>
           </div>
         }
       />
@@ -277,17 +278,17 @@ export default function Rapports() {
           {/* ── KPIs ── */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
             <KpiCard
-              icon="📈" label="Chiffre d'Affaires"
+              icon={<Icon name="trendUp" size={20} />} label="Chiffre d'Affaires"
               value={fmt(data.ventes.ca_total)}
               accent={{ text: "text-[#0023FF]", badge: "bg-[#E6EAFF] text-[#0023FF]" }}
             />
             <KpiCard
-              icon="💸" label="Total Dépenses"
+              icon={<Icon name="coins" size={20} />} label="Total Dépenses"
               value={fmt(data.achats.total_achats)}
               accent={{ text: "text-red-600", badge: "bg-red-100 text-red-700" }}
             />
             <KpiCard
-              icon="💰" label="Marge Brute"
+              icon={<Icon name="coins" size={20} />} label="Marge Brute"
               value={fmt(data.benefice)}
               sub={`Marge ${tauxMargeVal}%`}
               accent={{
@@ -296,7 +297,7 @@ export default function Rapports() {
               }}
             />
             <KpiCard
-              icon="🧾" label="Factures Émises"
+              icon={<Icon name="receipt" size={20} />} label="Factures Émises"
               value={fmtN(data.factures.nb_total)}
               sub={`${data.factures.nb_impayees} impayée(s)`}
               accent={{ text: "text-blue-600", badge: "bg-red-100 text-red-600" }}
@@ -538,7 +539,7 @@ export default function Rapports() {
                 CA <strong>{fmt(data.ventes.ca_total)}</strong> — Coût des ventes <strong>{fmt(data.cogs)}</strong>
               </div>
             </div>
-            <div className="text-5xl select-none">{data.benefice >= 0 ? "📈" : "📉"}</div>
+            <div className="select-none">{data.benefice >= 0 ? <Icon name="trendUp" size={44} /> : <Icon name="trendDown" size={44} />}</div>
           </div>
         </>
       )}

@@ -5,13 +5,14 @@ import { utilisateursService, adminService } from "../services";
 import { useMutation } from "../hooks/useApi";
 import { Spinner, ErrorBox, Badge, Modal, Select, Input, Btn, PageHeader, Toast, ConfirmModal, PasswordRules } from "../components/UI";
 import { isPasswordValid, PASSWORD_HINT } from "../utils/passwordPolicy";
+import Icon from "../components/Icon";
 
 const MODULES = [
-  { key: "perm_vente",       label: "Ventes",       icon: "↗" },
-  { key: "perm_appro",       label: "Appro.",        icon: "↙" },
-  { key: "perm_articles",    label: "Articles",      icon: "◫" },
-  { key: "perm_facturation", label: "Facturation",   icon: "▤" },
-  { key: "perm_clients",     label: "Clients",       icon: "◎" },
+  { key: "perm_vente",       label: "Ventes",       icon: "cart" },
+  { key: "perm_appro",       label: "Appro.",        icon: "truck" },
+  { key: "perm_articles",    label: "Articles",      icon: "box" },
+  { key: "perm_facturation", label: "Facturation",   icon: "receipt" },
+  { key: "perm_clients",     label: "Clients",       icon: "users" },
 ];
 
 const RESET_MODULES = [
@@ -35,7 +36,7 @@ const COLOR_MAP = {
 };
 
 const ROLE_COLOR = { Admin: "purple", Gestionnaire: "blue", Vendeur: "amber" };
-const ROLE_ICON  = { Admin: "👑", Gestionnaire: "🛡️", Vendeur: "👤" };
+const ROLE_ICON  = { Admin: "crown", Gestionnaire: "shield", Vendeur: "user" };
 
 export default function Utilisateurs() {
   const { data: users = [], loading, error, reload } = useUtilisateurs();
@@ -136,7 +137,7 @@ export default function Utilisateurs() {
                   <input type="checkbox" checked={form[m.key]}
                     onChange={(e) => setForm({ ...form, [m.key]: e.target.checked })}
                     className="accent-[#0023FF] w-4 h-4" />
-                  <span className="text-sm">{m.icon}</span>
+                  <span className="text-gray-500 flex"><Icon name={m.icon} size={16} /></span>
                   <span className={`text-sm font-medium ${form[m.key] ? "text-[#0023FF]" : "text-gray-600"}`}>{m.label}</span>
                 </label>
               ))}
@@ -157,7 +158,7 @@ export default function Utilisateurs() {
 
       {delConfirm && (
         <ConfirmModal
-          icon="👤"
+          icon={<Icon name="user" size={22} />}
           title={`Supprimer « ${delConfirm.login} » ?`}
           message="Cet utilisateur ne pourra plus se connecter. Cette action est irréversible."
           confirmLabel="Supprimer"
@@ -182,7 +183,7 @@ function UserCard({ user: u, onDelete }) {
         <div className="flex items-center gap-3">
           <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl font-black
             ${u.categorie === "Admin" ? "bg-purple-100" : u.categorie === "Gestionnaire" ? "bg-blue-100" : "bg-amber-100"}`}>
-            {ROLE_ICON[u.categorie] || "👤"}
+            <Icon name={ROLE_ICON[u.categorie] || "user"} size={20} className="text-gray-700" />
           </div>
           <div>
             <div className="font-bold text-gray-900 text-sm">{u.login}</div>
@@ -204,7 +205,7 @@ function UserCard({ user: u, onDelete }) {
         <div className="flex flex-wrap gap-1.5">
           {permsActives.map(m => (
             <span key={m.key} className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-              <span className="text-emerald-500 text-xs">✓</span> {m.label}
+              <Icon name="check" size={12} className="text-emerald-500" /> {m.label}
             </span>
           ))}
           {permsInactives.map(m => (
@@ -286,14 +287,14 @@ function ResetModal({ onClose, notify }) {
                     <div className={`text-sm font-bold ${sel ? c.text : "text-gray-700"}`}>{m.label}</div>
                     <div className="text-xs text-gray-400">{m.desc}</div>
                   </div>
-                  {sel && <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${c.bg} ${c.text} border ${c.border}`}>✓</span>}
+                  {sel && <span className={`flex items-center justify-center px-2 py-0.5 rounded-full ${c.bg} ${c.text} border ${c.border}`}><Icon name="check" size={12} /></span>}
                 </label>
               );
             })}
           </div>
           {selected.includes("parametres") && (
             <div className="flex items-start gap-2 px-3 py-2 mb-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700 font-medium">
-              <span className="text-base leading-none mt-0.5">⚠️</span>
+              <span className="text-amber-600 mt-0.5 flex-shrink-0"><Icon name="alert" size={16} /></span>
               <span>La réinitialisation des <strong>Paramètres</strong> efface le logo, les coordonnées, la couleur et le pied de page de l'entreprise (retour aux valeurs par défaut).</span>
             </div>
           )}
@@ -301,7 +302,7 @@ function ResetModal({ onClose, notify }) {
             <Btn color="gray" onClick={onClose}>Annuler</Btn>
             <button onClick={() => setStep(2)} disabled={selected.length === 0}
               className="px-5 py-2 rounded-xl text-sm font-bold bg-red-500 text-white hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition">
-              Continuer →
+              Continuer <Icon name="arrowRight" size={14} className="inline align-text-bottom ml-1" />
             </button>
           </div>
         </>
@@ -329,7 +330,7 @@ function ResetModal({ onClose, notify }) {
               }`} />
           </div>
           <div className="flex justify-end gap-2">
-            <Btn color="gray" onClick={() => { setStep(1); setConfirm(""); }}>← Retour</Btn>
+            <Btn color="gray" onClick={() => { setStep(1); setConfirm(""); }}><Icon name="arrowRight" size={14} className="inline align-text-bottom mr-1 rotate-180" /> Retour</Btn>
             <button onClick={handleReset} disabled={confirm !== "REINITIALISER" || loading}
               className="px-5 py-2 rounded-xl text-sm font-bold bg-red-600 text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-2">
               {loading && <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeDasharray="32" strokeDashoffset="10"/></svg>}

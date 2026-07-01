@@ -8,6 +8,7 @@ import { useEntreprise } from "../hooks/useApi";
 import { entrepriseService } from "../services";
 import { openBlob } from "../services/api";
 import * as printer from "../utils/printer";
+import Icon from "../components/Icon";
 import { Spinner, ErrorBox, Card, Input, Btn, PageHeader, Toast, SectionTitle, Modal } from "../components/UI";
 
 const DEVISES = ["FCFA", "EUR", "USD", "XOF", "XAF", "MAD", "GNF", "CDF", "NGN", "GHS"];
@@ -101,11 +102,11 @@ function PrinterCard() {
         <div className="flex gap-2">
           <button type="button" onClick={() => changeMode("ticket")}
             className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition ${mode === "ticket" ? "bg-[#0023FF] text-white border-[#0023FF]" : "bg-white text-gray-600 border-gray-200 hover:border-[#0023FF]/40"}`}>
-            🧾 Ticket (Bluetooth)
+            <Icon name="ticket" size={14} className="inline align-text-bottom mr-1" /> Ticket (Bluetooth)
           </button>
           <button type="button" onClick={() => changeMode("pdf")}
             className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition ${mode === "pdf" ? "bg-[#0023FF] text-white border-[#0023FF]" : "bg-white text-gray-600 border-gray-200 hover:border-[#0023FF]/40"}`}>
-            📄 PDF (système)
+            <Icon name="file" size={14} className="inline align-text-bottom mr-1" /> PDF (système)
           </button>
         </div>
         <p className="text-[11px] text-gray-400 mt-2">
@@ -235,12 +236,12 @@ function StyleGallery({ catalog, palettes, value, onChange, onPreview }) {
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); e.preventDefault(); onPreview(s); } }}
                 className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-[11px] text-gray-400 hover:text-white hover:bg-[#0023FF] transition"
               >
-                👁
+                <Icon name="eye" size={14} />
               </span>
             </div>
             {active && (
               <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-                style={{ background: pal.primary }}>✓</div>
+                style={{ background: pal.primary }}><Icon name="check" size={12} className="text-white" /></div>
             )}
           </button>
         );
@@ -288,7 +289,7 @@ function PdfPreviewModal({ docType, docLabel, style, onClose }) {
           {/* Sur mobile, les navigateurs n'affichent pas les PDF dans un cadre :
               on propose d'ouvrir l'aperçu dans le lecteur PDF du téléphone. */}
           <div className="sm:hidden flex flex-col items-center gap-3 py-10 px-4 bg-gray-50 rounded-xl border border-gray-100 text-center">
-            <span className="text-4xl">📄</span>
+            <span className="text-gray-300"><Icon name="file" size={40} /></span>
             <p className="text-sm text-gray-500">L'aperçu intégré n'est pas disponible sur ce navigateur.</p>
             <Btn onClick={async () => {
               const blob = await entrepriseService.getPdfPreviewBlob(docType, style.id);

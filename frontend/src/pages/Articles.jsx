@@ -51,11 +51,11 @@ function ImagePicker({ value, onChange }) {
               onMouseDown={(e) => e.preventDefault()}
               onClick={(e) => { e.stopPropagation(); onChange(""); }}
               className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center hover:bg-red-600 shadow-sm"
-            >✕</button>
+            ><Icon name="x" size={12} /></button>
           </>
         ) : (
           <div className="text-center text-gray-400 pointer-events-none">
-            <div className="text-3xl mb-1">📷</div>
+            <div className="text-gray-400 mb-1 flex justify-center"><Icon name="camera" size={28} /></div>
             <div className="text-xs font-semibold">Cliquer ou déposer une photo</div>
             <div className="text-[10px] mt-0.5 text-gray-300">JPG, PNG, WebP</div>
           </div>
@@ -72,6 +72,7 @@ import {
   fmt, fmtN, Spinner, ErrorBox, Badge, Modal,
   Input, Btn, PageHeader, DataTable, TR, TD, Toast, SearchBox,
 } from "../components/UI";
+import Icon from "../components/Icon";
 
 export default function Articles() {
   const [search, setSearch]       = useState("");
@@ -243,7 +244,7 @@ export default function Articles() {
                     <div className="flex items-center gap-2">
                       {a.image_url
                         ? <img src={a.image_url} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0 border border-gray-100 shadow-sm" />
-                        : <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-xl flex-shrink-0">📦</div>
+                        : <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0"><Icon name="box" size={22} /></div>
                       }
                       <span className="truncate">{a.libelle}</span>
                     </div>
@@ -270,7 +271,7 @@ export default function Articles() {
                           <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
                         </svg>
                       </button>
-                      <button onClick={() => setDelConfirm({ code: a.code, libelle: a.libelle })} className="text-red-400 hover:text-red-600 text-xs font-bold" title="Supprimer">✕</button>
+                      <button onClick={() => setDelConfirm({ code: a.code, libelle: a.libelle })} className="text-red-400 hover:text-red-600 text-xs font-bold" title="Supprimer"><Icon name="x" size={13} /></button>
                     </div>
                   </TD>
                 </TR>
@@ -292,7 +293,7 @@ export default function Articles() {
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">
                 Code Article *
-                {codeAuto && <span className="ml-2 text-[#0023FF] font-normal">{loadingCode ? "⏳ génération…" : "✦ auto-généré"}</span>}
+                {codeAuto && <span className="ml-2 text-[#0023FF] font-normal">{loadingCode ? <><Icon name="clock" size={11} className="inline align-text-bottom" /> génération…</> : <><Icon name="sparkles" size={11} className="inline align-text-bottom" /> auto-généré</>}</span>}
               </label>
               <div className="flex gap-2 items-center">
                 <input
@@ -311,7 +312,7 @@ export default function Articles() {
                     catch { /* silencieux */ } finally { setLoadingCode(false); }
                   }}
                   className="px-2 py-2 rounded-lg bg-[#E6EAFF] text-[#0023FF] hover:bg-[#D0D6FF] text-sm"
-                >↺</button>
+                ><Icon name="refresh" size={14} /></button>
               </div>
               {formErr.code && <p className="text-xs text-red-500 mt-1">{formErr.code}</p>}
             </div>
@@ -375,7 +376,7 @@ export default function Articles() {
       {delConfirm && (
         <Modal title="Supprimer l'article" onClose={() => setDelConfirm(null)}>
           <div className="flex items-start gap-4 mb-6">
-            <div className="w-11 h-11 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center flex-shrink-0 text-xl">🗑️</div>
+            <div className="w-11 h-11 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center flex-shrink-0 text-red-500"><Icon name="trash" size={22} /></div>
             <div>
               <p className="text-sm font-semibold text-gray-800">
                 Supprimer <span className="font-mono text-red-600 font-bold">{delConfirm.code}</span> ?
@@ -384,7 +385,7 @@ export default function Articles() {
                 {delConfirm.libelle}
               </p>
               <p className="text-xs text-gray-400 mt-2 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                ⚠️ L'article sera archivé : il disparaîtra du catalogue, des ventes
+                <Icon name="alert" size={13} className="inline align-text-bottom mr-1" /> L'article sera archivé : il disparaîtra du catalogue, des ventes
                 et des approvisionnements, mais son historique (ventes, achats,
                 rapports) restera intact et inchangé.
               </p>

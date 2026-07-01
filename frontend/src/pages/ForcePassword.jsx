@@ -4,6 +4,7 @@
 // plateforme). L'utilisateur doit définir un nouveau mot de passe conforme
 // avant de pouvoir continuer.
 import { useState } from "react";
+import Icon from "../components/Icon";
 import { useAuth } from "../context/AuthContext";
 import { authService } from "../services";
 import { Input, Btn, PasswordRules } from "../components/UI";
@@ -69,8 +70,8 @@ export default function ForcePasswordChange() {
           style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
 
           <div className="flex items-start gap-4 mb-5">
-            <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl bg-amber-50 border border-amber-100">
-              🔒
+            <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 text-amber-600 bg-amber-50 border border-amber-100">
+              <Icon name="lock" size={22} />
             </div>
             <div>
               <h1 className="text-base font-black text-gray-900 leading-snug">Mise à jour de sécurité requise</h1>

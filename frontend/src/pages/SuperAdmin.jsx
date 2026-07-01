@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useSuperadminEntreprises, useMutation } from "../hooks/useApi";
 import { superadminService, authService } from "../services";
 import { Spinner, ErrorBox, Badge, Modal, Input, Btn, Toast, ConfirmModal, PasswordRules, today, fmtDate } from "../components/UI";
+import Icon from "../components/Icon";
 import { isPasswordValid, PASSWORD_HINT } from "../utils/passwordPolicy";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -206,10 +207,10 @@ export default function SuperAdmin() {
 
         {/* KPI cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
-          <KpiCard label="Total" value={nbTotal} icon="🏢" />
-          <KpiCard label="Actives" value={nbActives} icon="✅" accent="emerald" />
-          <KpiCard label="Suspendues" value={nbSuspend} icon="⏸️" accent={nbSuspend > 0 ? "red" : null} />
-          <KpiCard label="Expirent bientôt" value={nbExpiring} icon="⏰" accent={nbExpiring > 0 ? "orange" : null} />
+          <KpiCard label="Total" value={nbTotal} icon={<Icon name="building" size={18} className="text-white/70" />} />
+          <KpiCard label="Actives" value={nbActives} icon={<Icon name="check" size={18} className="text-emerald-300" />} accent="emerald" />
+          <KpiCard label="Suspendues" value={nbSuspend} icon={<Icon name="pause" size={18} className="text-white/70" />} accent={nbSuspend > 0 ? "red" : null} />
+          <KpiCard label="Expirent bientôt" value={nbExpiring} icon={<Icon name="clock" size={18} className="text-white/70" />} accent={nbExpiring > 0 ? "orange" : null} />
         </div>
       </div>
 
@@ -367,7 +368,7 @@ export default function SuperAdmin() {
       {/* ── Confirmation suspension/réactivation ── */}
       {toggleTarget && (
         <ConfirmModal
-          icon={toggleTarget.actif ? "⏸️" : "▶️"}
+          icon={toggleTarget.actif ? <Icon name="pause" size={22} /> : <Icon name="play" size={22} />}
           title={`${toggleTarget.actif ? "Suspendre" : "Réactiver"} « ${toggleTarget.nom} » ?`}
           sub={toggleTarget.actif
             ? "Tous ses utilisateurs perdront immédiatement l'accès."
@@ -382,7 +383,7 @@ export default function SuperAdmin() {
       {/* ── Confirmation suppression en masse ── */}
       {bulkDelete && (
         <ConfirmModal
-          icon="🗑️"
+          icon={<Icon name="trash" size={22} />}
           title={`Supprimer ${selected.size} entreprise${selected.size > 1 ? "s" : ""} définitivement ?`}
           sub="Toutes leurs données (utilisateurs, articles, ventes, factures…) seront effacées sans retour possible."
           confirmLabel={bulkBusy ? "Suppression…" : "Tout supprimer"}
@@ -684,11 +685,11 @@ function CreateModal({ form, setForm, onClose, onSubmit, loading }) {
           {/* Résumé visuel */}
           {form.abonnement_fin ? (
             <p className="text-xs text-emerald-600 font-semibold bg-emerald-50 rounded-lg px-3 py-2 border border-emerald-100">
-              ✅ Accès jusqu'au {new Date(form.abonnement_fin).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+              <Icon name="check" size={13} className="inline align-text-bottom mr-1" /> Accès jusqu'au {new Date(form.abonnement_fin).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
             </p>
           ) : (
             <p className="text-xs text-blue-500 font-semibold bg-blue-50 rounded-lg px-3 py-2 border border-blue-100">
-              ♾️ Accès illimité (pas de date d'expiration)
+              <Icon name="infinity" size={14} className="inline align-text-bottom mr-1" /> Accès illimité (pas de date d'expiration)
             </p>
           )}
         </div>
@@ -759,9 +760,9 @@ function AbonnementModal({ ent, onClose, mutate, notify, reload }) {
           ${abo.color === "red"    ? "bg-red-50 border-red-200 text-red-700" :
             abo.color === "orange" ? "bg-orange-50 border-orange-200 text-orange-700" :
                                      "bg-emerald-50 border-emerald-200 text-emerald-700"}`}>
-          {abo.color === "red"    ? `⚠️  Abonnement expiré depuis ${fmtDate(ent.abonnement_fin)}` :
-           abo.color === "orange" ? `⏰  Expire dans ${abo.days} jour${abo.days > 1 ? "s" : ""} — ${fmtDate(ent.abonnement_fin)}` :
-                                    `✅  Actif jusqu'au ${fmtDate(ent.abonnement_fin)}`}
+          {abo.color === "red"    ? `Abonnement expiré depuis ${fmtDate(ent.abonnement_fin)}` :
+           abo.color === "orange" ? `Expire dans ${abo.days} jour${abo.days > 1 ? "s" : ""} — ${fmtDate(ent.abonnement_fin)}` :
+                                    `Actif jusqu'au ${fmtDate(ent.abonnement_fin)}`}
         </div>
       )}
 

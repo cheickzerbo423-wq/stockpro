@@ -10,6 +10,7 @@ import {
   PageHeader, DataTable, TR, TD, Toast, Badge, SearchBox, ConfirmModal,
   isFactureReglee,
 } from "../components/UI";
+import Icon from "../components/Icon";
 
 // ── Helpers ──────────────────────────────────────────────────────────
 const MOIS_COURTS = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
@@ -77,7 +78,7 @@ function FichePanel({ bilan, onClose, onPay }) {
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-3 mb-2 flex-wrap">
-                <span className="text-3xl">{isClient ? "👤" : "🏭"}</span>
+                <span className="text-white"><Icon name={isClient ? "user" : "factory"} size={28} /></span>
                 <h2 className="text-xl font-black truncate">{bilan.nom}</h2>
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${
                   isClient ? "bg-[#0023FF] text-white" : "bg-[#FFF900] text-black"
@@ -86,10 +87,10 @@ function FichePanel({ bilan, onClose, onPay }) {
                 </span>
               </div>
               <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-400">
-                {bilan.contact && <span>📞 {bilan.contact}</span>}
-                {bilan.email   && <span>✉ {bilan.email}</span>}
-                {bilan.ville   && <span>📍 {bilan.ville}</span>}
-                {bilan.adresse && <span>🏠 {bilan.adresse}</span>}
+                {bilan.contact && <span><Icon name="phone" size={12} className="inline align-text-bottom mr-1" />{bilan.contact}</span>}
+                {bilan.email   && <span><Icon name="mail" size={12} className="inline align-text-bottom mr-1" />{bilan.email}</span>}
+                {bilan.ville   && <span><Icon name="pin" size={12} className="inline align-text-bottom mr-1" />{bilan.ville}</span>}
+                {bilan.adresse && <span><Icon name="home" size={12} className="inline align-text-bottom mr-1" />{bilan.adresse}</span>}
               </div>
               <div className="flex gap-4 mt-2 text-xs text-gray-500">
                 {isClient ? (
@@ -105,7 +106,7 @@ function FichePanel({ bilan, onClose, onPay }) {
                 )}
               </div>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-white text-3xl flex-shrink-0 leading-none">✕</button>
+            <button onClick={onClose} className="text-gray-400 hover:text-white flex-shrink-0 leading-none"><Icon name="x" size={24} /></button>
           </div>
         </div>
 
@@ -115,19 +116,19 @@ function FichePanel({ bilan, onClose, onPay }) {
           {/* ── KPIs ── */}
           {isClient ? (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <KpiBox icon="📊" label="Factures" value={fmtN(kpi.nb_factures)} bg="bg-white border border-gray-100 shadow-sm" text="text-gray-800" />
-              <KpiBox icon="📈" label="CA Total" value={fmt(kpi.ca_total)} bg="bg-blue-50 border border-blue-100" text="text-blue-700" />
-              <KpiBox icon="✅" label="Encaissé" value={fmt(kpi.encaisse)}
+              <KpiBox icon={<Icon name="chart" size={18} />} label="Factures" value={fmtN(kpi.nb_factures)} bg="bg-white border border-gray-100 shadow-sm" text="text-gray-800" />
+              <KpiBox icon={<Icon name="trendUp" size={18} />} label="CA Total" value={fmt(kpi.ca_total)} bg="bg-blue-50 border border-blue-100" text="text-blue-700" />
+              <KpiBox icon={<Icon name="check" size={18} />} label="Encaissé" value={fmt(kpi.encaisse)}
                 sub={`${kpi.nb_reglees} réglée(s)`} bg="bg-emerald-50 border border-emerald-100" text="text-emerald-700" />
-              <KpiBox icon="⏳" label="Créances" value={fmt(kpi.creances)}
+              <KpiBox icon={<Icon name="clock" size={18} />} label="Créances" value={fmt(kpi.creances)}
                 sub={`${kpi.nb_impayees} impayée(s)`} bg="bg-red-50 border border-red-100" text="text-red-700" />
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <KpiBox icon="🛒" label="Achats" value={fmtN(kpi.nb_achats)} bg="bg-white border border-gray-100 shadow-sm" text="text-gray-800" />
-              <KpiBox icon="💸" label="Total Achats" value={fmt(kpi.total_achats)} bg="bg-blue-50 border border-blue-100" text="text-blue-700" />
-              <KpiBox icon="✅" label="Total Payé" value={fmt(kpi.total_paye)} bg="bg-emerald-50 border border-emerald-100" text="text-emerald-700" />
-              <KpiBox icon="🔴" label="Dettes" value={fmt(kpi.total_dettes)} bg="bg-red-50 border border-red-100" text="text-red-700" />
+              <KpiBox icon={<Icon name="cart" size={18} />} label="Achats" value={fmtN(kpi.nb_achats)} bg="bg-white border border-gray-100 shadow-sm" text="text-gray-800" />
+              <KpiBox icon={<Icon name="coins" size={18} />} label="Total Achats" value={fmt(kpi.total_achats)} bg="bg-blue-50 border border-blue-100" text="text-blue-700" />
+              <KpiBox icon={<Icon name="check" size={18} />} label="Total Payé" value={fmt(kpi.total_paye)} bg="bg-emerald-50 border border-emerald-100" text="text-emerald-700" />
+              <KpiBox icon={<Icon name="alert" size={18} />} label="Dettes" value={fmt(kpi.total_dettes)} bg="bg-red-50 border border-red-100" text="text-red-700" />
             </div>
           )}
 
@@ -311,10 +312,10 @@ function FichePanel({ bilan, onClose, onPay }) {
                 </>
               )}
             </div>
-            <div className="text-4xl select-none">
+            <div className="select-none text-gray-400">
               {isClient
-                ? parseFloat(kpi.creances) > 0 ? "⏳" : "🏆"
-                : parseFloat(kpi.total_dettes) > 0 ? "⚠️" : "✅"}
+                ? (parseFloat(kpi.creances) > 0 ? <Icon name="clock" size={34} /> : <Icon name="trophy" size={34} />)
+                : (parseFloat(kpi.total_dettes) > 0 ? <Icon name="alert" size={34} /> : <Icon name="check" size={34} />)}
             </div>
           </div>
 
@@ -452,7 +453,7 @@ export default function Clients() {
           <button key={t} onClick={() => setTab(t)}
             style={tab === t ? { backgroundColor: "#0023FF" } : undefined}
             className={`px-5 py-2 rounded-xl text-sm font-bold transition border ${tab === t ? "text-white border-transparent shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:border-[#B3BFFF]"}`}>
-            {t === "Clients" ? "👤" : "🏭"} {t}
+            <Icon name={t === "Clients" ? "user" : "factory"} size={14} className="inline align-text-bottom mr-1" /> {t}
             <span className="ml-1 opacity-60">({all.filter(c => c.type === t).length})</span>
           </button>
         ))}
@@ -530,7 +531,7 @@ export default function Clients() {
                       </svg>
                     </button>
                     <button onClick={(e) => { e.stopPropagation(); handleDel(c.id, c.nom); }}
-                      className="text-red-400 hover:text-red-600 text-xs font-bold">✕</button>
+                      className="text-red-400 hover:text-red-600"><Icon name="x" size={14} /></button>
                   </div>
                 </TD>
               </TR>
@@ -630,7 +631,7 @@ export default function Clients() {
 
       {delConfirm && (
         <ConfirmModal
-          icon="🗑️"
+          icon={<Icon name="trash" size={22} />}
           title={`Supprimer ${delConfirm.nom} ?`}
           message="Ce contact sera archivé : il disparaîtra de vos listes, mais son historique (ventes, achats, factures) restera intact et inchangé."
           confirmLabel="Supprimer"

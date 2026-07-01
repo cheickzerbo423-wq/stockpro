@@ -5,6 +5,7 @@ import {
 } from "recharts";
 import { useDashboard } from "../hooks/useApi";
 import { fmt, fmtN, Spinner, ErrorBox, isFactureReglee, tauxMarge } from "../components/UI";
+import Icon from "../components/Icon";
 
 const MOIS = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
 const BRAND = "#0023FF";
@@ -140,19 +141,19 @@ export default function Dashboard() {
 
       {/* ── KPIs — 2 colonnes mobile, 4 desktop ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <KpiCard icon="📈" label={`CA ${annee}`}
+        <KpiCard icon={<Icon name="trendUp" size={20} className="text-white" />} label={`CA ${annee}`}
           value={fmt(kpis.ca_total)}
           sub={`Achats stock : ${fmt(kpis.depenses_total)}`}
           color="blue" />
-        <KpiCard icon="💰" label="Marge brute"
+        <KpiCard icon={<Icon name="coins" size={20} className="text-white" />} label="Marge brute"
           value={fmt(kpis.benefice)}
           sub={`Marge : ${marge}%`}
           color={parseFloat(kpis.benefice) >= 0 ? "green" : "red"} />
-        <KpiCard icon="📦" label="Valeur du stock"
+        <KpiCard icon={<Icon name="box" size={20} className="text-white" />} label="Valeur du stock"
           value={fmt(kpis.valeur_stock || 0)}
           sub={`${fmtN(kpis.nb_articles)} articles actifs`}
           color="purple" />
-        <KpiCard icon="🧾" label="Factures émises"
+        <KpiCard icon={<Icon name="receipt" size={20} className="text-white" />} label="Factures émises"
           value={fmtN(kpis.nb_factures)}
           sub={`${kpis.factures_impayees} impayée(s) · ${fmt(kpis.montant_a_recouvrer)}`}
           color={parseInt(kpis.factures_impayees) > 0 ? "amber" : "green"} />
@@ -202,7 +203,7 @@ export default function Dashboard() {
           </div>
           {!hasGraph ? (
             <div className="flex flex-col items-center justify-center py-14 gap-3">
-              <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-2xl">📊</div>
+              <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400"><Icon name="chart" size={26} /></div>
               <p className="text-sm text-gray-400 font-medium">Aucune vente enregistrée cette année</p>
             </div>
           ) : (
@@ -235,7 +236,7 @@ export default function Dashboard() {
           </div>
           {top_clients.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-14 gap-3">
-              <span className="text-3xl">👥</span>
+              <span className="text-gray-300"><Icon name="users" size={30} /></span>
               <p className="text-xs text-gray-400 font-medium">Aucune vente cette année</p>
             </div>
           ) : (
@@ -264,19 +265,18 @@ export default function Dashboard() {
           </div>
           {top_clients.length === 0 ? (
             <div className="flex flex-col items-center py-8 gap-2">
-              <span className="text-2xl">👥</span>
+              <span className="text-gray-300"><Icon name="users" size={24} /></span>
               <p className="text-xs text-gray-400 font-medium">Aucune vente cette année</p>
             </div>
           ) : (
             <div className="space-y-3">
               {top_clients.map((c, i) => {
-                const medals = ["🥇","🥈","🥉"];
                 const resteDu = Math.max(0, (c.ca || 0) - (c.encaisse || 0));
                 return (
                   <div key={c.client_nom}>
                     <div className="flex items-center justify-between text-xs mb-1 gap-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-sm flex-shrink-0">{medals[i] ?? `${i+1}.`}</span>
+                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0 ${i === 0 ? "bg-amber-100 text-amber-700" : i === 1 ? "bg-gray-200 text-gray-600" : i === 2 ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-500"}`}>{i + 1}</span>
                         <span className="font-semibold text-gray-700 truncate">{c.client_nom}</span>
                       </div>
                       <span className="font-bold text-gray-900 flex-shrink-0">{fmt(c.encaisse)}</span>
@@ -303,7 +303,7 @@ export default function Dashboard() {
           </div>
           {recent_factures.length === 0 ? (
             <div className="flex flex-col items-center py-8 gap-2">
-              <span className="text-2xl">🧾</span>
+              <span className="text-gray-300"><Icon name="receipt" size={24} /></span>
               <p className="text-xs text-gray-400 font-medium">Aucune facture</p>
             </div>
           ) : (
@@ -324,10 +324,10 @@ export default function Dashboard() {
                       <div className="text-xs font-bold text-gray-800">{fmt(f.montant)}</div>
                       <div className="text-xs text-gray-400">{dateStr}</div>
                     </div>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                    <span className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                       paid ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"
                     }`}>
-                      {paid ? "✓" : "⏳"}
+                      {paid ? <Icon name="check" size={12} /> : <Icon name="clock" size={12} />}
                     </span>
                   </div>
                 );
@@ -460,7 +460,9 @@ export default function Dashboard() {
           </div>
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl flex-shrink-0"
             style={{ background: beneficeColor + "15" }}>
-            {parseFloat(kpis.benefice) >= 0 ? "🚀" : "📉"}
+            {parseFloat(kpis.benefice) >= 0
+              ? <Icon name="trendUp" size={34} style={{ color: beneficeColor }} />
+              : <Icon name="trendDown" size={34} style={{ color: beneficeColor }} />}
           </div>
         </div>
       </div>

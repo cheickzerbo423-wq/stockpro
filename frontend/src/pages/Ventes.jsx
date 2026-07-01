@@ -8,6 +8,7 @@ import {
   Input, Btn, Modal, Badge, PageHeader, DataTable, TR, TD, Toast, SearchBox, Pagination,
   isFactureReglee,
 } from "../components/UI";
+import Icon from "../components/Icon";
 
 /* ─── Mini-form création rapide ─────────────────────────── */
 function MiniForm({ title, icon, onSave, onCancel, saving }) {
@@ -143,7 +144,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
             </p>
           </div>
           <button onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-sm font-bold transition">✕</button>
+            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-sm font-bold transition"><Icon name="x" size={15} /></button>
         </div>
 
         {/* ── Formulaire (scrollable) ── */}
@@ -155,7 +156,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
             <div className="relative">
               <label className="block text-xs font-semibold text-gray-500 mb-1">Client *</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><Icon name="search" size={14} /></span>
                 <input
                   type="text"
                   value={clientOpen ? clientQ : client}
@@ -169,7 +170,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                 {client && (
                   <button onMouseDown={(e) => e.preventDefault()}
                     onClick={() => { setClient(""); setClientId(""); setClientQ(""); }}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 text-xs">✕</button>
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500"><Icon name="x" size={13} /></button>
                 )}
               </div>
               {clientOpen && (
@@ -196,7 +197,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                 </div>
               )}
               {showNewClient && (
-                <MiniForm title="Nouveau Client" icon="👤" saving={savingClient}
+                <MiniForm title="Nouveau Client" icon={<Icon name="user" size={22} />} saving={savingClient}
                   onCancel={() => setShowNewClient(false)}
                   onSave={async ({ nom, contact, adresse: adresseClient }) => {
                     setSavingClient(true);
@@ -241,14 +242,14 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
               />
               {articleQ && (
                 <button onClick={() => setArticleQ("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-500 text-xs transition">✕</button>
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-500 transition"><Icon name="x" size={12} /></button>
               )}
             </div>
 
             {/* Grille catalogue — 2 colonnes */}
             {filteredArticles.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-center">
-                <div className="text-3xl mb-2">🔎</div>
+                <div className="text-gray-300 mb-2 flex justify-center"><Icon name="search" size={28} /></div>
                 <p className="text-sm text-gray-400 font-medium">Aucun article trouvé</p>
                 <p className="text-xs text-gray-300 mt-0.5">Essayez un autre mot-clé</p>
               </div>
@@ -287,7 +288,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                       <div className="w-full aspect-square rounded-xl overflow-hidden bg-gray-100 mb-2 flex items-center justify-center">
                         {a.image_url
                           ? <img src={a.image_url} alt={a.libelle} className="w-full h-full object-cover" />
-                          : <span className="text-3xl">📦</span>}
+                          : <span className="text-gray-400"><Icon name="box" size={28} /></span>}
                       </div>
                       {/* Infos */}
                       <div className="flex flex-col flex-1">
@@ -304,7 +305,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                       {!rupture && (
                         <div className={`absolute bottom-2.5 right-2.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black transition
                           ${atMax ? "bg-gray-200 text-gray-400" : inCart > 0 ? "bg-[#0023FF] text-white" : "bg-gray-100 text-gray-500"}`}>
-                          {atMax ? "✓" : "+"}
+                          {atMax ? <Icon name="check" size={12} /> : "+"}
                         </div>
                       )}
                     </button>
@@ -318,7 +319,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
           <div className="px-4 pb-2">
             {panier.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-gray-300 text-sm text-center rounded-2xl border-2 border-dashed border-gray-100">
-                <div className="text-3xl mb-2">🛒</div>
+                <div className="text-gray-300 mb-2 flex justify-center"><Icon name="cart" size={28} /></div>
                 <span className="text-xs text-gray-400">Aucun article ajouté</span>
               </div>
             ) : (
@@ -335,7 +336,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                         <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100 flex items-center justify-center">
                           {p.image_url
                             ? <img src={p.image_url} alt="" className="w-full h-full object-cover" />
-                            : <span className="text-base">📦</span>}
+                            : <span className="text-gray-400"><Icon name="box" size={16} /></span>}
                         </div>
                         <div className="min-w-0">
                           <div><span className="text-[11px] font-black text-[#0023FF] font-mono bg-[#E6EAFF] px-1.5 py-0.5 rounded">{p.code}</span></div>
@@ -343,7 +344,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                         </div>
                       </div>
                       <button onClick={() => remove(p.code)}
-                        className="ml-2 w-8 h-8 rounded-full bg-red-50 text-red-400 hover:bg-red-100 active:bg-red-200 flex items-center justify-center text-sm shrink-0">✕</button>
+                        className="ml-2 w-8 h-8 rounded-full bg-red-50 text-red-400 hover:bg-red-100 active:bg-red-200 flex items-center justify-center shrink-0"><Icon name="x" size={14} /></button>
                     </div>
                     <div className="flex items-center gap-2">
                       {/* − qty + */}
@@ -368,7 +369,7 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
                     </div>
                     {p.quantite >= (stockMap.get(p.code) ?? Infinity) && (
                       <div className="text-[10px] font-bold text-amber-600 mt-1">
-                        ⚠ Stock maximum disponible atteint ({stockMap.get(p.code) ?? 0})
+                        <Icon name="alert" size={12} className="inline align-text-bottom mr-1" /> Stock maximum disponible atteint ({stockMap.get(p.code) ?? 0})
                       </div>
                     )}
                   </div>
@@ -386,9 +387,9 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setPaye(String(totalPanier))}
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-100 text-emerald-700 text-[13px] font-bold hover:bg-emerald-200 active:scale-95 transition">✅ Comptant</button>
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-100 text-emerald-700 text-[13px] font-bold hover:bg-emerald-200 active:scale-95 transition"><Icon name="check" size={14} className="inline align-text-bottom mr-1" /> Comptant</button>
                 <button onClick={() => setPaye("0")}
-                  className="flex-1 py-2.5 rounded-xl bg-red-100 text-red-600 text-[13px] font-bold hover:bg-red-200 active:scale-95 transition">📋 Crédit</button>
+                  className="flex-1 py-2.5 rounded-xl bg-red-100 text-red-600 text-[13px] font-bold hover:bg-red-200 active:scale-95 transition"><Icon name="clipboard" size={14} className="inline align-text-bottom mr-1" /> Crédit</button>
               </div>
               <div>
                 <label className="text-xs text-gray-500 font-semibold mb-1 block">Montant encaissé (FCFA)</label>
@@ -424,9 +425,9 @@ function VenteModal({ articles, clients, onSave, saving, onClose, onCreateClient
             {saving
               ? "Enregistrement…"
               : hasOverstock
-                ? "⚠ Stock insuffisant"
+                ? "Stock insuffisant"
                 : panier.length > 0
-                  ? `✓ Valider (${panier.length} art.)`
+                  ? `Valider (${panier.length} art.)`
                   : "Valider"}
           </button>
         </div>
@@ -531,7 +532,7 @@ export default function Ventes() {
       try {
         await facturesService.openRecu(result.facture.code);
       } catch {
-        notify(`✅ Vente enregistrée — Facture : ${result.facture.code}`, "success");
+        notify(`Vente enregistrée — Facture : ${result.facture.code}`, "success");
       }
     } catch (err) {
       notify(err.message, "error");
@@ -623,7 +624,7 @@ export default function Ventes() {
                     <div className="flex items-center gap-2 mb-1">
                       {(() => { const art = artMap.get(v.article_code); return art?.image_url
                         ? <img src={art.image_url} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
-                        : <div className="w-9 h-9 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-sm flex-shrink-0">📦</div>; })()}
+                        : <div className="w-9 h-9 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0"><Icon name="box" size={16} /></div>; })()}
                       <div className="min-w-0">
                         <div className="text-sm font-bold text-gray-800 truncate">{v.libelle}</div>
                         <div className="text-xs text-gray-500 truncate">{v.client_nom}</div>
@@ -684,7 +685,7 @@ export default function Ventes() {
                         <div className="flex items-center gap-2">
                           {(() => { const art = artMap.get(v.article_code); return art?.image_url
                             ? <img src={art.image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
-                            : <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-base flex-shrink-0">📦</div>; })()}
+                            : <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0"><Icon name="box" size={18} /></div>; })()}
                           <span className="truncate">{v.libelle}</span>
                         </div>
                       </TD>
@@ -782,7 +783,9 @@ export default function Ventes() {
               <div className="font-mono text-sm font-bold text-[#0023FF]">{factureDetail.code}</div>
               <div className="mt-2">
                 <Badge color={isFactureReglee(factureDetail.statut, factureDetail.reste) ? "emerald" : "red"}>
-                  {isFactureReglee(factureDetail.statut, factureDetail.reste) ? "✓ Réglée" : "⏳ Impayée"}
+                  {isFactureReglee(factureDetail.statut, factureDetail.reste)
+                    ? <span className="inline-flex items-center gap-1"><Icon name="check" size={12} /> Réglée</span>
+                    : <span className="inline-flex items-center gap-1"><Icon name="clock" size={12} /> Impayée</span>}
                 </Badge>
               </div>
             </div>
@@ -849,12 +852,12 @@ export default function Ventes() {
                 setFactureDetail(null);
                 navigate("/factures", { state: { factureSearch: factureDetail.code } });
               }}>
-                ↗ Voir dans Factures
+                <span className="inline-flex items-center gap-1.5"><Icon name="arrowUpRight" size={14} /> Voir dans Factures</span>
               </Btn>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Btn color="gray"  onClick={() => facturesService.openPDF(factureDetail.code)}>🖨 Facture PDF</Btn>
-              <Btn color="green" onClick={() => facturesService.openRecu(factureDetail.code)}>🎫 Ticket</Btn>
+              <Btn color="gray"  onClick={() => facturesService.openPDF(factureDetail.code)}><span className="inline-flex items-center gap-1.5"><Icon name="printer" size={14} /> Facture PDF</span></Btn>
+              <Btn color="green" onClick={() => facturesService.openRecu(factureDetail.code)}><span className="inline-flex items-center gap-1.5"><Icon name="ticket" size={14} /> Ticket</span></Btn>
               <Btn color="gray"  onClick={() => setFactureDetail(null)}>Fermer</Btn>
             </div>
           </div>

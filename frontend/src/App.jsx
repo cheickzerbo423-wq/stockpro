@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import Icon from "./components/Icon";
 
 import Login        from "./pages/Login";
 import Dashboard    from "./pages/Dashboard";
@@ -492,7 +493,7 @@ function Layout({ children }) {
       {/* Confirmation déconnexion */}
       {logoutConfirm && (
         <ConfirmModal
-          icon="🔒"
+          icon={<Icon name="lock" size={22} />}
           title="Se déconnecter ?"
           message="Voulez-vous vraiment vous déconnecter de votre espace de gestion ?"
           confirmLabel="Déconnexion"

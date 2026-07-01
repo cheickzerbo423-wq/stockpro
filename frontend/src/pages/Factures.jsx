@@ -9,6 +9,7 @@ import {
   Btn, PageHeader, DataTable, TR, TD, Toast, SearchBox, Pagination,
   isFactureReglee,
 } from "../components/UI";
+import Icon from "../components/Icon";
 
 export default function Factures() {
   const navigate  = useNavigate();
@@ -270,15 +271,15 @@ export default function Factures() {
                 </TD>
                 <TD>
                   <div className="flex gap-1 flex-wrap">
-                    <Btn sm color="gray"  onClick={() => handlePDF(f.code)}  loading={loadingPDF  === f.code}>🖨</Btn>
-                    <Btn sm color="green" onClick={() => handleRecu(f.code)} loading={loadingRecu === f.code}>🎫</Btn>
+                    <Btn sm color="gray"  onClick={() => handlePDF(f.code)}  loading={loadingPDF  === f.code}><Icon name="printer" size={15} /></Btn>
+                    <Btn sm color="green" onClick={() => handleRecu(f.code)} loading={loadingRecu === f.code}><Icon name="ticket" size={15} /></Btn>
                     {!isReglée(f) && parseFloat(f.reste) > 0 && (
                       <Btn sm color="orange" onClick={() => { setPayModal(f); setPayAmount(String(f.reste)); }}>
                         Payer
                       </Btn>
                     )}
                     {!f.statut && parseFloat(f.reste) <= 0 && (
-                      <Btn sm color="emerald" onClick={() => handleMarquerReglee(f)}>✓</Btn>
+                      <Btn sm color="emerald" onClick={() => handleMarquerReglee(f)}><Icon name="check" size={15} /></Btn>
                     )}
                   </div>
                 </TD>
@@ -304,7 +305,9 @@ export default function Factures() {
               <div className="font-mono text-sm font-bold text-[#0023FF]">{selected.code}</div>
               <div className="mt-2">
                 <Badge color={isReglée(selected) ? "emerald" : "red"}>
-                  {isReglée(selected) ? "✓ Réglée" : "⏳ Impayée"}
+                  {isReglée(selected)
+                    ? <span className="inline-flex items-center gap-1"><Icon name="check" size={12} /> Réglée</span>
+                    : <span className="inline-flex items-center gap-1"><Icon name="clock" size={12} /> Impayée</span>}
                 </Badge>
               </div>
             </div>
@@ -369,14 +372,14 @@ export default function Factures() {
                 setSelected(null); setDetail(null);
                 navigate("/ventes", { state: { factureSearch: selected.code } });
               }}>
-                ↗ Voir dans Ventes
+                <span className="inline-flex items-center gap-1.5"><Icon name="arrowUpRight" size={14} /> Voir dans Ventes</span>
               </Btn>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Btn color="gray"   onClick={() => handlePDF(selected.code, true)} loading={loadingPDF === selected.code}>⬇ PDF</Btn>
-              <Btn color="gray"   onClick={() => handlePrintFacture(selected.code)} loading={loadingPDF === selected.code}>🖨 Imprimer</Btn>
-              <Btn color="green"  onClick={() => handleRecu(selected.code)}      loading={loadingRecu === selected.code}>🎫 Reçu</Btn>
-              <Btn color="green"  onClick={() => handlePrintTicket(selected, detail.lignes)}>🧾 Ticket</Btn>
+              <Btn color="gray"   onClick={() => handlePDF(selected.code, true)} loading={loadingPDF === selected.code}><span className="inline-flex items-center gap-1.5"><Icon name="download" size={14} /> PDF</span></Btn>
+              <Btn color="gray"   onClick={() => handlePrintFacture(selected.code)} loading={loadingPDF === selected.code}><span className="inline-flex items-center gap-1.5"><Icon name="printer" size={14} /> Imprimer</span></Btn>
+              <Btn color="green"  onClick={() => handleRecu(selected.code)}      loading={loadingRecu === selected.code}><span className="inline-flex items-center gap-1.5"><Icon name="ticket" size={14} /> Reçu</span></Btn>
+              <Btn color="green"  onClick={() => handlePrintTicket(selected, detail.lignes)}><span className="inline-flex items-center gap-1.5"><Icon name="receipt" size={14} /> Ticket</span></Btn>
               <Btn color="gray"   onClick={() => { setSelected(null); setDetail(null); }}>Fermer</Btn>
             </div>
           </div>

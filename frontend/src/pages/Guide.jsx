@@ -1,5 +1,6 @@
 // src/pages/Guide.jsx
 import { useState } from "react";
+import Icon from "../components/Icon";
 
 const BRAND = "#0023FF";
 
@@ -30,7 +31,7 @@ function Step({ n, children }) {
   );
 }
 
-function Tip({ icon = "💡", color = "amber", children }) {
+function Tip({ icon = "bulb", color = "amber", children }) {
   const colors = {
     amber: "bg-amber-50 border-amber-200 text-amber-800",
     blue:  "bg-blue-50 border-blue-200 text-blue-800",
@@ -39,7 +40,7 @@ function Tip({ icon = "💡", color = "amber", children }) {
   };
   return (
     <div className={`flex gap-2 items-start px-3 py-2.5 rounded-xl border text-xs font-medium ${colors[color]}`}>
-      <span className="text-base flex-shrink-0 mt-0.5">{icon}</span>
+      <span className="flex-shrink-0 mt-0.5"><Icon name={icon} size={16} /></span>
       <span>{children}</span>
     </div>
   );
@@ -69,9 +70,9 @@ function Section({ id, icon, title, subtitle, accentColor = "#0023FF", children 
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-gray-50 transition print:hover:bg-transparent"
       >
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: accentColor + "18" }}>
-          {icon}
+          <Icon name={icon} size={20} style={{ color: accentColor }} />
         </div>
         <div className="flex-1 min-w-0">
           <h2 className="text-sm font-black text-gray-900">{title}</h2>
@@ -101,15 +102,15 @@ function SectionTitle({ children }) {
 /* ── Page principale ────────────────────────────── */
 export default function Guide() {
   const modules = [
-    { id: "dashboard",   icon: "🏠", label: "Tableau de Bord" },
-    { id: "articles",    icon: "📦", label: "Articles & Stock" },
-    { id: "ventes",      icon: "🛍️",  label: "Ventes" },
-    { id: "appro",       icon: "🚚", label: "Approvisionnements" },
-    { id: "clients",     icon: "👥", label: "Clients & Fournisseurs" },
-    { id: "factures",    icon: "🧾", label: "Factures" },
-    { id: "rapports",    icon: "📊", label: "Rapports Financiers" },
-    { id: "utilisateurs",icon: "🔐", label: "Utilisateurs" },
-    { id: "parametres",  icon: "⚙️", label: "Paramètres" },
+    { id: "dashboard",   icon: "home", label: "Tableau de Bord" },
+    { id: "articles",    icon: "box", label: "Articles & Stock" },
+    { id: "ventes",      icon: "cart",  label: "Ventes" },
+    { id: "appro",       icon: "truck", label: "Approvisionnements" },
+    { id: "clients",     icon: "users", label: "Clients & Fournisseurs" },
+    { id: "factures",    icon: "receipt", label: "Factures" },
+    { id: "rapports",    icon: "chart", label: "Rapports Financiers" },
+    { id: "utilisateurs",icon: "lock", label: "Utilisateurs" },
+    { id: "parametres",  icon: "settings", label: "Paramètres" },
   ];
 
   return (
@@ -136,7 +137,7 @@ export default function Guide() {
             {modules.map(m => (
               <a key={m.id} href={`#${m.id}`}
                 className="text-xs font-bold px-3 py-1.5 rounded-xl bg-white/10 text-white hover:bg-[#0023FF] transition border border-white/10">
-                {m.icon} {m.label}
+                <Icon name={m.icon} size={15} className="inline align-text-bottom mr-1.5" />{m.label}
               </a>
             ))}
           </div>
@@ -146,7 +147,7 @@ export default function Guide() {
       {/* ═══════════════════════════════════════
           MODULE 0 – Tableau de Bord
       ═══════════════════════════════════════ */}
-      <Section id="dashboard" icon="🏠" title="Tableau de Bord"
+      <Section id="dashboard" icon="home" title="Tableau de Bord"
         subtitle="Vue globale de l'activité et alertes de stock en temps réel" accentColor="#6366f1">
 
         <SectionTitle>Indicateurs principaux</SectionTitle>
@@ -185,7 +186,7 @@ export default function Guide() {
           Un encart <strong>Dernières Factures</strong> liste les opérations récentes avec leur statut (Réglée / Impayée).
         </p>
 
-        <Tip icon="🔔" color="amber">
+        <Tip icon="bell" color="amber">
           Quand la liste <strong>Stocks en ordre</strong> s'affiche en vert, aucune rupture n'est détectée. Sinon, rendez-vous dans <strong>Approvisionnements</strong> pour réapprovisionner les articles concernés.
         </Tip>
       </Section>
@@ -193,7 +194,7 @@ export default function Guide() {
       {/* ═══════════════════════════════════════
           MODULE 1 – Articles & Stock
       ═══════════════════════════════════════ */}
-      <Section id="articles" icon="📦" title="Articles & Stock"
+      <Section id="articles" icon="box" title="Articles & Stock"
         subtitle="Gérer le catalogue produits et les niveaux de stock">
 
         <SectionTitle>Ajouter un article</SectionTitle>
@@ -205,13 +206,13 @@ export default function Guide() {
           <Step n="5">Cliquez <strong>Enregistrer</strong>.</Step>
         </div>
 
-        <Tip icon="✨" color="amber">
+        <Tip icon="sparkles" color="amber">
           Le code article est auto-généré depuis le libellé : ex. <strong>BISCUIT → BIS001</strong>. Vous pouvez basculer en saisie manuelle ou le régénérer avec le bouton ↺.
         </Tip>
 
         <SectionTitle>Modifier un article</SectionTitle>
         <div className="space-y-2">
-          <Step n="1">Cliquez sur le bouton ✏ en fin de ligne pour ouvrir le formulaire de modification.</Step>
+          <Step n="1">Cliquez sur le bouton <Icon name="edit" size={13} className="inline align-text-bottom" /> en fin de ligne pour ouvrir le formulaire de modification.</Step>
           <Step n="2">Modifiez le libellé, les prix d'achat et de vente, ou le seuil d'alerte. Le code reste fixe et n'est pas modifiable depuis ce formulaire.</Step>
           <Step n="3">Cliquez <strong>Enregistrer</strong> — les changements s'appliquent immédiatement.</Step>
         </div>
@@ -238,7 +239,7 @@ export default function Guide() {
           </div>
         </div>
 
-        <Tip icon="🔢" color="blue">
+        <Tip icon="hash" color="blue">
           Le tri est <strong>persistant</strong> : il reste actif après chaque nouvel approvisionnement ou vente, sans avoir à trier à nouveau.
         </Tip>
       </Section>
@@ -246,7 +247,7 @@ export default function Guide() {
       {/* ═══════════════════════════════════════
           MODULE 2 – Ventes
       ═══════════════════════════════════════ */}
-      <Section id="ventes" icon="🛍️" title="Ventes"
+      <Section id="ventes" icon="cart" title="Ventes"
         subtitle="Créer des ventes et générer des factures automatiquement">
 
         <SectionTitle>Créer une nouvelle vente</SectionTitle>
@@ -259,10 +260,10 @@ export default function Guide() {
           <Step n="6">Choisissez le mode de paiement (<Badge color="green">Comptant</Badge> ou <Badge color="red">Crédit</Badge>) puis cliquez <strong>Valider</strong>.</Step>
         </div>
 
-        <Tip icon="🎫" color="blue">
+        <Tip icon="ticket" color="blue">
           Le <strong>ticket de caisse</strong> thermique s'ouvre automatiquement après chaque vente validée. La facture PDF reste accessible depuis l'onglet Factures.
         </Tip>
-        <Tip icon="📱" color="amber">
+        <Tip icon="device" color="amber">
           Sur mobile, utilisez les onglets <strong>Catalogue / Panier</strong> pour naviguer entre les deux panneaux.
         </Tip>
 
@@ -277,7 +278,7 @@ export default function Guide() {
       {/* ═══════════════════════════════════════
           MODULE 3 – Approvisionnements
       ═══════════════════════════════════════ */}
-      <Section id="appro" icon="🚚" title="Approvisionnements"
+      <Section id="appro" icon="truck" title="Approvisionnements"
         subtitle="Commander plusieurs produits en une seule opération">
 
         <SectionTitle>Créer un approvisionnement</SectionTitle>
@@ -291,11 +292,11 @@ export default function Guide() {
           <Step n="7">Définissez le mode de paiement et enregistrez.</Step>
         </div>
 
-        <Tip icon="⚡" color="green">
+        <Tip icon="bolt" color="green">
           Le bouton <strong>Comptant</strong> remplit automatiquement le montant payé au total de la commande ; <strong>Crédit total</strong> laisse le montant payé à zéro.
           Lors d'un règlement partiel, le montant versé est réparti <strong>proportionnellement</strong> entre les lignes de la commande.
         </Tip>
-        <Tip icon="📋" color="amber">
+        <Tip icon="clipboard" color="amber">
           En mode <strong>Crédit</strong>, la dette fournisseur est enregistrée et visible dans le tableau. Vous pouvez la solder plus tard via le bouton <strong>Payer</strong>.
         </Tip>
 
@@ -307,7 +308,7 @@ export default function Guide() {
           <Step n="4">Ou cliquez sur <em>Solder la dette</em> pour régler le reste en une seule fois.</Step>
         </div>
 
-        <Tip icon="🔢" color="blue">
+        <Tip icon="hash" color="blue">
           Cliquez sur n'importe quel <strong>en-tête de colonne</strong> pour trier le tableau (▲ croissant, ▼ décroissant). Le tri reste actif même après l'ajout de nouvelles opérations.
         </Tip>
       </Section>
@@ -315,7 +316,7 @@ export default function Guide() {
       {/* ═══════════════════════════════════════
           MODULE 4 – Clients & Fournisseurs
       ═══════════════════════════════════════ */}
-      <Section id="clients" icon="👥" title="Clients & Fournisseurs"
+      <Section id="clients" icon="users" title="Clients & Fournisseurs"
         subtitle="Gérer vos contacts commerciaux et consulter leur bilan financier">
 
         <SectionTitle>Ajouter un contact</SectionTitle>
@@ -327,12 +328,12 @@ export default function Guide() {
 
         <SectionTitle>Modifier un contact</SectionTitle>
         <div className="space-y-2">
-          <Step n="1">Dans le tableau, cliquez sur l'icône <strong>✏</strong> (crayon) en fin de ligne du contact à modifier.</Step>
+          <Step n="1">Dans le tableau, cliquez sur l'icône <strong><Icon name="edit" size={13} className="inline align-text-bottom" /></strong> (crayon) en fin de ligne du contact à modifier.</Step>
           <Step n="2">Le formulaire pré-rempli s'ouvre — modifiez les champs souhaités.</Step>
           <Step n="3">Cliquez <strong>Enregistrer</strong> pour valider les changements.</Step>
         </div>
 
-        <Tip icon="🔗" color="blue">
+        <Tip icon="link" color="blue">
           Les clients et fournisseurs créés ici apparaissent automatiquement dans les listes déroulantes de Ventes et Approvisionnements. Ils peuvent aussi être créés à la volée directement depuis ces modules.
         </Tip>
 
@@ -346,16 +347,16 @@ export default function Guide() {
 
         <div className="grid grid-cols-2 gap-2 mt-1">
           <div className="p-3 bg-blue-50 rounded-xl border border-blue-100">
-            <div className="text-xs font-bold text-blue-800 mb-1">👤 Fiche Client</div>
+            <div className="text-xs font-bold text-blue-800 mb-1"><Icon name="user" size={13} className="inline align-text-bottom mr-1" />Fiche Client</div>
             <p className="text-xs text-blue-600">CA · Encaissé · Créances · Historique factures</p>
           </div>
           <div className="p-3 bg-[#E6EAFF] rounded-xl border border-[#B3BFFF]">
-            <div className="text-xs font-bold text-[#0023FF] mb-1">🏭 Fiche Fournisseur</div>
+            <div className="text-xs font-bold text-[#0023FF] mb-1"><Icon name="factory" size={13} className="inline align-text-bottom mr-1" />Fiche Fournisseur</div>
             <p className="text-xs text-[#0023FF]/70">Total achats · Payé · Dettes · Bouton Payer intégré</p>
           </div>
         </div>
 
-        <Tip icon="💰" color="amber">
+        <Tip icon="coins" color="amber">
           Depuis la fiche fournisseur, cliquez directement sur <strong>Payer</strong> en face d'un achat à crédit pour solder la dette sans quitter le panneau.
         </Tip>
       </Section>
@@ -363,31 +364,31 @@ export default function Guide() {
       {/* ═══════════════════════════════════════
           MODULE 5 – Factures
       ═══════════════════════════════════════ */}
-      <Section id="factures" icon="🧾" title="Factures"
+      <Section id="factures" icon="receipt" title="Factures"
         subtitle="Consulter, encaisser et générer des documents clients">
 
         <SectionTitle>Consulter une facture</SectionTitle>
         <div className="space-y-2">
           <Step n="1">Utilisez les filtres <Badge color="gray">Toutes</Badge> / <Badge color="green">Réglées</Badge> / <Badge color="red">Impayées</Badge> ou la recherche pour retrouver une facture.</Step>
           <Step n="2">Cliquez sur le <strong>numéro de facture</strong> dans le tableau pour voir le détail.</Step>
-          <Step n="3">Le détail affiche le client, la date, les articles, les montants, le statut de paiement et un bouton <strong>⬇ Télécharger</strong>.</Step>
+          <Step n="3">Le détail affiche le client, la date, les articles, les montants, le statut de paiement et un bouton <strong><Icon name="download" size={13} className="inline align-text-bottom" /> Télécharger</strong>.</Step>
         </div>
 
-        <Tip icon="✓" color="green">
-          Le bouton <strong>✓</strong> en fin de ligne marque directement une facture comme réglée, sans passer par le détail — pratique pour les régularisations rapides.
+        <Tip icon="check" color="green">
+          Le bouton <strong><Icon name="check" size={13} className="inline align-text-bottom" /></strong> en fin de ligne marque directement une facture comme réglée, sans passer par le détail — pratique pour les régularisations rapides.
         </Tip>
 
         <SectionTitle>Générer les documents</SectionTitle>
         <div className="grid grid-cols-2 gap-3">
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-            <div className="text-sm font-bold text-gray-800 mb-1">📄 Facture PDF</div>
+            <div className="text-sm font-bold text-gray-800 mb-1"><Icon name="file" size={14} className="inline align-text-bottom mr-1" />Facture PDF</div>
             <p className="text-xs text-gray-500">Document A4 officiel avec détail des articles, totaux et coordonnées entreprise.</p>
             <div className="mt-2">
               <Badge color="orange">Bouton PDF dans le détail</Badge>
             </div>
           </div>
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-            <div className="text-sm font-bold text-gray-800 mb-1">🧾 Reçu thermique</div>
+            <div className="text-sm font-bold text-gray-800 mb-1"><Icon name="receipt" size={14} className="inline align-text-bottom mr-1" />Reçu thermique</div>
             <p className="text-xs text-gray-500">Ticket 80mm compact, idéal pour imprimante de caisse. S'ouvre en nouvelle fenêtre.</p>
             <div className="mt-2">
               <Badge color="blue">Bouton Reçu dans le détail</Badge>
@@ -403,7 +404,7 @@ export default function Guide() {
           <Step n="4">Ou ouvrez le détail de la facture et cliquez <strong>Enregistrer un paiement</strong>.</Step>
         </div>
 
-        <Tip icon="📊" color="green">
+        <Tip icon="chart" color="green">
           Les indicateurs en haut de page (<em>CA total, Réglées, Impayées, Taux de recouvrement</em>) se mettent à jour en temps réel après chaque paiement.
         </Tip>
       </Section>
@@ -411,7 +412,7 @@ export default function Guide() {
       {/* ═══════════════════════════════════════
           MODULE 6 – Rapports
       ═══════════════════════════════════════ */}
-      <Section id="rapports" icon="📊" title="Rapports Financiers"
+      <Section id="rapports" icon="chart" title="Rapports Financiers"
         subtitle="Analyser les performances sur n'importe quelle période">
 
         <SectionTitle>Générer un rapport</SectionTitle>
@@ -438,7 +439,7 @@ export default function Guide() {
           ))}
         </div>
 
-        <Tip icon="⬇" color="blue">
+        <Tip icon="download" color="blue">
           Cliquez sur <strong>Exporter PDF</strong> pour télécharger le rapport complet au format PDF.
         </Tip>
       </Section>
@@ -446,30 +447,30 @@ export default function Guide() {
       {/* ═══════════════════════════════════════
           MODULE 7 – Utilisateurs
       ═══════════════════════════════════════ */}
-      <Section id="utilisateurs" icon="🔐" title="Utilisateurs"
+      <Section id="utilisateurs" icon="lock" title="Utilisateurs"
         subtitle="Gérer les accès et les droits (Admin uniquement)">
 
-        <Tip icon="🔒" color="red">
+        <Tip icon="lock" color="red">
           Cet onglet est réservé aux comptes <Badge color="red">Admin</Badge>. Les autres utilisateurs n'y ont pas accès.
         </Tip>
 
         <SectionTitle>Rôles disponibles</SectionTitle>
         <div className="space-y-2">
           {[
-            { role: "Admin",        icon: "👑", desc: "Accès total à tous les modules, y compris la gestion des utilisateurs et la réinitialisation des données." },
-            { role: "Gestionnaire", icon: "🛡️", desc: "Rôle intermédiaire — son accès aux modules dépend des permissions cochées sur son compte." },
-            { role: "Vendeur",      icon: "👤", desc: "Rôle courant pour les opérations du quotidien — son accès aux modules dépend lui aussi des permissions cochées." },
+            { role: "Admin",        icon: "crown", desc: "Accès total à tous les modules, y compris la gestion des utilisateurs et la réinitialisation des données." },
+            { role: "Gestionnaire", icon: "shield", desc: "Rôle intermédiaire — son accès aux modules dépend des permissions cochées sur son compte." },
+            { role: "Vendeur",      icon: "user", desc: "Rôle courant pour les opérations du quotidien — son accès aux modules dépend lui aussi des permissions cochées." },
           ].map(r => (
             <div key={r.role} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
               <Badge color={r.role === "Admin" ? "red" : r.role === "Gestionnaire" ? "blue" : "green"}>
-                {r.icon} {r.role}
+                <Icon name={r.icon} size={15} className="inline align-text-bottom mr-1.5" />{r.role}
               </Badge>
               <p className="text-xs text-gray-600 flex-1">{r.desc}</p>
             </div>
           ))}
         </div>
 
-        <Tip icon="🔑" color="blue">
+        <Tip icon="key" color="blue">
           Le <strong>rôle</strong> sert avant tout d'étiquette visuelle (badge et icône). L'accès réel aux modules est défini, pour
           chaque utilisateur, par les <strong>permissions individuelles</strong> décrites ci-dessous — un Admin a cependant toujours accès à tout.
         </Tip>
@@ -484,23 +485,23 @@ export default function Guide() {
 
         <SectionTitle>Supprimer un utilisateur</SectionTitle>
         <div className="space-y-2">
-          <Step n="1">Cliquez sur le bouton <strong>✕</strong> en fin de ligne d'un utilisateur.</Step>
+          <Step n="1">Cliquez sur le bouton <strong><Icon name="x" size={13} className="inline align-text-bottom" /></strong> en fin de ligne d'un utilisateur.</Step>
           <Step n="2">Confirmez la suppression. L'opération est <strong>définitive</strong>.</Step>
           <Step n="3">Si l'utilisateur est actuellement connecté, il sera <strong>déconnecté automatiquement</strong> dès sa prochaine action dans l'application.</Step>
         </div>
 
         <div className="grid grid-cols-2 gap-2 mt-1">
           <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
-            <div className="text-xs font-bold text-emerald-800 mb-1">✅ Autorisé</div>
+            <div className="text-xs font-bold text-emerald-800 mb-1"><Icon name="check" size={13} className="inline align-text-bottom mr-1" />Autorisé</div>
             <p className="text-xs text-emerald-600">Un Admin peut supprimer n'importe quel utilisateur, y compris un autre Admin.</p>
           </div>
           <div className="p-3 bg-red-50 rounded-xl border border-red-100">
-            <div className="text-xs font-bold text-red-800 mb-1">🚫 Interdit</div>
+            <div className="text-xs font-bold text-red-800 mb-1"><Icon name="ban" size={13} className="inline align-text-bottom mr-1" />Interdit</div>
             <p className="text-xs text-red-600">Un Admin ne peut pas supprimer son propre compte pour éviter de se bloquer.</p>
           </div>
         </div>
 
-        <Tip icon="⚠️" color="red">
+        <Tip icon="alert" color="red">
           La suppression est permanente. Toutes les opérations (ventes, factures, achats) créées par cet utilisateur sont conservées, mais le compte est définitivement retiré.
         </Tip>
 
@@ -513,7 +514,7 @@ export default function Guide() {
         </div>
 
         <div className="p-3 bg-red-50 rounded-xl border border-red-200 space-y-1.5 mt-1">
-          <p className="text-xs font-black text-red-800">⚠️ Points importants</p>
+          <p className="text-xs font-black text-red-800"><Icon name="alert" size={13} className="inline align-text-bottom mr-1" />Points importants</p>
           <p className="text-xs text-red-700">• L'action est <strong>irréversible</strong> — les données ne peuvent pas être récupérées.</p>
           <p className="text-xs text-red-700">• Effacer les <strong>Articles</strong> supprime aussi automatiquement les ventes et achats liés.</p>
           <p className="text-xs text-red-700">• Effacer les <strong>Factures</strong> supprime aussi les lignes de vente associées.</p>
@@ -525,10 +526,10 @@ export default function Guide() {
       {/* ═══════════════════════════════════════
           MODULE 8 – Paramètres (personnalisation entreprise)
       ═══════════════════════════════════════ */}
-      <Section id="parametres" icon="⚙️" title="Paramètres"
+      <Section id="parametres" icon="settings" title="Paramètres"
         subtitle="Personnaliser les factures, reçus et rapports PDF (Admin uniquement)" accentColor="#6366f1">
 
-        <Tip icon="🔒" color="red">
+        <Tip icon="lock" color="red">
           Cet onglet est réservé aux comptes <Badge color="red">Admin</Badge>. Les autres utilisateurs n'y ont pas accès.
         </Tip>
 
@@ -562,14 +563,14 @@ export default function Guide() {
           <Step n="3">Le panneau <strong>Aperçu de l'en-tête PDF</strong>, à droite, prévisualise en direct le rendu du nom, du logo, des coordonnées et de la couleur choisis.</Step>
         </div>
 
-        <Tip icon="✨" color="green">
+        <Tip icon="sparkles" color="green">
           Aucune modification de code ni redéploiement n'est nécessaire : dès l'enregistrement, les <strong>nouvelles factures, nouveaux reçus et nouveaux rapports PDF</strong> utilisent automatiquement ces réglages.
         </Tip>
-        <Tip icon="💡" color="blue">
+        <Tip icon="bulb" color="blue">
           Tant qu'aucune information n'est renseignée, WariGest applique des valeurs par défaut neutres — vous pouvez donc personnaliser progressivement, à votre rythme.
         </Tip>
 
-        <SectionTitle>🎨 Styles des documents PDF — catalogue de 30 modèles</SectionTitle>
+        <SectionTitle><Icon name="palette" size={16} className="inline align-text-bottom mr-1.5" />Styles des documents PDF — catalogue de 30 modèles</SectionTitle>
         <p className="text-xs text-gray-500 leading-relaxed">
           En bas de la page Paramètres, la carte <strong>Styles des documents PDF</strong> propose un catalogue de
           <strong> 30 styles</strong> — 6 mises en page (Classique, Moderne, Bloc, Élégant, Compact, Latéral) déclinées en
@@ -582,14 +583,14 @@ export default function Guide() {
           <Step n="3">Cliquez sur le style souhaité — il est mis en surbrillance pour confirmer la sélection.</Step>
           <Step n="4">Cliquez <strong>Enregistrer les modifications</strong> : le style choisi s'applique <strong>immédiatement</strong> à la prochaine génération PDF du document concerné.</Step>
         </div>
-        <Tip icon="🎯" color="amber">
+        <Tip icon="target" color="amber">
           Chaque type de document (factures, reçus, rapports) a son <strong>propre style</strong>, indépendant des deux autres — vous pouvez par exemple choisir un style "Élégant Violet" pour les factures et "Compact Graphite" pour les reçus.
         </Tip>
-        <Tip icon="🖌️" color="blue">
+        <Tip icon="palette" color="blue">
           Par défaut, le style <strong>Classique Bleu</strong> est appliqué. Avec 30 combinaisons disponibles, chaque entreprise peut trouver un rendu adapté à son identité visuelle.
         </Tip>
 
-        <SectionTitle>🖨️ Impression — imprimante & mini-imprimante</SectionTitle>
+        <SectionTitle><Icon name="printer" size={16} className="inline align-text-bottom mr-1.5" />Impression — imprimante & mini-imprimante</SectionTitle>
         <p className="text-sm text-gray-600 leading-relaxed mb-3">
           En bas de la page Paramètres, la carte <strong>Imprimante</strong> permet d'imprimer vos reçus, factures et rapports de deux façons complémentaires.
         </p>
@@ -601,10 +602,10 @@ export default function Guide() {
 
         <SectionTitle>Imprimer un document</SectionTitle>
         <div className="space-y-2">
-          <Step n="1"><strong>Facture / reçu</strong> : ouvrez une facture dans l'onglet <strong>Factures</strong>, puis utilisez <strong>🖨 Imprimer</strong> (facture PDF), <strong>🎫 Reçu</strong> (reçu PDF) ou <strong>🧾 Ticket</strong> (mini-imprimante Bluetooth).</Step>
-          <Step n="2"><strong>Rapport</strong> : dans l'onglet <strong>Rapports financiers</strong>, cliquez sur <strong>🖨 Imprimer</strong> pour l'envoyer à votre imprimante, ou <strong>⬇ Exporter PDF</strong> pour l'enregistrer.</Step>
+          <Step n="1"><strong>Facture / reçu</strong> : ouvrez une facture dans l'onglet <strong>Factures</strong>, puis utilisez <strong><Icon name="printer" size={12} className="inline align-text-bottom" /> Imprimer</strong> (facture PDF), <strong><Icon name="ticket" size={12} className="inline align-text-bottom" /> Reçu</strong> (reçu PDF) ou <strong><Icon name="receipt" size={12} className="inline align-text-bottom" /> Ticket</strong> (mini-imprimante Bluetooth).</Step>
+          <Step n="2"><strong>Rapport</strong> : dans l'onglet <strong>Rapports financiers</strong>, cliquez sur <strong><Icon name="printer" size={12} className="inline align-text-bottom" /> Imprimer</strong> pour l'envoyer à votre imprimante, ou <strong><Icon name="download" size={12} className="inline align-text-bottom" /> Exporter PDF</strong> pour l'enregistrer.</Step>
         </div>
-        <Tip icon="📱" color="blue">
+        <Tip icon="device" color="blue">
           Sur iPhone, le Bluetooth n'est pas disponible dans le navigateur : utilisez l'impression <strong>PDF</strong>, qui fonctionne partout. Le ticket Bluetooth est idéal sur <strong>Android</strong> et <strong>ordinateur</strong>.
         </Tip>
       </Section>

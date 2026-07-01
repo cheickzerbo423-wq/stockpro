@@ -1,5 +1,6 @@
 // src/components/UI.jsx — Design system WariGest Premium
 import React from "react";
+import Icon from "./Icon";
 
 // ── Formatage ─────────────────────────────────────────────
 // Séparateur de milliers : espace insécable ordinaire (U+00A0).
@@ -77,7 +78,7 @@ export function ErrorBox({ message, onRetry }) {
       {onRetry && (
         <button onClick={onRetry}
           className="text-xs text-red-600 font-bold px-4 py-2 bg-red-100 hover:bg-red-200 rounded-xl transition">
-          ↺ Réessayer
+          <span className="inline-flex items-center gap-1.5"><Icon name="refresh" size={14} /> Réessayer</span>
         </button>
       )}
     </div>
@@ -259,7 +260,7 @@ export function SearchBox({ value, onChange, onSelect, suggestions = [], placeho
         />
         {value
           ? <button onClick={() => { onChange(""); onSelect && onSelect(""); setOpen(false); }}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-500 text-xs transition">✕</button>
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-500 text-xs transition"><Icon name="x" size={12} /></button>
           : <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="6 9 12 15 18 9"/>
             </svg>
@@ -352,8 +353,8 @@ export function DataTable({ headers, children, empty = "Aucune donnée", sort, o
             <tr>
               <td colSpan={headers.length}>
                 <div className="flex flex-col items-center justify-center py-16 gap-3">
-                  <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center text-3xl">
-                    📭
+                  <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-300">
+                    <Icon name="inbox" size={32} />
                   </div>
                   <div className="text-center">
                     <p className="text-sm font-semibold text-gray-400">{empty}</p>
@@ -497,7 +498,7 @@ export function StatCard({ label, value, icon, gradient }) {
 // ── Toast ─────────────────────────────────────────────────
 export function Toast({ message, type = "success", onClose }) {
   const config = {
-    success: { bg: "#111827", icon: "✓", dot: "#34D399" },
+    success: { bg: "#111827", icon: <Icon name="check" size={14} />, dot: "#34D399" },
     error:   { bg: "#DC2626", icon: "!", dot: "#FCA5A5" },
     info:    { bg: "#0023FF", icon: "i", dot: "#93C5FD" },
   };
@@ -523,7 +524,7 @@ export function ConfirmModal({
   title,
   message,
   sub,
-  icon = "⚠️",
+  icon = <Icon name="alert" size={22} />,
   confirmLabel = "Confirmer",
   confirmColor = "red",
   onConfirm,
@@ -559,7 +560,7 @@ export function ConfirmModal({
               )}
               {sub && (
                 <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mt-2.5 leading-relaxed">
-                  ⚠️ {sub}
+                  <Icon name="alert" size={13} className="inline align-text-bottom mr-0.5" /> {sub}
                 </p>
               )}
             </div>
@@ -618,7 +619,7 @@ export function PasswordRules({ value }) {
         <div key={i} className={`flex items-center gap-1.5 text-[11px] font-medium transition-colors ${r.ok ? "text-emerald-600" : "text-gray-400"}`}>
           <span className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold
             ${r.ok ? "bg-emerald-100 text-emerald-600" : "bg-gray-200 text-gray-400"}`}>
-            {r.ok ? "✓" : "✕"}
+            {r.ok ? <Icon name="check" size={11} /> : <Icon name="x" size={11} />}
           </span>
           {r.label}
         </div>

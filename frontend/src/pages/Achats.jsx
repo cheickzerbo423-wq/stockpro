@@ -6,6 +6,7 @@ import {
   fmt, fmtN, fmtDate, today, Spinner, ErrorBox, Badge,
   Modal, Input, Btn, PageHeader, DataTable, TR, TD, Toast, SearchBox, Pagination,
 } from "../components/UI";
+import Icon from "../components/Icon";
 
 /* ─── Mini-form création rapide ─────────────────────── */
 function MiniForm({ title, icon, onSave, onCancel, saving }) {
@@ -101,7 +102,7 @@ function LigneCommande({ ligne, index, articles, onUpdate, onRemove }) {
         <span className="text-xs font-bold text-[#0023FF] uppercase tracking-wide">Produit {index}</span>
         <button onClick={onRemove}
           className="w-8 h-8 flex items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 active:scale-95 transition"
-          title="Retirer ce produit">✕</button>
+          title="Retirer ce produit"><Icon name="x" size={16} /></button>
       </div>
       <div className="relative" ref={ref}>
         <label className="block text-xs font-semibold text-gray-500 mb-1">Article *</label>
@@ -110,7 +111,7 @@ function LigneCommande({ ligne, index, articles, onUpdate, onRemove }) {
             <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-md overflow-hidden bg-white border border-gray-200 flex items-center justify-center pointer-events-none">
               {selectedArt?.image_url
                 ? <img src={selectedArt.image_url} alt="" className="w-full h-full object-cover" />
-                : <span className="text-base">📦</span>}
+                : <span className="text-gray-400"><Icon name="box" size={16} /></span>}
             </div>
             <input
               className={`w-full border rounded-lg pl-11 pr-8 py-2.5 text-sm focus:outline-none focus:ring-2 bg-white ${
@@ -123,12 +124,12 @@ function LigneCommande({ ligne, index, articles, onUpdate, onRemove }) {
               onBlur={handleBlur}
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer select-none"
-              onMouseDown={(e) => { e.preventDefault(); setOpen((v) => !v); }}>▾</span>
+              onMouseDown={(e) => { e.preventDefault(); setOpen((v) => !v); }}><Icon name="chevron" size={14} /></span>
           </div>
 
           {nonReconnu && (
             <p className="text-[11px] text-red-500 font-semibold mt-1">
-              ⚠️ Article non reconnu — choisissez-le dans la liste, ou créez-le d'abord dans Articles.
+              <Icon name="alert" size={12} className="inline align-text-bottom mr-1" /> Article non reconnu — choisissez-le dans la liste, ou créez-le d'abord dans Articles.
             </p>
           )}
 
@@ -142,7 +143,7 @@ function LigneCommande({ ligne, index, articles, onUpdate, onRemove }) {
                   <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100 flex items-center justify-center">
                     {a.image_url
                       ? <img src={a.image_url} alt="" className="w-full h-full object-cover" />
-                      : <span className="text-xl">📦</span>}
+                      : <span className="text-gray-400"><Icon name="box" size={20} /></span>}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-[11px] font-black text-[#0023FF] bg-[#E6EAFF] px-1.5 py-0.5 rounded inline-block mb-0.5">{a.code}</div>
@@ -345,7 +346,7 @@ export default function Achats() {
     if (errors.length > 0) {
       notify(`${results.length} enregistré(s). Erreurs : ${errors.join(" | ")}`, "error");
     } else {
-      notify(`✅ ${results.length} produit(s) approvisionné(s) avec succès !`);
+      notify(`${results.length} produit(s) approvisionné(s) avec succès !`);
     }
     setShowAdd(false);
     resetModal();
@@ -444,7 +445,7 @@ export default function Achats() {
                   <div className="flex items-center gap-2">
                     {(() => { const art = artMap.get(a.article_code); return art?.image_url
                       ? <img src={art.image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
-                      : <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-base flex-shrink-0">📦</div>; })()}
+                      : <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0"><Icon name="box" size={18} /></div>; })()}
                     <span className="truncate">{a.libelle}</span>
                   </div>
                 </TD>
@@ -484,7 +485,7 @@ export default function Achats() {
       {/* ── Modal Nouvel Approvisionnement ── */}
       {showAdd && (
         <Modal
-          title="🚚 Nouvel Approvisionnement"
+          title="Nouvel Approvisionnement"
           onClose={() => { setShowAdd(false); resetModal(); }}
           wide
         >
@@ -493,7 +494,7 @@ export default function Achats() {
             <div className="md:col-span-2 relative">
               <label className="block text-xs font-semibold text-gray-500 mb-1">Fournisseur *</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><Icon name="search" size={14} /></span>
                 <input
                   type="text"
                   value={fournisseurOpen ? fournisseurQ : fournisseurNom}
@@ -508,8 +509,8 @@ export default function Achats() {
                   <button
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => { setFournisseurNom(""); setFournisseurId(""); setFournisseurQ(""); }}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 text-xs"
-                  >✕</button>
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500"
+                  ><Icon name="x" size={13} /></button>
                 )}
               </div>
               {fournisseurOpen && (
@@ -548,7 +549,7 @@ export default function Achats() {
               {showNewFournisseur && (
                 <MiniForm
                   title="Nouveau Fournisseur"
-                  icon="🏭"
+                  icon={<Icon name="factory" size={22} />}
                   saving={savingFournisseur}
                   onCancel={() => setShowNewFournisseur(false)}
                   onSave={async ({ nom, contact }) => {
@@ -594,7 +595,7 @@ export default function Achats() {
                 className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#0023FF]/10 focus:border-[#0023FF] focus:bg-white transition" />
               {articleSearch && (
                 <button type="button" onClick={() => setArticleSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-500 text-xs">✕</button>
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-500"><Icon name="x" size={12} /></button>
               )}
             </div>
 
@@ -615,7 +616,7 @@ export default function Achats() {
                       <div className="w-full aspect-square rounded-lg overflow-hidden bg-gray-100 mb-1.5 flex items-center justify-center">
                         {a.image_url
                           ? <img src={a.image_url} alt={a.libelle} className="w-full h-full object-cover" />
-                          : <span className="text-2xl">📦</span>}
+                          : <span className="text-gray-400"><Icon name="box" size={24} /></span>}
                       </div>
                       <div className="text-[10px] text-gray-400 font-mono">{a.code}</div>
                       <div className="text-xs font-bold text-gray-800 leading-tight line-clamp-2">{a.libelle}</div>
@@ -630,7 +631,7 @@ export default function Achats() {
           {/* Panier d'approvisionnement */}
           {lignesPanier.length === 0 ? (
             <div className="mb-4 py-7 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-100 text-gray-400">
-              <div className="text-2xl mb-1">📥</div>
+              <div className="text-gray-300 mb-1 flex justify-center"><Icon name="inbox" size={24} /></div>
               <span className="text-xs">Touchez un produit ci-dessus pour l'ajouter</span>
             </div>
           ) : (
@@ -645,11 +646,11 @@ export default function Achats() {
                     <div className="w-9 h-9 rounded-lg overflow-hidden bg-gray-100 border border-gray-100 flex items-center justify-center flex-shrink-0">
                       {l.image_url
                         ? <img src={l.image_url} alt="" className="w-full h-full object-cover" />
-                        : <span className="text-base">📦</span>}
+                        : <span className="text-gray-400"><Icon name="box" size={16} /></span>}
                     </div>
                     <span className="flex-1 text-sm font-semibold text-gray-800 truncate">{l.libelle}</span>
                     <button type="button" onClick={() => removeLigne(l.id)}
-                      className="w-7 h-7 rounded-full bg-red-50 text-red-400 hover:bg-red-100 active:scale-95 transition flex items-center justify-center text-xs shrink-0">✕</button>
+                      className="w-7 h-7 rounded-full bg-red-50 text-red-400 hover:bg-red-100 active:scale-95 transition flex items-center justify-center text-xs shrink-0"><Icon name="x" size={13} /></button>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
@@ -687,14 +688,14 @@ export default function Achats() {
                 onClick={() => setMontantPaye(String(totalCommande))}
                 className="text-[13px] px-4 py-2 rounded-lg bg-emerald-100 text-emerald-700 font-bold hover:bg-emerald-200 active:scale-95 transition"
               >
-                ✅ Comptant
+                <Icon name="check" size={14} className="inline align-text-bottom mr-1" /> Comptant
               </button>
               <button
                 type="button"
                 onClick={() => setMontantPaye("0")}
                 className="text-[13px] px-4 py-2 rounded-lg bg-red-100 text-red-700 font-bold hover:bg-red-200 active:scale-95 transition"
               >
-                📋 Crédit total
+                <Icon name="clipboard" size={14} className="inline align-text-bottom mr-1" /> Crédit total
               </button>
             </div>
             {(() => {

@@ -807,7 +807,25 @@ export default function Ventes() {
             </div>
           </div>
 
-          <div className="rounded-xl overflow-hidden border border-gray-200 mb-5">
+          {/* Mobile : cartes empilées (évite le débordement de la table) */}
+          <div className="md:hidden space-y-2 mb-5">
+            {(factureDetail.lignes || []).map((l, i) => (
+              <div key={i} className="rounded-xl border border-gray-200 bg-white p-3">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <span className="font-bold text-gray-800 text-sm leading-tight">{l.libelle}</span>
+                  <span className="font-black text-[#0023FF] text-sm whitespace-nowrap">{fmt(l.montant_total)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span className="bg-gray-100 rounded-lg px-2 py-0.5 font-semibold text-gray-700">Qté {Number(l.quantite)}</span>
+                  <span>×</span>
+                  <span>{fmt(l.prix_vente)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop : tableau */}
+          <div className="hidden md:block rounded-xl overflow-hidden border border-gray-200 mb-5">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-900 text-white">

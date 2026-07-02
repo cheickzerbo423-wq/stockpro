@@ -497,9 +497,38 @@ export default function Ventes() {
   const nbFactures = kpis.nb_factures || 0;
   const moyPanier = nbFactures ? totalCA / nbFactures : 0;
 
-  const { sorted: ventesAffichées, sortKey, sortDir, handleSort } = useSortableData(ventes, "facture_code", "asc");
-  const sortState = { key: sortKey, dir: sortDir };
   const artMap = useMemo(() => new Map(articles.map(a => [a.code, a])), [articles]);
+
+  // Regroupe les lignes de vente par facture : une seule rangée par facture,
+  // avec le nombre d'articles et le total. Les lignes étant triées par date,
+  // celles d'une même facture sont consécutives.
+  const facturesGroupees = useMemo(() => {
+    const map = new Map();
+    for (const v of ventes) {
+      let f = map.get(v.facture_code);
+      if (!f) {
+        f = {
+          facture_code: v.facture_code,
+          date_vente: v.date_vente,
+          date_facture: v.date_facture,
+          client_nom: v.client_nom,
+          facture_montant: parseFloat(v.facture_montant) || 0,
+          montant_paye: v.montant_paye,
+          reste: v.reste,
+          facture_statut: v.facture_statut,
+          nb_articles: 0,
+          premier_libelle: v.libelle,
+          premier_code: v.article_code,
+        };
+        map.set(v.facture_code, f);
+      }
+      f.nb_articles += 1;
+    }
+    return [...map.values()];
+  }, [ventes]);
+
+  const { sorted: facturesAffichées, sortKey, sortDir, handleSort } = useSortableData(facturesGroupees, "facture_code", "asc");
+  const sortState = { key: sortKey, dir: sortDir };
 
   const handleSave = async ({ client, clientId, datev, paye, panier }) => {
     if (!client)              { notify("Sélectionnez un client.", "error"); return; }
@@ -556,9 +585,6 @@ export default function Ventes() {
     } catch (err) { notify(err.message, "error"); }
   };
 
-  // Pour n'afficher le bouton Payer qu'une fois par facture (première occurrence)
-  const seenFactures = new Set();
-
   return (
     <div>
       <PageHeader
@@ -603,43 +629,43 @@ export default function Ventes() {
           <>
             {/* ── Mobile : cards ── */}
             <div className="md:hidden divide-y divide-gray-50">
-              {ventesAffichées.map((v, i) => {
-                const paid = isFactureReglee(v.facture_statut, v.reste);
+              {facturesAffichées.map((f) => {
+                const paid = isFactureReglee(f.facture_statut, f.reste);
+                const art = artMap.get(f.premier_code);
                 return (
-                  <div key={i} className="px-4 py-3">
+                  <div key={f.facture_code} role="button" tabIndex={0}
+                    onClick={() => viewFacture(f.facture_code)}
+                    className="px-4 py-3 hover:bg-gray-50 active:bg-gray-100 transition cursor-pointer">
                     <div className="flex items-center justify-between mb-1.5">
-                      <button
-                        onClick={() => viewFacture(v.facture_code)}
-                        className="font-mono text-xs font-bold bg-[#E6EAFF] text-[#0023FF] px-2 py-0.5 rounded-lg border border-[#B3BFFF] hover:bg-[#E6EAFF] hover:border-[#B3BFFF] transition"
-                      >
-                        {loadingDetail === v.facture_code ? "…" : v.facture_code}
-                      </button>
+                      <span className="font-mono text-xs font-bold bg-[#E6EAFF] text-[#0023FF] px-2 py-0.5 rounded-lg border border-[#B3BFFF]">
+                        {loadingDetail === f.facture_code ? "…" : f.facture_code}
+                      </span>
                       <div className="flex items-center gap-2">
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${paid ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-600 border-red-200"}`}>
                           {paid ? "Payé" : "Crédit"}
                         </span>
-                        <span className="text-xs text-gray-400">{fmtDate(v.date_vente)}</span>
+                        <span className="text-xs text-gray-400">{fmtDate(f.date_vente)}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 mb-1">
-                      {(() => { const art = artMap.get(v.article_code); return art?.image_url
+                      {art?.image_url
                         ? <img src={art.image_url} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
-                        : <div className="w-9 h-9 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0"><Icon name="box" size={16} /></div>; })()}
+                        : <div className="w-9 h-9 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0"><Icon name="box" size={16} /></div>}
                       <div className="min-w-0">
-                        <div className="text-sm font-bold text-gray-800 truncate">{v.libelle}</div>
-                        <div className="text-xs text-gray-500 truncate">{v.client_nom}</div>
+                        <div className="text-sm font-bold text-gray-800 truncate">{f.client_nom}</div>
+                        <div className="text-xs text-gray-500">{f.nb_articles} article{f.nb_articles > 1 ? "s" : ""}</div>
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">
-                        {fmtN(v.quantite)} × {fmtN(v.prix_vente)} FCFA
+                      <span className="text-xs text-[#0023FF] font-semibold inline-flex items-center gap-1">
+                        <Icon name="eye" size={12} /> Voir le détail
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-black text-[#0023FF]">{fmt(v.montant_total)}</span>
-                        {!paid && parseFloat(v.reste) > 0 && (
+                        <span className="text-sm font-black text-[#0023FF]">{fmt(f.facture_montant)}</span>
+                        {!paid && parseFloat(f.reste) > 0 && (
                           <button
-                            onClick={() => { setPayModal({ facture_code: v.facture_code, montant_paye: v.montant_paye, reste: v.reste }); setPayAmount(""); }}
-                            className="text-xs bg-[#0023FF] text-white px-2 py-1 rounded-lg font-bold hover:bg-[#0023FF] transition"
+                            onClick={(e) => { e.stopPropagation(); setPayModal({ facture_code: f.facture_code, montant_paye: f.montant_paye, reste: f.reste }); setPayAmount(""); }}
+                            className="text-xs bg-[#0023FF] text-white px-2 py-1 rounded-lg font-bold"
                           >Payer</button>
                         )}
                       </div>
@@ -653,60 +679,50 @@ export default function Ventes() {
             <div className="hidden md:block">
               <DataTable
                 headers={[
-                  { label: "N° Facture", sortKey: "facture_code",  w: "11%" },
-                  { label: "Date",       sortKey: "date_vente",    w: "9%" },
-                  { label: "Article",    sortKey: "libelle",       w: "22%" },
-                  { label: "Client",     sortKey: "client_nom",    w: "18%" },
-                  { label: "Qté",     sortKey: "quantite",      right: true, w: "6%" },
-                  { label: "Prix U.", sortKey: "prix_vente",    right: true, w: "9%" },
-                  { label: "Montant", sortKey: "montant_total", right: true, w: "11%" },
-                  { label: "Statut",  sortKey: "facture_statut", w: "8%" },
-                  { label: "",        w: "6%" },
+                  { label: "N° Facture", sortKey: "facture_code",    w: "14%" },
+                  { label: "Date",       sortKey: "date_vente",      w: "12%" },
+                  { label: "Client",     sortKey: "client_nom",      w: "26%" },
+                  { label: "Articles",   sortKey: "nb_articles",     right: true, w: "12%" },
+                  { label: "Montant",    sortKey: "facture_montant", right: true, w: "16%" },
+                  { label: "Statut",     sortKey: "facture_statut",  w: "12%" },
+                  { label: "",           w: "8%" },
                 ]}
                 sort={sortState} onSort={handleSort}
                 empty="Aucune vente enregistrée."
               >
-                {ventesAffichées.map((v, i) => {
-                  const isFirst = !seenFactures.has(v.facture_code);
-                  if (isFirst) seenFactures.add(v.facture_code);
-                  const paid = isFactureReglee(v.facture_statut, v.reste);
+                {facturesAffichées.map((f) => {
+                  const paid = isFactureReglee(f.facture_statut, f.reste);
+                  const art = artMap.get(f.premier_code);
                   return (
-                    <TR key={i}>
+                    <TR key={f.facture_code} onClick={() => viewFacture(f.facture_code)} className="cursor-pointer hover:bg-gray-50">
                       <TD>
-                        <button
-                          onClick={() => viewFacture(v.facture_code)}
-                          className="font-mono text-xs bg-[#E6EAFF] text-[#0023FF] px-2 py-0.5 rounded-lg border border-[#B3BFFF] hover:bg-[#E6EAFF] hover:border-[#B3BFFF] hover:underline transition"
-                        >
-                          {loadingDetail === v.facture_code ? "…" : v.facture_code}
-                        </button>
+                        <span className="font-mono text-xs bg-[#E6EAFF] text-[#0023FF] px-2 py-0.5 rounded-lg border border-[#B3BFFF]">
+                          {loadingDetail === f.facture_code ? "…" : f.facture_code}
+                        </span>
                       </TD>
-                      <TD>{fmtDate(v.date_vente)}</TD>
+                      <TD>{fmtDate(f.date_vente)}</TD>
                       <TD bold>
                         <div className="flex items-center gap-2">
-                          {(() => { const art = artMap.get(v.article_code); return art?.image_url
+                          {art?.image_url
                             ? <img src={art.image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
-                            : <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0"><Icon name="box" size={18} /></div>; })()}
-                          <span className="truncate">{v.libelle}</span>
+                            : <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0"><Icon name="box" size={18} /></div>}
+                          <span className="truncate">{f.client_nom}</span>
                         </div>
                       </TD>
-                      <TD>{v.client_nom}</TD>
-                      <TD right>{fmtN(v.quantite)}</TD>
-                      <TD right>{fmtN(v.prix_vente)}</TD>
-                      <TD right bold>{fmt(v.montant_total)}</TD>
+                      <TD right>{f.nb_articles}</TD>
+                      <TD right bold>{fmt(f.facture_montant)}</TD>
                       <TD>
-                        {isFirst && (
-                          <span className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-lg border
-                            ${paid
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : "bg-red-50 text-red-600 border-red-200"}`}>
-                            {paid ? "Payé" : "Crédit"}
-                          </span>
-                        )}
+                        <span className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-lg border
+                          ${paid
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-red-50 text-red-600 border-red-200"}`}>
+                          {paid ? "Payé" : "Crédit"}
+                        </span>
                       </TD>
                       <TD>
-                        {isFirst && !paid && parseFloat(v.reste) > 0 && (
+                        {!paid && parseFloat(f.reste) > 0 && (
                           <button
-                            onClick={() => { setPayModal({ facture_code: v.facture_code, montant_paye: v.montant_paye, reste: v.reste }); setPayAmount(""); }}
+                            onClick={(e) => { e.stopPropagation(); setPayModal({ facture_code: f.facture_code, montant_paye: f.montant_paye, reste: f.reste }); setPayAmount(""); }}
                             className="text-xs bg-[#0023FF] text-white px-2.5 py-1 rounded-lg font-bold hover:bg-[#0023FF] transition whitespace-nowrap"
                           >
                             Payer

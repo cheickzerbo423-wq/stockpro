@@ -1,5 +1,4 @@
 // src/components/UI.jsx — Design system WariGest Premium
-import React from "react";
 import Icon from "./Icon";
 
 // ── Formatage ─────────────────────────────────────────────
@@ -229,63 +228,26 @@ export function Btn({ children, onClick, color = "blue", sm, loading, type = "bu
 }
 
 // ── SearchBox ─────────────────────────────────────────────
-export function SearchBox({ value, onChange, onSelect, suggestions = [], placeholder = "Rechercher…", className = "" }) {
-  const [open, setOpen] = React.useState(false);
-  const ref = React.useRef(null);
-
-  React.useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const visible = suggestions.filter(s =>
-    !value || s.label.toLowerCase().includes(value.toLowerCase()) || (s.sub || "").toLowerCase().includes(value.toLowerCase())
-  ).slice(0, 8);
-
+// Barre de recherche simple (sans liste déroulante de suggestions).
+// Le prop `suggestions` éventuellement passé par les pages est volontairement
+// ignoré : on veut une simple zone de saisie qui filtre le tableau au fil de la frappe.
+export function SearchBox({ value, onChange, onSelect, placeholder = "Rechercher…", className = "" }) {
   return (
-    <div ref={ref} className={`relative ${className}`}>
-      <div className="relative">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        <input
-          value={value}
-          onChange={e => { onChange(e.target.value); setOpen(true); }}
-          onFocus={() => setOpen(true)}
-          placeholder={placeholder}
-          className="w-full pl-9 pr-8 py-2.5 border border-gray-200 rounded-xl text-sm bg-white
-            focus:outline-none focus:ring-2 focus:ring-[#0023FF]/10 focus:border-[#0023FF]
-            hover:border-gray-300 transition-all"
-        />
-        {value
-          ? <button onClick={() => { onChange(""); onSelect && onSelect(""); setOpen(false); }}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-500 text-xs transition"><Icon name="x" size={12} /></button>
-          : <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-        }
-      </div>
-
-      {open && visible.length > 0 && (
-        <div className="absolute z-50 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
-          {visible.map((s, i) => (
-            <button key={i} onMouseDown={e => e.preventDefault()}
-              onClick={() => { onChange(s.label); onSelect && onSelect(s.label); setOpen(false); }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[#F0F3FF] transition-colors text-left">
-              <div className="w-7 h-7 rounded-lg bg-[#E6EAFF] flex items-center justify-center flex-shrink-0">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#0023FF" }} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold text-gray-800 truncate">{s.label}</div>
-                {s.sub && <div className="text-xs text-gray-400 truncate">{s.sub}</div>}
-              </div>
-            </button>
-          ))}
-          <div className="px-3 py-2 border-t border-gray-50 bg-gray-50/50">
-            <span className="text-[10px] text-gray-400 font-medium">{visible.length} résultat(s)</span>
-          </div>
-        </div>
+    <div className={`relative ${className}`}>
+      <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full pl-9 pr-9 py-2.5 border border-gray-200 rounded-xl text-sm bg-white
+          focus:outline-none focus:ring-2 focus:ring-[#0023FF]/10 focus:border-[#0023FF]
+          hover:border-gray-300 transition-all"
+      />
+      {value && (
+        <button onClick={() => { onChange(""); onSelect && onSelect(""); }}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-500 text-xs transition"><Icon name="x" size={12} /></button>
       )}
     </div>
   );

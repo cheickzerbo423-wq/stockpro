@@ -99,14 +99,17 @@ function ProgBar({ value, max, color }) {
 export default function Dashboard() {
   const { data, loading, error, reload } = useDashboard();
   const annee = new Date().getFullYear();
-  const [showCaArticles, setShowCaArticles] = useState(false);
+  const [modal, setModal] = useState(null); // "ca" | "marge" | "stock" | "factures" | null
 
   if (loading) return <Spinner label="Chargement du tableau de bord…" />;
   if (error)   return <ErrorBox message={error} onRetry={reload} />;
   if (!data)   return null;
 
-  const { kpis, alertes_stock = [], ca_par_mois = [], top_clients = [], recent_factures = [], creances_clients = [], ca_par_article = [] } = data;
+  const { kpis, alertes_stock = [], ca_par_mois = [], top_clients = [], recent_factures = [], creances_clients = [], ca_par_article = [], stock_par_article = [], factures_annee = [] } = data;
   const caArticlesTotal = ca_par_article.reduce((s, a) => s + (parseFloat(a.ca) || 0), 0);
+  const margeArticlesTotal = ca_par_article.reduce((s, a) => s + (parseFloat(a.marge) || 0), 0);
+  const stockTotal = stock_par_article.reduce((s, a) => s + (parseFloat(a.valeur_stock) || 0), 0);
+  const margeArticles = [...ca_par_article].sort((a, b) => (parseFloat(b.marge) || 0) - (parseFloat(a.marge) || 0));
 
   const tauxRec = kpis.ca_facture > 0 ? Math.round((kpis.encaisse / kpis.ca_facture) * 100) : 0;
   const beneficeColor = parseFloat(kpis.benefice) >= 0 ? "#059669" : "#DC2626";
@@ -160,19 +163,22 @@ export default function Dashboard() {
           value={fmt(kpis.ca_total)}
           sub={ca_par_article.length ? "Cliquer pour le détail par article" : `Achats stock : ${fmt(kpis.depenses_total)}`}
           color="blue"
-          onClick={ca_par_article.length ? () => setShowCaArticles(true) : undefined} />
+          onClick={ca_par_article.length ? () => setModal("ca") : undefined} />
         <KpiCard icon={<Icon name="coins" size={20} className="text-white" />} label="Marge brute"
           value={fmt(kpis.benefice)}
-          sub={`Marge : ${marge}%`}
-          color={parseFloat(kpis.benefice) >= 0 ? "green" : "red"} />
+          sub={ca_par_article.length ? "Cliquer pour le détail par article" : `Marge : ${marge}%`}
+          color={parseFloat(kpis.benefice) >= 0 ? "green" : "red"}
+          onClick={ca_par_article.length ? () => setModal("marge") : undefined} />
         <KpiCard icon={<Icon name="box" size={20} className="text-white" />} label="Valeur du stock"
           value={fmt(kpis.valeur_stock || 0)}
-          sub={`${fmtN(kpis.nb_articles)} articles actifs`}
-          color="purple" />
+          sub={stock_par_article.length ? "Cliquer pour le détail par article" : `${fmtN(kpis.nb_articles)} articles actifs`}
+          color="purple"
+          onClick={stock_par_article.length ? () => setModal("stock") : undefined} />
         <KpiCard icon={<Icon name="receipt" size={20} className="text-white" />} label="Factures émises"
           value={fmtN(kpis.nb_factures)}
-          sub={`${kpis.factures_impayees} impayée(s) · ${fmt(kpis.montant_a_recouvrer)}`}
-          color={parseInt(kpis.factures_impayees) > 0 ? "amber" : "green"} />
+          sub={factures_annee.length ? "Cliquer pour voir les factures" : `${kpis.factures_impayees} impayée(s) · ${fmt(kpis.montant_a_recouvrer)}`}
+          color={parseInt(kpis.factures_impayees) > 0 ? "amber" : "green"}
+          onClick={factures_annee.length ? () => setModal("factures") : undefined} />
       </div>
 
       {/* ── Taux de recouvrement ── */}
@@ -484,8 +490,8 @@ export default function Dashboard() {
       </div>
 
       {/* ── Modal : CA par article ── */}
-      {showCaArticles && (
-        <Modal title={`Chiffre d'affaires par article — ${annee}`} onClose={() => setShowCaArticles(false)} wide>
+      {modal === "ca" && (
+        <Modal title={`Chiffre d'affaires par article — ${annee}`} onClose={() => setModal(null)} wide>
           {ca_par_article.length === 0 ? (
             <div className="flex flex-col items-center py-10 gap-3">
               <span className="text-gray-300"><Icon name="box" size={30} /></span>
@@ -546,6 +552,230 @@ export default function Dashboard() {
                           <td className="px-4 py-3 text-right font-bold text-[#0023FF]">{fmt(a.ca)}</td>
                           <td className="px-3 py-3 text-center text-gray-500">{pct}%</td>
                           <td className="px-4 py-3 text-right font-semibold text-emerald-600">{fmt(a.marge)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </Modal>
+      )}
+
+      {/* ── Modal : Marge brute par article ── */}
+      {modal === "marge" && (
+        <Modal title={`Marge brute par article — ${annee}`} onClose={() => setModal(null)} wide>
+          {margeArticles.length === 0 ? (
+            <div className="flex flex-col items-center py-10 gap-3">
+              <span className="text-gray-300"><Icon name="coins" size={30} /></span>
+              <p className="text-sm text-gray-400 font-medium">Aucune vente cette année</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mb-4">
+                <span className="text-xs font-bold text-emerald-700 uppercase tracking-wide">Marge brute totale {annee}</span>
+                <span className="text-lg font-black text-emerald-600">{fmt(margeArticlesTotal)}</span>
+              </div>
+
+              {/* Mobile : cartes */}
+              <div className="md:hidden space-y-2">
+                {margeArticles.map((a, i) => {
+                  const tx = parseFloat(a.ca) > 0 ? Math.round((parseFloat(a.marge) / parseFloat(a.ca)) * 100) : 0;
+                  return (
+                    <div key={a.article_code || i} className="rounded-xl border border-gray-200 bg-white p-3">
+                      <div className="flex items-start justify-between gap-2 mb-1.5">
+                        <div className="min-w-0">
+                          <div className="font-bold text-gray-800 text-sm leading-tight truncate">{a.libelle}</div>
+                          <div className="text-[10px] text-gray-400 font-mono">{a.article_code}</div>
+                        </div>
+                        <span className={`font-black text-sm whitespace-nowrap ${parseFloat(a.marge) >= 0 ? "text-emerald-600" : "text-red-600"}`}>{fmt(a.marge)}</span>
+                      </div>
+                      <ProgBar value={Math.max(0, parseFloat(a.marge))} max={Math.max(1, parseFloat(margeArticles[0].marge))} color="#10B981" />
+                      <div className="flex items-center justify-between mt-1.5 text-[11px]">
+                        <span className="text-gray-500">CA {fmt(a.ca)} · {fmtN(a.qte)} vendu(s)</span>
+                        <span className="text-emerald-600 font-semibold">Taux {tx}%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop : tableau */}
+              <div className="hidden md:block rounded-xl overflow-hidden border border-gray-200">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-900 text-white">
+                      <th className="text-left px-4 py-3 font-semibold">Article</th>
+                      <th className="text-center px-3 py-3 font-semibold w-20">Qté</th>
+                      <th className="text-right px-4 py-3 font-semibold">CA</th>
+                      <th className="text-right px-4 py-3 font-semibold">Marge brute</th>
+                      <th className="text-center px-3 py-3 font-semibold w-20">Taux</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {margeArticles.map((a, i) => {
+                      const tx = parseFloat(a.ca) > 0 ? Math.round((parseFloat(a.marge) / parseFloat(a.ca)) * 100) : 0;
+                      return (
+                        <tr key={a.article_code || i} className={`border-t border-gray-100 ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
+                          <td className="px-4 py-3">
+                            <div className="font-medium text-gray-800">{a.libelle}</div>
+                            <div className="text-[10px] text-gray-400 font-mono">{a.article_code}</div>
+                          </td>
+                          <td className="px-3 py-3 text-center text-gray-600">{fmtN(a.qte)}</td>
+                          <td className="px-4 py-3 text-right text-gray-600">{fmt(a.ca)}</td>
+                          <td className={`px-4 py-3 text-right font-bold ${parseFloat(a.marge) >= 0 ? "text-emerald-600" : "text-red-600"}`}>{fmt(a.marge)}</td>
+                          <td className="px-3 py-3 text-center text-gray-500">{tx}%</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </Modal>
+      )}
+
+      {/* ── Modal : Valeur du stock par article ── */}
+      {modal === "stock" && (
+        <Modal title="Valeur du stock par article" onClose={() => setModal(null)} wide>
+          {stock_par_article.length === 0 ? (
+            <div className="flex flex-col items-center py-10 gap-3">
+              <span className="text-gray-300"><Icon name="box" size={30} /></span>
+              <p className="text-sm text-gray-400 font-medium">Aucun article en stock</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-xl px-4 py-3 mb-4">
+                <span className="text-xs font-bold text-purple-700 uppercase tracking-wide">Valeur totale du stock</span>
+                <span className="text-lg font-black text-purple-600">{fmt(stockTotal)}</span>
+              </div>
+
+              {/* Mobile : cartes */}
+              <div className="md:hidden space-y-2">
+                {stock_par_article.map((a, i) => (
+                  <div key={a.code || i} className="rounded-xl border border-gray-200 bg-white p-3">
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <div className="min-w-0">
+                        <div className="font-bold text-gray-800 text-sm leading-tight truncate">{a.libelle}</div>
+                        <div className="text-[10px] text-gray-400 font-mono">{a.code}</div>
+                      </div>
+                      <span className="font-black text-purple-600 text-sm whitespace-nowrap">{fmt(a.valeur_stock)}</span>
+                    </div>
+                    <ProgBar value={parseFloat(a.valeur_stock)} max={Math.max(1, parseFloat(stock_par_article[0].valeur_stock))} color="#8B5CF6" />
+                    <div className="mt-1.5 text-[11px] text-gray-500">{fmtN(a.stock_restant)} unité(s) × {fmt(a.prix_achat)}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop : tableau */}
+              <div className="hidden md:block rounded-xl overflow-hidden border border-gray-200">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-900 text-white">
+                      <th className="text-left px-4 py-3 font-semibold">Article</th>
+                      <th className="text-center px-3 py-3 font-semibold w-24">Stock</th>
+                      <th className="text-right px-4 py-3 font-semibold">Prix d'achat</th>
+                      <th className="text-right px-4 py-3 font-semibold">Valeur en stock</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stock_par_article.map((a, i) => (
+                      <tr key={a.code || i} className={`border-t border-gray-100 ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-gray-800">{a.libelle}</div>
+                          <div className="text-[10px] text-gray-400 font-mono">{a.code}</div>
+                        </td>
+                        <td className="px-3 py-3 text-center text-gray-600">{fmtN(a.stock_restant)}</td>
+                        <td className="px-4 py-3 text-right text-gray-600">{fmt(a.prix_achat)}</td>
+                        <td className="px-4 py-3 text-right font-bold text-purple-600">{fmt(a.valeur_stock)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </Modal>
+      )}
+
+      {/* ── Modal : Factures émises ── */}
+      {modal === "factures" && (
+        <Modal title={`Factures émises — ${annee}`} onClose={() => setModal(null)} wide>
+          {factures_annee.length === 0 ? (
+            <div className="flex flex-col items-center py-10 gap-3">
+              <span className="text-gray-300"><Icon name="receipt" size={30} /></span>
+              <p className="text-sm text-gray-400 font-medium">Aucune facture cette année</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-center">
+                  <div className="text-base font-black text-gray-800">{fmtN(factures_annee.length)}</div>
+                  <div className="text-[10px] font-semibold text-gray-400 uppercase">Factures</div>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5 text-center">
+                  <div className="text-base font-black text-emerald-600">{fmtN(factures_annee.filter((f) => isFactureReglee(f.statut, f.reste)).length)}</div>
+                  <div className="text-[10px] font-semibold text-emerald-500 uppercase">Réglées</div>
+                </div>
+                <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 text-center">
+                  <div className="text-base font-black text-red-600">{fmtN(factures_annee.filter((f) => !isFactureReglee(f.statut, f.reste)).length)}</div>
+                  <div className="text-[10px] font-semibold text-red-500 uppercase">Impayées</div>
+                </div>
+              </div>
+
+              {/* Mobile : cartes */}
+              <div className="md:hidden space-y-2">
+                {factures_annee.map((f, i) => {
+                  const paid = isFactureReglee(f.statut, f.reste);
+                  return (
+                    <div key={f.code || i} className="rounded-xl border border-gray-200 bg-white p-3">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="font-mono text-xs font-bold bg-[#E6EAFF] text-[#0023FF] px-2 py-0.5 rounded-lg border border-[#B3BFFF]">{f.code}</span>
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${paid ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-600 border-red-200"}`}>{paid ? "Réglée" : "Impayée"}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm text-gray-700 truncate">{f.client_nom}</span>
+                        <span className="font-black text-gray-900 text-sm whitespace-nowrap">{fmt(f.montant)}</span>
+                      </div>
+                      {!paid && parseFloat(f.reste) > 0 && (
+                        <div className="text-[11px] text-red-500 font-medium mt-0.5">Reste {fmt(f.reste)}</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop : tableau */}
+              <div className="hidden md:block rounded-xl overflow-hidden border border-gray-200">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-900 text-white">
+                      <th className="text-left px-4 py-3 font-semibold">N° Facture</th>
+                      <th className="text-left px-4 py-3 font-semibold">Date</th>
+                      <th className="text-left px-4 py-3 font-semibold">Client</th>
+                      <th className="text-right px-4 py-3 font-semibold">Montant</th>
+                      <th className="text-right px-4 py-3 font-semibold">Reste</th>
+                      <th className="text-center px-3 py-3 font-semibold w-24">Statut</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {factures_annee.map((f, i) => {
+                      const paid = isFactureReglee(f.statut, f.reste);
+                      const dateStr = f.date_facture ? new Date(f.date_facture).toLocaleDateString("fr-FR", { day:"2-digit", month:"short", year:"numeric" }) : "";
+                      return (
+                        <tr key={f.code || i} className={`border-t border-gray-100 ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
+                          <td className="px-4 py-3 font-mono text-xs font-bold text-[#0023FF]">{f.code}</td>
+                          <td className="px-4 py-3 text-gray-600">{dateStr}</td>
+                          <td className="px-4 py-3 font-medium text-gray-800">{f.client_nom}</td>
+                          <td className="px-4 py-3 text-right font-bold text-gray-900">{fmt(f.montant)}</td>
+                          <td className={`px-4 py-3 text-right ${parseFloat(f.reste) > 0 ? "text-red-600 font-semibold" : "text-gray-400"}`}>{fmt(f.reste)}</td>
+                          <td className="px-3 py-3 text-center">
+                            <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border ${paid ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-600 border-red-200"}`}>
+                              {paid ? <Icon name="check" size={11} /> : <Icon name="clock" size={11} />} {paid ? "Réglée" : "Impayée"}
+                            </span>
+                          </td>
                         </tr>
                       );
                     })}

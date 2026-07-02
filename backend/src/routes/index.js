@@ -118,7 +118,7 @@ router.get("/dashboard", authenticate, async (req, res) => {
     // Cloisonnement multi-entreprises : $1 = année, $2 = entreprise courante.
     const entId = req.user.entreprise_id;
 
-    const [totaux, alertes, caAnnee, topClients, recentFactures, creancesClients, caParArticle] = await Promise.all([
+    const [totaux, alertes, caAnnee, topClients, recentFactures, creancesClients, caParArticle, stockParArticle, facturesAnnee] = await Promise.all([
       db.query(`
         SELECT
           (SELECT COALESCE(SUM(montant_total),0) FROM lignes_vente WHERE annee = $1 AND entreprise_id = $2)   AS ca_total,
@@ -200,6 +200,22 @@ router.get("/dashboard", authenticate, async (req, res) => {
         GROUP BY article_code
         ORDER BY ca DESC
       `, [annee, entId]),
+
+      // Valeur du stock par article (détail au clic sur la carte "Valeur du stock").
+      db.query(`
+        SELECT code, libelle, stock_restant, prix_achat, valeur_stock::bigint AS valeur_stock
+        FROM vue_stock
+        WHERE actif = TRUE AND entreprise_id = $1
+        ORDER BY valeur_stock DESC
+      `, [entId]),
+
+      // Factures de l'année (détail au clic sur la carte "Factures émises").
+      db.query(`
+        SELECT code, client_nom, montant, montant_paye, reste, statut, date_facture
+        FROM factures
+        WHERE EXTRACT(YEAR FROM date_facture) = $1 AND entreprise_id = $2
+        ORDER BY date_facture DESC, created_at DESC
+      `, [annee, entId]),
     ]);
 
     res.json({
@@ -210,6 +226,8 @@ router.get("/dashboard", authenticate, async (req, res) => {
       recent_factures:  recentFactures.rows,
       creances_clients: creancesClients.rows,
       ca_par_article:   caParArticle.rows,
+      stock_par_article: stockParArticle.rows,
+      factures_annee:   facturesAnnee.rows,
     });
   } catch (err) {
     console.error(err);

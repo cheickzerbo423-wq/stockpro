@@ -118,7 +118,7 @@ router.get("/dashboard", authenticate, async (req, res) => {
     // Cloisonnement multi-entreprises : $1 = année, $2 = entreprise courante.
     const entId = req.user.entreprise_id;
 
-    const [totaux, alertes, caAnnee, topClients, recentFactures, creancesClients] = await Promise.all([
+    const [totaux, alertes, caAnnee, topClients, recentFactures, creancesClients, caParArticle] = await Promise.all([
       db.query(`
         SELECT
           (SELECT COALESCE(SUM(montant_total),0) FROM lignes_vente WHERE annee = $1 AND entreprise_id = $2)   AS ca_total,
@@ -186,6 +186,20 @@ router.get("/dashboard", authenticate, async (req, res) => {
         ORDER BY total_du DESC
         LIMIT 10
       `, [entId]),
+
+      // CA par article (année courante) : chiffre d'affaires + marge par
+      // référence vendue, pour le détail au clic sur la carte "CA" du dashboard.
+      db.query(`
+        SELECT article_code,
+               MAX(libelle)                                  AS libelle,
+               SUM(montant_total)::bigint                    AS ca,
+               SUM(quantite)::bigint                         AS qte,
+               SUM(montant_total - (quantite * prix_achat))::bigint AS marge
+        FROM lignes_vente
+        WHERE annee = $1 AND entreprise_id = $2
+        GROUP BY article_code
+        ORDER BY ca DESC
+      `, [annee, entId]),
     ]);
 
     res.json({
@@ -195,6 +209,7 @@ router.get("/dashboard", authenticate, async (req, res) => {
       top_clients:      topClients.rows,
       recent_factures:  recentFactures.rows,
       creances_clients: creancesClients.rows,
+      ca_par_article:   caParArticle.rows,
     });
   } catch (err) {
     console.error(err);

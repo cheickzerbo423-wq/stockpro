@@ -3,8 +3,9 @@ import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
+import { useState } from "react";
 import { useDashboard } from "../hooks/useApi";
-import { fmt, fmtN, Spinner, ErrorBox, isFactureReglee, tauxMarge } from "../components/UI";
+import { fmt, fmtN, Spinner, ErrorBox, isFactureReglee, tauxMarge, Modal } from "../components/UI";
 import Icon from "../components/Icon";
 
 const MOIS = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
@@ -36,16 +37,28 @@ const PALETTES = {
   purple: { bg: "#EDE9FE", bar: "#8B5CF6" },
 };
 
-function KpiCard({ icon, label, value, sub, color = "blue" }) {
+function KpiCard({ icon, label, value, sub, color = "blue", onClick }) {
   const p = PALETTES[color] || PALETTES.blue;
+  const clickable = typeof onClick === "function";
   return (
-    <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-default"
+    <div onClick={onClick}
+      role={clickable ? "button" : undefined} tabIndex={clickable ? 0 : undefined}
+      onKeyDown={clickable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } } : undefined}
+      className={`bg-white rounded-2xl overflow-hidden border border-gray-100 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 ${clickable ? "cursor-pointer" : "cursor-default"}`}
       style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
       <div className="h-1.5" style={{ background: p.bar }} />
       <div className="p-4 sm:p-5">
-        <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl mb-3 shadow-sm"
-          style={{ background: p.bar }}>
-          {icon}
+        <div className="flex items-start justify-between">
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl mb-3 shadow-sm"
+            style={{ background: p.bar }}>
+            {icon}
+          </div>
+          {clickable && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+              style={{ background: p.bg, color: p.bar }}>
+              <Icon name="eye" size={11} /> Détail
+            </span>
+          )}
         </div>
         <div className="text-sm sm:text-base font-black leading-tight tracking-tight break-normal"
           style={{ color: p.bar }}>
@@ -86,12 +99,14 @@ function ProgBar({ value, max, color }) {
 export default function Dashboard() {
   const { data, loading, error, reload } = useDashboard();
   const annee = new Date().getFullYear();
+  const [showCaArticles, setShowCaArticles] = useState(false);
 
   if (loading) return <Spinner label="Chargement du tableau de bord…" />;
   if (error)   return <ErrorBox message={error} onRetry={reload} />;
   if (!data)   return null;
 
-  const { kpis, alertes_stock = [], ca_par_mois = [], top_clients = [], recent_factures = [], creances_clients = [] } = data;
+  const { kpis, alertes_stock = [], ca_par_mois = [], top_clients = [], recent_factures = [], creances_clients = [], ca_par_article = [] } = data;
+  const caArticlesTotal = ca_par_article.reduce((s, a) => s + (parseFloat(a.ca) || 0), 0);
 
   const tauxRec = kpis.ca_facture > 0 ? Math.round((kpis.encaisse / kpis.ca_facture) * 100) : 0;
   const beneficeColor = parseFloat(kpis.benefice) >= 0 ? "#059669" : "#DC2626";
@@ -143,8 +158,9 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard icon={<Icon name="trendUp" size={20} className="text-white" />} label={`CA ${annee}`}
           value={fmt(kpis.ca_total)}
-          sub={`Achats stock : ${fmt(kpis.depenses_total)}`}
-          color="blue" />
+          sub={ca_par_article.length ? "Cliquer pour le détail par article" : `Achats stock : ${fmt(kpis.depenses_total)}`}
+          color="blue"
+          onClick={ca_par_article.length ? () => setShowCaArticles(true) : undefined} />
         <KpiCard icon={<Icon name="coins" size={20} className="text-white" />} label="Marge brute"
           value={fmt(kpis.benefice)}
           sub={`Marge : ${marge}%`}
@@ -466,6 +482,80 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* ── Modal : CA par article ── */}
+      {showCaArticles && (
+        <Modal title={`Chiffre d'affaires par article — ${annee}`} onClose={() => setShowCaArticles(false)} wide>
+          {ca_par_article.length === 0 ? (
+            <div className="flex flex-col items-center py-10 gap-3">
+              <span className="text-gray-300"><Icon name="box" size={30} /></span>
+              <p className="text-sm text-gray-400 font-medium">Aucune vente cette année</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between bg-[#E6EAFF] border border-[#B3BFFF] rounded-xl px-4 py-3 mb-4">
+                <span className="text-xs font-bold text-[#0023FF] uppercase tracking-wide">Total CA {annee}</span>
+                <span className="text-lg font-black text-[#0023FF]">{fmt(caArticlesTotal)}</span>
+              </div>
+
+              {/* Mobile : cartes */}
+              <div className="md:hidden space-y-2">
+                {ca_par_article.map((a, i) => {
+                  const pct = caArticlesTotal > 0 ? Math.round((parseFloat(a.ca) / caArticlesTotal) * 100) : 0;
+                  return (
+                    <div key={a.article_code || i} className="rounded-xl border border-gray-200 bg-white p-3">
+                      <div className="flex items-start justify-between gap-2 mb-1.5">
+                        <div className="min-w-0">
+                          <div className="font-bold text-gray-800 text-sm leading-tight truncate">{a.libelle}</div>
+                          <div className="text-[10px] text-gray-400 font-mono">{a.article_code}</div>
+                        </div>
+                        <span className="font-black text-[#0023FF] text-sm whitespace-nowrap">{fmt(a.ca)}</span>
+                      </div>
+                      <ProgBar value={parseFloat(a.ca)} max={parseFloat(ca_par_article[0].ca)} color={BRAND} />
+                      <div className="flex items-center justify-between mt-1.5 text-[11px]">
+                        <span className="text-gray-500">{fmtN(a.qte)} vendu(s) · {pct}% du CA</span>
+                        <span className="text-emerald-600 font-semibold">Marge {fmt(a.marge)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop : tableau */}
+              <div className="hidden md:block rounded-xl overflow-hidden border border-gray-200">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-900 text-white">
+                      <th className="text-left px-4 py-3 font-semibold">Article</th>
+                      <th className="text-center px-3 py-3 font-semibold w-20">Qté</th>
+                      <th className="text-right px-4 py-3 font-semibold">Chiffre d'affaires</th>
+                      <th className="text-center px-3 py-3 font-semibold w-16">%</th>
+                      <th className="text-right px-4 py-3 font-semibold">Marge</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ca_par_article.map((a, i) => {
+                      const pct = caArticlesTotal > 0 ? Math.round((parseFloat(a.ca) / caArticlesTotal) * 100) : 0;
+                      return (
+                        <tr key={a.article_code || i} className={`border-t border-gray-100 ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
+                          <td className="px-4 py-3">
+                            <div className="font-medium text-gray-800">{a.libelle}</div>
+                            <div className="text-[10px] text-gray-400 font-mono">{a.article_code}</div>
+                          </td>
+                          <td className="px-3 py-3 text-center text-gray-600">{fmtN(a.qte)}</td>
+                          <td className="px-4 py-3 text-right font-bold text-[#0023FF]">{fmt(a.ca)}</td>
+                          <td className="px-3 py-3 text-center text-gray-500">{pct}%</td>
+                          <td className="px-4 py-3 text-right font-semibold text-emerald-600">{fmt(a.marge)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </Modal>
+      )}
 
     </div>
   );

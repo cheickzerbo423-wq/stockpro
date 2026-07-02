@@ -407,15 +407,11 @@ export default function Achats() {
       </div>
 
       {/* Barre de recherche sur le tableau */}
-      <div className="mb-4 max-w-sm">
+      <div className="mb-4 w-full sm:max-w-md">
         <SearchBox
           value={searchTable}
           onChange={setSearchTable}
           placeholder="Rechercher un article ou fournisseur…"
-          suggestions={[
-            ...new Map(achats.map(a => [a.fournisseur_nom, { label: a.fournisseur_nom, sub: "Fournisseur" }])).values(),
-            ...new Map(achats.map(a => [a.libelle, { label: a.libelle, sub: `Code : ${a.article_code}` }])).values(),
-          ]}
         />
       </div>
 

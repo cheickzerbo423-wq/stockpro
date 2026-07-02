@@ -191,16 +191,12 @@ export default function Factures() {
       </div>
 
       {/* Barre de recherche + filtres */}
-      <div className="flex flex-wrap gap-3 mb-4 items-center">
-        <div className="flex-1 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 mb-4 sm:items-center">
+        <div className="w-full sm:flex-1 sm:min-w-0">
           <SearchBox
             value={search}
             onChange={setSearch}
             placeholder="Rechercher N° facture ou client…"
-            suggestions={[
-              ...new Map(factures.map(f => [f.client_nom, { label: f.client_nom, sub: "Client" }])).values(),
-              ...factures.map(f => ({ label: f.code, sub: `${f.client_nom} — ${fmt(f.montant)}` })),
-            ]}
           />
         </div>
         <div className="flex gap-1">

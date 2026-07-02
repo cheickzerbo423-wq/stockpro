@@ -265,7 +265,6 @@ export default function Articles() {
             value={search}
             onChange={setSearch}
             placeholder="Rechercher par code ou libellé…"
-            suggestions={articles.map(a => ({ label: a.libelle, sub: `Code : ${a.code} — Stock : ${a.stock_restant}` }))}
           />
         </div>
         {gammes.length > 0 && (

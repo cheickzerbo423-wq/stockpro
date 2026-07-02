@@ -438,12 +438,11 @@ export default function Clients() {
       />
 
       {/* Barre de recherche */}
-      <div className="mb-4 max-w-sm">
+      <div className="mb-4 w-full sm:max-w-md">
         <SearchBox
           value={search}
           onChange={setSearch}
           placeholder="Rechercher un client ou fournisseur…"
-          suggestions={all.filter(c => c.type === tab).map(c => ({ label: c.nom, sub: c.contact || c.ville || c.type }))}
         />
       </div>
 

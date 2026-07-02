@@ -608,16 +608,11 @@ export default function Ventes() {
       </div>
 
       {/* Barre de recherche */}
-      <div className="mb-4 max-w-sm">
+      <div className="mb-4 w-full sm:max-w-md">
         <SearchBox
           value={search}
           onChange={setSearch}
           placeholder="Rechercher article, client, facture…"
-          suggestions={[
-            ...new Map(ventes.map(v => [v.client_nom, { label: v.client_nom, sub: "Client" }])).values(),
-            ...new Map(ventes.map(v => [v.libelle, { label: v.libelle, sub: "Article" }])).values(),
-            ...new Map(ventes.map(v => [v.facture_code, { label: v.facture_code, sub: "N° Facture" }])).values(),
-          ]}
         />
       </div>
 
